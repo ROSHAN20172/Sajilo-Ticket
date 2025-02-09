@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react'
+import { Link, useNavigate } from 'react-router-dom';
 import { FaBars } from 'react-icons/fa';
-import { FaX } from "react-icons/fa6";
+import { FaX, FaArrowRight } from "react-icons/fa6";
+import { AppContent } from '../../context/AppContext';
+import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const Navbar = () => {
 
@@ -9,11 +12,43 @@ const Navbar = () => {
     const [isVisible, setIsVisible] = useState(true);
     const [open, setOpen] = useState(false);
 
+    const navigate = useNavigate()
+    const { userData, backendUrl, setUserData, setIsLoggedin } = useContext(AppContent)
+
+    const sendVerificationOtp = async () => {
+        try {
+            axios.defaults.withCredentials = true;
+
+            const {data} = await axios.post(backendUrl + '/api/auth/send-verify-otp')
+
+            if(data.success){
+                navigate('/email-verify')
+                toast.success(data.message)
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+
+    const logout = async () => {
+        try {
+            axios.defaults.withCredentials = true
+            const {data} = await axios.post(backendUrl + '/api/auth/logout')
+            data.success && setIsLoggedin(false)
+            data.success && setUserData(false)
+            navigate('/')
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+
     //Navbar items
     const navItems = [
         { label: "Home", link: "/" },
         { label: "Services", link: "/services" },
-        { label: "Tickets", link: "/tickets" },
+        { label: "Tickets", link: "/bus-tickets" },
         { label: "About", link: "/about" },
     ]
 
@@ -52,7 +87,7 @@ const Navbar = () => {
     return (
         <nav className={`w-full h-[8ch] fixed top-0 left-0 lg:px-16 md:px-7 sm:px-7 px-4 backdrop-blur-lg transition-transform duration-300 z-50 
         ${isVisible ? "translate-y-0" : "-translate-y-full"} 
-        ${scrollPosition > 50 ? "bg-violet-200" : "bg-neutral-100/10"}`}>
+        ${scrollPosition > 50 ? "bg-neutral-300" : "bg-neutral-100/10"}`}>
             <div className="w-fill h-full flex items-center justify-between">
                 {/* Logo Section */}
                 <Link to="/" className='text-4xl text-primary font-bold'>
@@ -86,14 +121,26 @@ const Navbar = () => {
                             </li>
                         ))}
                     </ul>
+                    {userData ?
+                        <div className='w-8 h-8 flex justify-center items-center rounded-full bg-primary text-white relative group'>
+                            {userData.name[0].toUpperCase()}
+                            <div className='absolute hidden group-hover:block top-0 right-0 z-10 text-black rounded pt-10 w-32'>
+                                <ul className='list-none m-0 p-2 bg-gray-100 text-sm shadow-lg rounded'>
+                                    {!userData.isAccountVerified && <li onClick={sendVerificationOtp} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap'>Verify Email</li>}
+                                    <li onClick={logout} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap'>Log Out</li>
+                                </ul>
+                            </div>
+                        </div>
 
-                    {/* Button */}
-                    <div className="flex items-center justify-center">
-                        <button className='md:w-fit w-full md:px-4 px-6 md:py-1 py-2.5 hover:bg-transparent bg-primary border border-primary hover:border-primary md:rounded-full rounded-xl text-base font-normal text-neutral-50 hover:text-primary ease-in-out duration-300'>
-                            Sign In
-                        </button>
-                    </div>
-
+                        // Button
+                        : <div className="flex items-center justify-center">
+                            <button onClick={() => navigate('/login')}
+                                className='flex items-center gap-2 md:w-fit w-full md:px-4 px-6 md:py-1 py-2.5 hover:bg-transparent bg-primary border border-primary hover:border-primary md:rounded-full rounded-xl text-base font-normal text-neutral-50 hover:text-primary ease-in-out duration-300'>
+                                Log In
+                                <FaArrowRight />
+                            </button>
+                        </div>
+                    }
                 </div>
             </div>
         </nav>
