@@ -38,7 +38,7 @@ const Search = () => {
 
                     {/* Exchange button */}
                     <button className="absolute w-11 h-6 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center bg-primary">
-                        <TbArrowsExchange className='w-6 h-6 text-neutral-500' />
+                        <TbArrowsExchange className='w-6 h-6 text-neutral-50' />
                     </button>
 
                 </div>
