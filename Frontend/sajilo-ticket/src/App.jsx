@@ -10,6 +10,7 @@ import ResetPassword from "./pages/auth/ResetPassword"
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Ticket from "./pages/ticket/Ticket"
+import Detail from "./pages/ticket/detail/Detail"
 
 function App() {
   return (
@@ -25,6 +26,9 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/bus-tickets" element={<Ticket />} />
+
+            {/* Nested Routes bus Details */}
+            <Route path="/bus-tickets/detail" element={<Detail />} />
 
             {/* Backend */}
             <Route path="/login" element={<Login />} />
