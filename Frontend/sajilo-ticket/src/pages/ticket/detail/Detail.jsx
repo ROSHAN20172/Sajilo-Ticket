@@ -4,6 +4,10 @@ import RootLayout from '../../../layout/RootLayout'
 import { Link } from 'react-router-dom'
 import WarningAlert from '../../../components/alertmessage/WarningAlert'
 import BusSeat from './seat/busseat/BusSeat'
+import ToggleBtn from '../../../components/togglebtn/ToggleBtn'
+import Amenities from './seat/amenities/Amenities'
+import ReservationPolicy from './reservationpolicy/ReservationPolicy'
+import BusImage from './busimage/BusImage'
 
 const Detail = () => {
 
@@ -59,6 +63,30 @@ const Detail = () => {
 
           {/* Button */}
           <div className="w-full flex items-center justify-center gap-6 flex-col">
+
+            <ToggleBtn
+              buttonText={"See Bus Details"}
+              buttonTextHidden={"Hide Bus Details"}
+            >
+              <div className="w-full space-y-10">
+
+                {/* Reservation policy and amenities */}
+                <div className="w-full grid grid-cols-7 gap-20">
+
+                  {/* Amenities */}
+                  <Amenities />
+
+                  {/* Reservation policy */}
+                  <ReservationPolicy />
+
+                </div>
+
+                {/* Bus images */}
+                <BusImage />
+
+              </div>
+
+            </ToggleBtn>
 
           </div>
 
