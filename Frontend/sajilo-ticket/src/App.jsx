@@ -11,6 +11,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Ticket from "./pages/ticket/Ticket"
 import Detail from "./pages/ticket/detail/Detail"
+import Checkout from "./pages/ticket/detail/checkout/Checkout"
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
 
             {/* Nested Routes bus Details */}
             <Route path="/bus-tickets/detail" element={<Detail />} />
+            <Route path="/bus-tickets/checkout" element={<Checkout />} />
 
             {/* Backend */}
             <Route path="/login" element={<Login />} />

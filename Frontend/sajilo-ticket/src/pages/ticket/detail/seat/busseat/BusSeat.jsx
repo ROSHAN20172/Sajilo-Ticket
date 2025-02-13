@@ -170,7 +170,7 @@ const BusSeat = () => {
 
                         <div className="flex items-center gap-x-2">
                             <RiMoneyRupeeCircleLine className='text-xl text-neutral-500' />
-                            <p className="text-sm text-neutral-500 font-medium">NPR. 1200</p>
+                            <p className="text-sm text-neutral-500 font-medium">NPR. 1600</p>
                         </div>
 
                     </div>
