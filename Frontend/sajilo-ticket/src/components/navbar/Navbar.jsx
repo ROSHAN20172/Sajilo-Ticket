@@ -47,9 +47,9 @@ const Navbar = () => {
     //Navbar items
     const navItems = [
         { label: "Home", link: "/" },
-        { label: "Services", link: "/services" },
         { label: "Tickets", link: "/bus-tickets" },
         { label: "About", link: "/about" },
+        { label: "Agent", link: "/agent" },
     ]
 
     //Handle click open

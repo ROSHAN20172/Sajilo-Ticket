@@ -5,19 +5,30 @@ import transporter from '../config/nodemailer.js'
 import { EMAIL_VERIFY_TEMPLATE, PASSWORD_RESET_TEMPLATE } from '../config/emailTemplates.js';
 
 export const register = async (req, res) => {
-
     const { name, email, password } = req.body;
 
+    // Validate input fields
     if (!name || !email || !password) {
-        return res.json({ success: false, message: 'Missing Details' })
+        return res.json({ success: false, message: 'Missing Details' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    if (!emailRegex.test(email)) {
+        return res.json({ success: false, message: 'Invalid Email Format' });
+    }
+
+    // Validate password: Minimum 6 characters, at least one special character
+    const passwordRegex = /^(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}$/;
+    if (!passwordRegex.test(password)) {
+        return res.json({ success: false, message: 'Password must be at least 6 characters long and contain at least one special character.' });
     }
 
     try {
+        const existingUser = await userModel.findOne({ email });
 
-        const esistingUser = await userModel.findOne({ email })
-
-        if (esistingUser) {
-            return res.json({ success: false, message: "User Already Exists" })
+        if (existingUser) {
+            return res.json({ success: false, message: "User Already Exists" });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -39,17 +50,18 @@ export const register = async (req, res) => {
             from: process.env.SENDER_EMAIL,
             to: email,
             subject: 'Welcome to Sajilo Ticket',
-            text: `Welcome to Sajio Ticket. Your Account has been Successfully Created with email id: ${email}. Now you can Book your Bus Ticket Online easily from anywhere without visiting Operator Counter.`
-        }
+            text: `Welcome to Sajilo Ticket. Your Account has been Successfully Created with email id: ${email}. Now you can Book your Bus Ticket Online easily from anywhere without visiting the Operator Counter.`
+        };
 
         await transporter.sendMail(mailOptions);
 
         return res.json({ success: true });
 
     } catch (error) {
-        res.json({ success: false, message: error.message })
+        res.json({ success: false, message: error.message });
     }
-}
+};
+
 
 export const login = async (req, res) => {
     const { email, password } = req.body;
@@ -127,8 +139,8 @@ export const sendVerifyOtp = async (req, res) => {
             from: process.env.SENDER_EMAIL,
             to: user.email,
             subject: 'Account Verification OTP',
-            // text: `Your OTP to verify Sajilo Ticket account is ${otp}. Verify your using this OTP.`,
-            html: EMAIL_VERIFY_TEMPLATE.replace('{{otp}}', otp).replace("{{email}}",user.email)
+            text: `Your OTP to verify Sajilo Ticket account is ${otp}. Verify your using this OTP.`,
+            // html: EMAIL_VERIFY_TEMPLATE.replace('{{otp}}', otp).replace("{{email}}",user.email)
         }
 
         await transporter.sendMail(mailOptions);
@@ -212,8 +224,8 @@ export const sendResetOtp = async (req, res) => {
             from: process.env.SENDER_EMAIL,
             to: user.email,
             subject: 'Password Reset OTP',
-            // text: `Your OTP for Reseting your Sajilo Ticket account Password is ${otp}. Proceed to Resetting your Password using this OTP.`,
-            html: PASSWORD_RESET_TEMPLATE.replace('{{otp}}', otp).replace("{{email}}",user.email)
+            text: `Your OTP for Reseting your Sajilo Ticket account Password is ${otp}. Proceed to Resetting your Password using this OTP.`,
+            // html: PASSWORD_RESET_TEMPLATE.replace('{{otp}}', otp).replace("{{email}}",user.email)
         };
 
         await transporter.sendMail(mailOptions);

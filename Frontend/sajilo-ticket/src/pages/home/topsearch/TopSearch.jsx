@@ -16,11 +16,11 @@ const TopSearch = () => {
             {/* Top Search tickets routes card */}
             <div className="w-full grid grid-cols-3 gap-5">
                 <TopSearchCard routeFrom={"Kathmandu"} routeTo={"Janakpur"} timeDuration={"12 Hrs"} price={"1000"} />
-                <TopSearchCard routeFrom={"Kathmandu"} routeTo={"Janakpur"} timeDuration={"12 Hrs"} price={"1000"} />
-                <TopSearchCard routeFrom={"Kathmandu"} routeTo={"Janakpur"} timeDuration={"12 Hrs"} price={"1000"} />
-                <TopSearchCard routeFrom={"Kathmandu"} routeTo={"Janakpur"} timeDuration={"12 Hrs"} price={"1000"} />
-                <TopSearchCard routeFrom={"Kathmandu"} routeTo={"Janakpur"} timeDuration={"12 Hrs"} price={"1000"} />
-                <TopSearchCard routeFrom={"Kathmandu"} routeTo={"Janakpur"} timeDuration={"12 Hrs"} price={"1000"} />
+                <TopSearchCard routeFrom={"Kathmandu"} routeTo={"Pokhara"} timeDuration={"12 Hrs"} price={"1000"} />
+                <TopSearchCard routeFrom={"Kathmandu"} routeTo={"Biratnagar"} timeDuration={"12 Hrs"} price={"1000"} />
+                <TopSearchCard routeFrom={"Janakpur"} routeTo={"Kathmandu"} timeDuration={"12 Hrs"} price={"1000"} />
+                <TopSearchCard routeFrom={"Pokhara"} routeTo={"Kathmandu"} timeDuration={"12 Hrs"} price={"1000"} />
+                <TopSearchCard routeFrom={"Biratnagar"} routeTo={"Kathmandu"} timeDuration={"12 Hrs"} price={"1000"} />
             </div>
 
         </RootLayout>

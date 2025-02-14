@@ -5,6 +5,7 @@ import { FaLock } from "react-icons/fa6";
 import { AppContent } from '../../context/AppContext'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { Link } from 'react-router-dom'; // Import Link
 
 const ResetPassword = () => {
 
@@ -77,7 +78,6 @@ const ResetPassword = () => {
       {/* enter email id  form*/}
 
       {!isEmailSent &&
-
         <form onSubmit={onSubmitEmail} noValidate className='bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm '>
           <h1 className='text-white text-2xl font-semibold text-center mb-4'>Reset Password</h1>
           <p className='text-center mb-6 text-indigo-300'>Enter your Registered Email Address</p>
@@ -86,7 +86,15 @@ const ResetPassword = () => {
             <input type="email" placeholder='Email Id' className='bg-transparent outline-none text-white'
               value={email} onChange={e => setEmail(e.target.value)} required />
           </div>
-          <button className='w-full py-3 bg-gradient-to-r from-indigo-500 to bg-indigo-900 text-white rounded-full'>Submit</button>
+          <button className='w-full py-2.5 bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-full font-medium text-neutral-50 hover:text-primary ease-in-out duration-300'>Submit</button>
+
+          {/* Back to Home link */}
+          <div className="mt-4 text-center">
+            <Link to="/" className="text-blue-400 underline">
+              Back to Home
+            </Link>
+          </div>
+
         </form>
       }
 
@@ -95,7 +103,7 @@ const ResetPassword = () => {
       {!isOtpSubmitted && isEmailSent &&
         <form onSubmit={onSubmitOtp} noValidate className='bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm '>
           <h1 className='text-white text-2xl font-semibold text-center mb-4'>Reset Password OTP</h1>
-          <p className='text-center mb-6 text-indigo-300'>Enter the 6-digit Code Send to your Email</p>
+          <p className='text-center mb-6 text-indigo-300'>Enter the 6-digit Code Sent to your Email</p>
           <div className='flex justify-between mb-8' onPaste={handlePaste}>
             {Array(6).fill(0).map((_, index) => (
               <input type="text" maxLength='1' key={index} required
@@ -105,14 +113,20 @@ const ResetPassword = () => {
                 onKeyDown={(e) => handleKeyDown(e, index)} />
             ))}
           </div>
-          <button className='w-full py-2.5 bg-gradient-to-r from-indigo-500 to bg-indigo-900 text-white rounded-full'>Submit</button>
+          <button className='w-full py-2.5 bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-full font-medium text-neutral-50 hover:text-primary ease-in-out duration-300'>Submit</button>
+
+          {/* Back to Home link */}
+          <div className="mt-4 text-center">
+            <Link to="/" className="text-blue-400 underline">
+              Back to Home
+            </Link>
+          </div>
         </form>
       }
 
       {/* enter new password form */}
 
       {isOtpSubmitted && isEmailSent &&
-
         <form onSubmit={onSubmitNewPassword} noValidate className='bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm '>
           <h1 className='text-white text-2xl font-semibold text-center mb-4'>New Password</h1>
           <p className='text-center mb-6 text-indigo-300'>Enter New Password</p>
@@ -121,9 +135,17 @@ const ResetPassword = () => {
             <input type="password" placeholder='Password' className='bg-transparent outline-none text-white'
               value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
           </div>
-          <button className='w-full py-3 bg-gradient-to-r from-indigo-500 to bg-indigo-900 text-white rounded-full'>Submit</button>
+          <button className='w-full py-2.5 bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-full font-medium text-neutral-50 hover:text-primary ease-in-out duration-300'>Submit</button>
+
+          {/* Back to Home link */}
+          <div className="mt-4 text-center">
+            <Link to="/" className="text-blue-400 underline">
+              Back to Home
+            </Link>
+          </div>
         </form>
       }
+
     </div>
   )
 }

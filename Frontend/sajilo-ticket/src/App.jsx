@@ -12,6 +12,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Ticket from "./pages/ticket/Ticket"
 import Detail from "./pages/ticket/detail/Detail"
 import Checkout from "./pages/ticket/detail/checkout/Checkout"
+import Invoice from "./pages/ticket/invoice/Invoice"
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
             {/* Nested Routes bus Details */}
             <Route path="/bus-tickets/detail" element={<Detail />} />
             <Route path="/bus-tickets/checkout" element={<Checkout />} />
+            <Route path="/bus-tickets/payment" element={<Invoice />} />
 
             {/* Backend */}
             <Route path="/login" element={<Login />} />

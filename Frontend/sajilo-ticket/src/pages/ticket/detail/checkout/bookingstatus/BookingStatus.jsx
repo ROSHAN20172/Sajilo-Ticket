@@ -40,7 +40,7 @@ const BookingStatus = () => {
 
                             <div className="w-full flex items-center justify-between gap-x-4 !mt-1.5">
                                 <h1 className="text-sm text-neutral-600 font-normal">
-                                    Bus No.:
+                                    Bus No. :
                                 </h1>
                                 <h1 className="text-base text-neutral-700 font-medium">
                                     (Ba. 3 Kha. 1234)
@@ -76,7 +76,7 @@ const BookingStatus = () => {
 
                         <div className="flex items-center justify-between gap-x-4">
                             <div className="flex gap-y-0.5 flex-col">
-                                <h3 className="text-base text-neutral-500 font-medium">Total Price:</h3>
+                                <h3 className="text-base text-neutral-500 font-medium">Total Price :</h3>
                                 <span className='text-xs to-neutral-500 font-normal'>
                                     (Including all taxes)
                                 </span>

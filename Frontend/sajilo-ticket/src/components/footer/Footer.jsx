@@ -1,8 +1,9 @@
 import React from 'react'
 import RootLayout from '../../layout/RootLayout'
 import { Link } from 'react-router-dom'
-import { FaFacebook, FaInstagram, FaXTwitter, FaYoutube } from 'react-icons/fa6'
-
+import { FaFacebook, FaInstagram, FaYoutube, FaPhone, FaTiktok } from 'react-icons/fa6'
+import { TiLocation } from "react-icons/ti";
+import { MdEmail } from "react-icons/md";
 import KhaltiImg from "../../assets/Khalti.png"
 
 const Footer = () => {
@@ -22,7 +23,7 @@ const Footer = () => {
 
                             {/* description */}
                             <p className="text-sm text-neutral-500 font-normal">
-                                Book your bus ticket online Book your bus ticket onlineBook your bus ticket onlineBook your bus ticket onlineBook your bus ticket onlineBook your bus ticket onlineBook your bus ticket onlineBook your bus ticket onlineBook your bus ticket onlineBook your bus ticket online
+                                Sajilo Ticket is Nepal’s leading online bus ticket booking platform, making travel easier, faster, and more convenient. Book your tickets effortlessly, choose from various routes, and enjoy a hassle-free journey with secure payments and 24/7 support.
                             </p>
                         </div>
 
@@ -41,7 +42,7 @@ const Footer = () => {
                             </div>
 
                             <div className="w-11 h-11 rounded-xl bg-neutral-800/40 hover:bg-primary flex items-center justify-center cursor-pointer ease-in-out duration-500">
-                                <FaXTwitter className='w-5 h-5 text-neutral-500' />
+                                <FaTiktok className='w-5 h-5 text-neutral-500' />
                             </div>
                         </div>
 
@@ -58,40 +59,36 @@ const Footer = () => {
                             </Link>
 
                             <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
-                                About Us
+                                Buy Ticket
                             </Link>
 
                             <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
-                                About Us
+                                Be a Operator
                             </Link>
 
                             <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
-                                About Us
+                                Log in
                             </Link>
                         </div>
                     </div>
 
                     <div className="col-span-1 space-y-5">
                         <h1 className="text-lg text-neutral-100 font-semibold">
-                            Top Reserved Routes
+                            Contact Us
                         </h1>
 
-                        <div className="space-y-2">
-                            <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
-                                Kathmandu-janakpur
-                            </Link>
+                        <div className="space-y-3 mt-5">
+                            <p className="flex items-center gap-2 text-base text-neutral-500">
+                                <MdEmail className="text-lg" /> info@sajiloticket.com
+                            </p>
 
-                            <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
-                                Kathmandu-janakpur
-                            </Link>
+                            <p className="flex items-center gap-2 text-base text-neutral-500">
+                                <FaPhone className="text-lg" /> +977 1234567890
+                            </p>
 
-                            <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
-                                Kathmandu-janakpur
-                            </Link>
-
-                            <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
-                                Kathmandu-janakpur
-                            </Link>
+                            <p className="flex items-center gap-2 text-base text-neutral-500">
+                                <TiLocation className="text-lg" /> Kathmandu, Nepal
+                            </p>
                         </div>
                     </div>
 
@@ -131,7 +128,7 @@ const Footer = () => {
                     </p>
 
                     <div className="flex items-center gap-x-5">
-                    <h1 className="text-sm text-neutral-500 font-normal">
+                        <h1 className="text-sm text-neutral-500 font-normal">
                             Payment Partner
                         </h1>
                         <img src={KhaltiImg} alt="" className="w-fit h-9 object-contain object-center" />

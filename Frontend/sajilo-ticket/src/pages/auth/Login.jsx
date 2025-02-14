@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppContent } from '../../context/AppContext';
 import axios from 'axios'
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom'; // Import Link
 
 const Login = () => {
 
@@ -12,7 +13,7 @@ const Login = () => {
 
     const { backendUrl, setIsLoggedin, getUserData } = useContext(AppContent)
 
-    const [state, setState] = useState('Sign Up')
+    const [state, setState] = useState('Log In')  // changed from 'Sign Up' to 'Login'
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -81,8 +82,10 @@ const Login = () => {
                             className='bg-transparent outline-none' type="password" placeholder='Password' required />
                     </div>
                     <p onClick={() => navigate('/reset-password')}
-                        className='mb-4 text-indigo-500 cursor-pointer'>Forget Password</p>
-                    <button className='w-full py-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-indigo-900 text-white font-medium'>{state}</button>
+                        className='mb-4 text-indigo-500 cursor-pointer'>Forget Password
+                    </p>
+                    <button className='w-full py-2.5 bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-full font-medium text-neutral-50 hover:text-primary ease-in-out duration-300'>{state}</button>
+
                 </form>
 
                 {state === 'Sign Up' ? (
@@ -95,6 +98,11 @@ const Login = () => {
                     </p>
                 )}
 
+                <div className="mt-6 text-center">
+                    <Link to="/" className="text-blue-400 underline">
+                        Back to Home
+                    </Link>
+                </div>
             </div>
         </div>
     )
