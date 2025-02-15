@@ -4,9 +4,10 @@ import Home from "./pages/home/Home"
 import About from "./pages/about/About"
 import Footer from "./components/footer/Footer"
 
-import Login from "./pages/auth/Login"
-import EmailVerify from "./pages/auth/EmailVerify"
-import ResetPassword from "./pages/auth/ResetPassword"
+import LogIn from "./pages/auth/login/LogIn"
+import SignUp from "./pages/auth/signup/SignUp"
+import EmailVerify from "./pages/auth/emailverification/EmailVerify"
+import ResetPassword from "./pages/auth/resetpassword/ResetPassword"
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Ticket from "./pages/ticket/Ticket"
@@ -35,7 +36,8 @@ function App() {
             <Route path="/bus-tickets/payment" element={<Invoice />} />
 
             {/* Backend */}
-            <Route path="/login" element={<Login />} />
+            <Route path="/login" element={<LogIn />} />
+            <Route path="/signup" element={<SignUp />} />
             <Route path="/email-verify" element={<EmailVerify />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
