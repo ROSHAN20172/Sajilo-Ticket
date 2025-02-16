@@ -216,6 +216,56 @@ export const verifyEmail = async (req, res) => {
     }
 };
 
+export const resendOtp = async (req, res) => {
+    const { email } = req.body;
+
+    // Check for missing fields
+    if (!email) {
+        return res.status(400).json({ success: false, message: 'Email is required.' });
+    }
+
+    try {
+        // Find the temporary user record
+        const tempUser = await tempUserModel.findOne({ email });
+
+        if (!tempUser) {
+            return res.status(404).json({ success: false, message: 'No verification request found for this email.' });
+        }
+
+        // Check if the OTP resend interval has passed (30 seconds)
+        const currentTime = Date.now();
+        const createdAtTime = new Date(tempUser.createdAt).getTime();
+
+        if (currentTime - createdAtTime < 30000) {
+            return res.status(400).json({ success: false, message: 'Please wait 30 seconds before requesting a new OTP.' });
+        }
+
+        // Generate new OTP
+        const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Update OTP and reset creation time
+        tempUser.verifyOtp = newOtp;
+        tempUser.createdAt = new Date(); // Reset the createdAt timestamp
+        await tempUser.save();
+
+        // Send OTP email
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: email,
+            subject: 'Your OTP Code for Email Verification',
+            text: `Your new OTP for email verification is: ${newOtp}`
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({ success: true, message: 'OTP resent successfully. Please check your email.' });
+
+    } catch (error) {
+        console.error('Resend OTP Error:', error);
+        res.status(500).json({ success: false, message: 'Internal server error. Please try again later.' });
+    }
+};
+
 export const login = async (req, res) => {
     const { email, password } = req.body;
 
@@ -268,43 +318,6 @@ export const logout = async (req, res) => {
     }
 }
 
-// Send verification OTP to user Email
-export const sendVerifyOtp = async (req, res) => {
-    try {
-
-        const { userId } = req.body;
-
-        const user = await userModel.findById(userId);
-
-        if (user.isAccountVerified) {
-            return res.json({ success: false, message: "Account Already Verified" })
-        }
-
-        const otp = String(Math.floor(100000 + Math.random() * 900000));
-
-        user.verifyOtp = otp;
-        user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000
-
-        await user.save();
-
-
-        const mailOptions = {
-            from: process.env.SENDER_EMAIL,
-            to: user.email,
-            subject: 'Account Verification OTP',
-            text: `Your OTP to verify Sajilo Ticket account is ${otp}. Verify your using this OTP.`,
-            // html: EMAIL_VERIFY_TEMPLATE.replace('{{otp}}', otp).replace("{{email}}",user.email)
-        }
-
-        await transporter.sendMail(mailOptions);
-
-        res.json({ success: true, message: "Verification OTP Sent in your Email Successfully" })
-
-    } catch (error) {
-        return res.json({ success: false, message: error.message })
-    }
-}
-
 // Check if user is Authenticated
 export const isAuthenticated = async (req, res) => {
     try {
@@ -315,44 +328,71 @@ export const isAuthenticated = async (req, res) => {
 }
 
 // Send Password Reset OTP
-export const sendResetOtp = async (req, res) => {
-    const {email} = req.body;
+// export const sendResetOtp = async (req, res) => {
+//     const { email } = req.body;
 
-    if(!email){
-        return res.json({ success: false, message: "Email is Required" })
-    }
+//     if (!email) {
+//         return res.json({ success: false, message: "Email is Required" });
+//     }
 
-    try {
-        
-        const user = await userModel.findOne({email});
-        if(!user){
-            return res.json({success: false, message: "User not Found"})
-        }
+//     try {
+//         const user = await userModel.findOne({ email });
+//         if (!user) {
+//             return res.json({ success: false, message: "User not Found" });
+//         }
 
-        const otp = String(Math.floor(100000 + Math.random() * 900000));
+//         const otp = String(Math.floor(100000 + Math.random() * 900000));
 
-        user.resetOtp = otp;
-        user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000
+//         user.resetOtp = otp;
+//         user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000;
+//         await user.save();
 
-        await user.save();
+//         await transporter.sendMail({
+//             from: process.env.SENDER_EMAIL,
+//             to: user.email,
+//             subject: 'Password Reset OTP',
+//             text: `Your OTP is ${otp}. It expires in 15 minutes.`,
+//         });
 
+//         return res.json({ success: true, message: "OTP Successfully sent to your Email" });
 
-        const mailOptions = {
-            from: process.env.SENDER_EMAIL,
-            to: user.email,
-            subject: 'Password Reset OTP',
-            text: `Your OTP for Reseting your Sajilo Ticket account Password is ${otp}. Proceed to Resetting your Password using this OTP.`,
-            // html: PASSWORD_RESET_TEMPLATE.replace('{{otp}}', otp).replace("{{email}}",user.email)
-        };
+//     } catch (error) {
+//         return res.json({ success: false, message: error.message });
+//     }
+// };
 
-        await transporter.sendMail(mailOptions);
+// export const resendResetOtp = async (req, res) => {
+//     const { email } = req.body;
 
-        return res.json({ success: true, message: "OTP Successfully sent to your Email" });
+//     if (!email) {
+//         return res.json({ success: false, message: "Email is Required" });
+//     }
 
-    } catch (error) {
-        return res.json({ success: false, message: error.message });
-    }
-}
+//     try {
+//         const user = await userModel.findOne({ email });
+//         if (!user) {
+//             return res.json({ success: false, message: "User not Found" });
+//         }
+
+//         const otp = String(Math.floor(100000 + Math.random() * 900000));
+//         user.resetOtp = otp;
+//         user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000;
+
+//         await user.save();
+
+//         await transporter.sendMail({
+//             from: process.env.SENDER_EMAIL,
+//             to: user.email,
+//             subject: 'Password Reset OTP (Resend)',
+//             text: `Your new OTP is ${otp}. It is valid for 15 minutes.`,
+//         });
+
+//         return res.json({ success: true, message: "New OTP Sent" });
+
+//     } catch (error) {
+//         return res.json({ success: false, message: error.message });
+//     }
+// };
 
 //Reset User Password
 export const resetPassword = async (req, res) => {
@@ -391,3 +431,99 @@ export const resetPassword = async (req, res) => {
         return res.json({ success: false, message: error.message });
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+// Send Reset OTP (Initial Request)
+export const sendResetOtp = async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.json({ success: false, message: "Email is required" });
+    }
+
+    try {
+        const user = await userModel.findOne({ email });
+        if (!user) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        // Check if 30 seconds have passed since the last OTP request
+        if (user.resetOtpRequestedAt && Date.now() - user.resetOtpRequestedAt < 30 * 1000) {
+            return res.json({ success: false, message: "Please wait 30 seconds before requesting a new OTP" });
+        }
+
+        // Generate a new OTP
+        const otp = String(Math.floor(100000 + Math.random() * 900000));
+        user.resetOtp = otp;
+        user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000;
+        user.resetOtpRequestedAt = Date.now(); // ✅ Store OTP request time
+
+        await user.save();
+
+        // Send OTP email
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: user.email,
+            subject: 'Password Reset OTP',
+            text: `Your OTP for resetting your Sajilo Ticket account password is ${otp}.`
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        return res.json({ success: true, message: "OTP successfully sent to your email" });
+
+    } catch (error) {
+        return res.json({ success: false, message: error.message });
+    }
+};
+
+// Resend OTP (with 30-sec cooldown)
+export const resendResetOtp = async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.json({ success: false, message: "Email is required" });
+    }
+
+    try {
+        const user = await userModel.findOne({ email });
+        if (!user) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        // Check if 30 seconds have passed since the last OTP request
+        if (user.resetOtpRequestedAt && Date.now() - user.resetOtpRequestedAt < 30 * 1000) {
+            return res.json({ success: false, message: "Please wait 30 seconds before requesting a new OTP" });
+        }
+
+        // Generate new OTP
+        const otp = String(Math.floor(100000 + Math.random() * 900000));
+        user.resetOtp = otp;
+        user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000;
+        user.resetOtpRequestedAt = Date.now(); // ✅ Update request time
+
+        await user.save();
+
+        // Send OTP email
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: user.email,
+            subject: 'Resend: Password Reset OTP',
+            text: `Your new OTP for resetting your Sajilo Ticket account password is ${otp}.`
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        return res.json({ success: true, message: "New OTP successfully sent to your email" });
+
+    } catch (error) {
+        return res.json({ success: false, message: error.message });
+    }
+};
