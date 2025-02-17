@@ -5,106 +5,6 @@ import transporter from '../config/nodemailer.js'
 import { EMAIL_VERIFY_TEMPLATE, PASSWORD_RESET_TEMPLATE } from '../config/emailTemplates.js';
 import tempUserModel from '../models/tempUserModel.js';
 
-// export const register = async (req, res) => {
-//     const { name, email, password } = req.body;
-
-//     if (!name || !email || !password) {
-//         return res.json({ success: false, message: 'Missing Details' });
-//     }
-
-//     try {
-//         const existingUser = await userModel.findOne({ email });
-//         if (existingUser) {
-//             return res.json({ success: false, message: "User Already Exists" });
-//         }
-
-//         const existingTempUser = await tempUserModel.findOne({ email });
-//         if (existingTempUser) {
-//             return res.json({ success: false, message: "Verification in Progress. Check Your Email." });
-//         }
-
-//         const hashedPassword = await bcrypt.hash(password, 10);
-//         const otp = String(Math.floor(100000 + Math.random() * 900000)); // Generate OTP
-
-//         const tempUser = new tempUserModel({ name, email, password: hashedPassword, verifyOtp: otp });
-//         await tempUser.save();
-
-//         // Send OTP Email
-//         const mailOptions = {
-//             from: process.env.SENDER_EMAIL,
-//             to: email,
-//             subject: 'Verify Your Email - Sajilo Ticket',
-//             text: `Your OTP for verifying your Sajilo Ticket account is ${otp}. It will expire in 15 minutes.`,
-//         };
-
-//         await transporter.sendMail(mailOptions);
-
-//         res.json({ success: true, message: "OTP Sent to Email. Verify to Complete Signup." });
-
-//     } catch (error) {
-//         res.json({ success: false, message: error.message });
-//     }
-// };
-
-// export const verifyEmail = async (req, res) => {
-//     const { email, otp } = req.body;
-
-//     if (!email || !otp) {
-//         return res.json({ success: false, message: "Missing Details" });
-//     }
-
-//     try {
-//         const tempUser = await tempUserModel.findOne({ email });
-
-//         if (!tempUser) {
-//             return res.json({ success: false, message: "No Verification Request Found." });
-//         }
-
-//         if (tempUser.verifyOtp !== otp) {
-//             return res.json({ success: false, message: "Invalid OTP" });
-//         }
-
-//         // Move user to main collection
-//         const newUser = new userModel({
-//             name: tempUser.name,
-//             email: tempUser.email,
-//             password: tempUser.password,
-//             isAccountVerified: true
-//         });
-
-//         await newUser.save();
-//         await tempUserModel.deleteOne({ email }); // Remove temp data
-
-//         // Send Welcome Email
-//         const mailOptions = {
-//             from: process.env.SENDER_EMAIL,
-//             to: email,
-//             subject: 'Welcome to Sajilo Ticket!',
-//             text: `Hello ${tempUser.name},\n\nWelcome to Sajilo Ticket! 🎉\n\nYour account has been successfully verified. You can now log in and start booking tickets easily.\n\nEnjoy your journey with us!\n\nBest Regards,\nSajilo Ticket Team`
-//         };
-
-//         await transporter.sendMail(mailOptions);
-
-//         // Create JWT token for the new user
-//         const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-
-//         // Set token in cookie
-//         res.cookie('token', token, {
-//             httpOnly: true,
-//             secure: process.env.NODE_ENV === 'production',
-//             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-//             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-//         });
-
-//         res.json({ success: true, message: "Email Verified Successfully. Welcome email sent. You are now logged in." });
-
-//     } catch (error) {
-//         res.json({ success: false, message: error.message });
-//     }
-// };
-
-
-
 export const register = async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -327,73 +227,6 @@ export const isAuthenticated = async (req, res) => {
     }
 }
 
-// Send Password Reset OTP
-// export const sendResetOtp = async (req, res) => {
-//     const { email } = req.body;
-
-//     if (!email) {
-//         return res.json({ success: false, message: "Email is Required" });
-//     }
-
-//     try {
-//         const user = await userModel.findOne({ email });
-//         if (!user) {
-//             return res.json({ success: false, message: "User not Found" });
-//         }
-
-//         const otp = String(Math.floor(100000 + Math.random() * 900000));
-
-//         user.resetOtp = otp;
-//         user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000;
-//         await user.save();
-
-//         await transporter.sendMail({
-//             from: process.env.SENDER_EMAIL,
-//             to: user.email,
-//             subject: 'Password Reset OTP',
-//             text: `Your OTP is ${otp}. It expires in 15 minutes.`,
-//         });
-
-//         return res.json({ success: true, message: "OTP Successfully sent to your Email" });
-
-//     } catch (error) {
-//         return res.json({ success: false, message: error.message });
-//     }
-// };
-
-// export const resendResetOtp = async (req, res) => {
-//     const { email } = req.body;
-
-//     if (!email) {
-//         return res.json({ success: false, message: "Email is Required" });
-//     }
-
-//     try {
-//         const user = await userModel.findOne({ email });
-//         if (!user) {
-//             return res.json({ success: false, message: "User not Found" });
-//         }
-
-//         const otp = String(Math.floor(100000 + Math.random() * 900000));
-//         user.resetOtp = otp;
-//         user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000;
-
-//         await user.save();
-
-//         await transporter.sendMail({
-//             from: process.env.SENDER_EMAIL,
-//             to: user.email,
-//             subject: 'Password Reset OTP (Resend)',
-//             text: `Your new OTP is ${otp}. It is valid for 15 minutes.`,
-//         });
-
-//         return res.json({ success: true, message: "New OTP Sent" });
-
-//     } catch (error) {
-//         return res.json({ success: false, message: error.message });
-//     }
-// };
-
 //Reset User Password
 export const resetPassword = async (req, res) => {
     const {email, otp, newPassword} = req.body;
@@ -432,16 +265,6 @@ export const resetPassword = async (req, res) => {
     }
 }
 
-
-
-
-
-
-
-
-
-
-
 // Send Reset OTP (Initial Request)
 export const sendResetOtp = async (req, res) => {
     const { email } = req.body;
@@ -464,7 +287,7 @@ export const sendResetOtp = async (req, res) => {
         const otp = String(Math.floor(100000 + Math.random() * 900000));
         user.resetOtp = otp;
         user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000;
-        user.resetOtpRequestedAt = Date.now(); // ✅ Store OTP request time
+        user.resetOtpRequestedAt = Date.now(); 
 
         await user.save();
 
@@ -507,7 +330,7 @@ export const resendResetOtp = async (req, res) => {
         const otp = String(Math.floor(100000 + Math.random() * 900000));
         user.resetOtp = otp;
         user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000;
-        user.resetOtpRequestedAt = Date.now(); // ✅ Update request time
+        user.resetOtpRequestedAt = Date.now(); 
 
         await user.save();
 
