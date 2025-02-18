@@ -15,77 +15,49 @@ import EmailVerify from "./pages/auth/emailverification/EmailVerify";
 import ResetPassword from "./pages/auth/resetpassword/ResetPassword";
 
 import AdminLogin from './pages/admin/auth/adminlogin/AdminLogin';
-import AdminRegister from './pages/admin/auth/adminregister/AdminRegister';
+import AdminRegister from './pages/admin/auth/adminsignup/AdminSignUp';
 import AdminDashboard from './pages/admin/admindashboard/AdminDashboard';
 
-import AdminLayout from './layout/adminlayout/AdminLayout';
-
-import AuthService from './services/authservice/AuthService';
-import { Navigate } from 'react-router-dom';
-
-// Protected Route for Admin
-const ProtectedAdminRoute = ({ children }) => {
-  const isAdminLoggedIn = AuthService.isAdminLoggedIn();
-
-  if (!isAdminLoggedIn) {
-    return <Navigate to="/admin-login" />;
-  }
-
-  return children;
-};
-
-const ProtectedAdminLogin = ({ children }) => {
-  const isAdminLoggedIn = AuthService.isAdminLoggedIn();
-
-  if (isAdminLoggedIn) {
-    return <Navigate to="/admin-dashboard" />;
-  }
-
-  return children;
-};
+import AdminProtectedRoute from "./components/protectedroutes/adminprotectedroute/AdminProtectedRoute";
 
 function App() {
   return (
-    <>
-      <Router>
-        <main className="w-full flex flex-col bg-neutral-50 min-h-screen">
-          {/* Navbar for public routes */}
-          {window.location.pathname.startsWith("/admin") === false && <Navbar />}
+    <Router>
+      <main className="w-full flex flex-col bg-neutral-50 min-h-screen">
+        {/* Navbar for public routes */}
+        {window.location.pathname.startsWith("/admin") === false && <Navbar />}
 
-          {/* Routing */}
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/bus-tickets" element={<Ticket />} />
-            <Route path="/bus-tickets/detail" element={<Detail />} />
-            <Route path="/bus-tickets/checkout" element={<Checkout />} />
-            <Route path="/bus-tickets/payment" element={<Invoice />} />
+        {/* Routing */}
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/bus-tickets" element={<Ticket />} />
+          <Route path="/bus-tickets/detail" element={<Detail />} />
+          <Route path="/bus-tickets/checkout" element={<Checkout />} />
+          <Route path="/bus-tickets/payment" element={<Invoice />} />
 
-            <Route path="/login" element={<LogIn />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/email-verify" element={<EmailVerify />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+          {/* User Auth Routes */}
+          <Route path="/login" element={<LogIn />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/email-verify" element={<EmailVerify />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* Admin Routes */}
-            <Route path="/admin-login" element={<ProtectedAdminLogin><AdminLogin /></ProtectedAdminLogin>} />
-            <Route path="/admin-register" element={<AdminRegister />} />
-            
-            {/* Admin Dashboard inside Admin Layout */}
-            <Route path="/admin-dashboard" element={
-              <ProtectedAdminRoute>
-                <AdminLayout>
-                  <AdminDashboard />
-                </AdminLayout>
-              </ProtectedAdminRoute>
-            } />
-          </Routes>
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminLogin />} />
 
-          {/* Footer for public routes */}
-          {window.location.pathname.startsWith("/admin") === false && <Footer />}
-        </main>
-      </Router>
-    </>
+          {/* Protected Admin Routes */}
+          <Route element={<AdminProtectedRoute />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/register" element={<AdminRegister />} />
+          </Route>
+        </Routes>
+
+        {/* Footer for public routes */}
+        {window.location.pathname.startsWith("/admin") === false && <Footer />}
+      </main>
+    </Router>
   );
 }
 
