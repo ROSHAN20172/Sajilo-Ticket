@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/navbar/Navbar";
 import Footer from "./components/footer/Footer";
 
+// Public Pages
 import Home from "./pages/home/Home";
 import About from "./pages/about/About";
 import Ticket from "./pages/ticket/Ticket";
@@ -9,16 +10,25 @@ import Detail from "./pages/ticket/detail/Detail";
 import Checkout from "./pages/ticket/detail/checkout/Checkout";
 import Invoice from "./pages/ticket/invoice/Invoice";
 
+// User Pages
 import LogIn from "./pages/auth/login/LogIn";
 import SignUp from "./pages/auth/signup/SignUp";
 import EmailVerify from "./pages/auth/emailverification/EmailVerify";
 import ResetPassword from "./pages/auth/resetpassword/ResetPassword";
 
+// Admin Pages
 import AdminLogin from './pages/admin/auth/adminlogin/AdminLogin';
 import AdminRegister from './pages/admin/auth/adminsignup/AdminSignUp';
 import AdminDashboard from './pages/admin/admindashboard/AdminDashboard';
 
 import AdminProtectedRoute from "./components/protectedroutes/adminprotectedroute/AdminProtectedRoute";
+
+// Operator Pages
+import OperatorLogin from './pages/operator/auth/operatorlogin/OperatorLogin';
+import OperatorSignUp from './pages/operator/auth/operatorsignup/OperatorSignUp';
+import OperatorDashboard from './pages/operator/operatordashboard/OperatorDashboard';
+
+import OperatorProtectedRoute from "./components/protectedroutes/operatorProtectedRoute/OperatorProtectedRoute";
 
 function App() {
   return (
@@ -44,13 +54,23 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Admin Routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
 
           {/* Protected Admin Routes */}
           <Route element={<AdminProtectedRoute />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/register" element={<AdminRegister />} />
+          </Route>
+
+          {/* Operator Routes */}
+          <Route path="/operator" element={<OperatorLogin />} />
+          <Route path="/operator/login" element={<OperatorLogin />} />
+          <Route path="/operator/signup" element={<OperatorSignUp />} />
+
+          {/* Protected Operator Routes */}
+          <Route element={<OperatorProtectedRoute />}>
+            <Route path="/operator/dashboard" element={<OperatorDashboard />} />
           </Route>
         </Routes>
 

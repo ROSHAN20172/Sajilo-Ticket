@@ -1,5 +1,5 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { MdEmail } from "react-icons/md";
 import { FaLock } from "react-icons/fa6";
 import { AppContent } from '../../../context/AppContext';
@@ -104,7 +104,7 @@ const ResetPassword = () => {
 
   return (
     <div className='flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-200 to-purple-400'>
-      
+
       {!isEmailSent && (
         <form onSubmit={onSubmitEmail} noValidate className='bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm '>
           <h1 className='text-white text-2xl font-semibold text-center mb-4'>Reset Password</h1>
@@ -115,6 +115,11 @@ const ResetPassword = () => {
               value={email} onChange={e => setEmail(e.target.value)} required />
           </div>
           <button className='w-full py-2.5 bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-full font-medium text-neutral-50 hover:text-primary ease-in-out duration-300'>Submit</button>
+
+          <div className="mt-6 text-center">
+            <Link to="/login" className="text-blue-400 underline">Back to Login</Link>
+          </div>
+
         </form>
       )}
 
@@ -133,16 +138,21 @@ const ResetPassword = () => {
           </div>
 
           {/* Resend OTP button */}
-          <button 
-            type="button" 
-            className={`text-blue-400 underline ${resendTimer > 0 ? 'opacity-50 cursor-not-allowed' : ''}`} 
-            onClick={onResendOtp} 
+          <button
+            type="button"
+            className={`text-blue-400 underline ${resendTimer > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={onResendOtp}
             disabled={resendTimer > 0}
           >
             {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : "Resend OTP"}
           </button>
 
           <button className='w-full py-2.5 bg-primary rounded-full font-medium text-neutral-50 mt-4'>Submit</button>
+
+          <div className="mt-6 text-center">
+            <Link to="/login" className="text-blue-400 underline">Back to Login</Link>
+          </div>
+
         </form>
       )}
 
@@ -156,6 +166,11 @@ const ResetPassword = () => {
               value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
           </div>
           <button className='w-full py-2.5 bg-primary rounded-full font-medium text-neutral-50'>Submit</button>
+
+          <div className="mt-6 text-center">
+            <Link to="/login" className="text-blue-400 underline">Back to Login</Link>
+          </div>
+
         </form>
       )}
 

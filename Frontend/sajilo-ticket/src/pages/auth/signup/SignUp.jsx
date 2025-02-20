@@ -17,6 +17,12 @@ const Signup = () => {
     const passwordRegex = /^(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]{6,}$/;
 
     const validateForm = () => {
+        // Check if the email is in a lowercase
+        if (email !== email.toLowerCase()) {
+            toast.error("Email must be in lowercase.");
+            return false;
+        }
+
         // Check if the email is in a valid format
         if (!emailRegex.test(email)) {
             toast.error("Please enter a valid email address.");

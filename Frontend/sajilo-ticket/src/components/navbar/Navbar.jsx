@@ -18,7 +18,7 @@ const Navbar = () => {
     const logout = async () => {
         try {
             axios.defaults.withCredentials = true
-            const {data} = await axios.post(backendUrl + '/api/auth/logout')
+            const { data } = await axios.post(backendUrl + '/api/auth/logout')
             data.success && setIsLoggedin(false)
             data.success && setUserData(false)
             navigate('/')
@@ -32,7 +32,7 @@ const Navbar = () => {
         { label: "Home", link: "/" },
         { label: "Tickets", link: "/bus-tickets" },
         { label: "About", link: "/about" },
-        { label: "Agent", link: "/agent" },
+        { label: "Operator", link: "/operator"}
     ]
 
     //Handle click open
