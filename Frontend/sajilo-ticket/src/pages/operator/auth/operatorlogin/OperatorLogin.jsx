@@ -77,6 +77,9 @@ const OperatorLogin = () => {
                             required
                         />
                     </div>
+                    <p onClick={() => navigate('/operator-reset-password')} className='mb-4 text-indigo-500 cursor-pointer'>
+                        Forgot Password?
+                    </p>
                     <button className='w-full py-2.5 bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-full font-medium text-neutral-50 hover:text-primary ease-in-out duration-300'>
                         Login
                     </button>

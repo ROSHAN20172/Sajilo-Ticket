@@ -1,3 +1,5 @@
+// May uninstall if not used in future npm uninstall @mui/x-data-grid recharts @emotion/styled
+
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { OperatorAppContext } from '../../../context/OperatorAppContext';

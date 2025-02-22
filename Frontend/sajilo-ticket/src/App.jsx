@@ -29,6 +29,7 @@ import OperatorSignUp from './pages/operator/auth/operatorsignup/OperatorSignUp'
 import OperatorDashboard from './pages/operator/operatordashboard/OperatorDashboard';
 
 import OperatorProtectedRoute from "./components/protectedroutes/operatorProtectedRoute/OperatorProtectedRoute";
+import OperatorResetPassword from "./pages/operator/auth/operatorresetpassword/OperatorResetPassword";
 
 function App() {
   return (
@@ -56,6 +57,7 @@ function App() {
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/operator-reset-password" element={<OperatorResetPassword />} />
 
           {/* Protected Admin Routes */}
           <Route element={<AdminProtectedRoute />}>
