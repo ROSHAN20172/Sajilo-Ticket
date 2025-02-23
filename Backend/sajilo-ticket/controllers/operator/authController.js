@@ -1,49 +1,137 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { google } from 'googleapis';
 import Operator from '../../models/operator/operatorModel.js';
 import transporter from '../../config/nodemailer.js';
+import { Readable } from 'stream';
 
-// Operator Registration
+// Upload Files to Drive
+const uploadFileToDrive = async (file) => {
+    try {
+        const auth = new google.auth.GoogleAuth({
+            keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+            scopes: ['https://www.googleapis.com/auth/drive'],
+        });
+        const driveService = google.drive({ version: 'v3', auth });
+
+        const fileMetadata = {
+            name: file.originalname,
+            parents: [process.env.GOOGLE_DRIVE_PAN_FOLDER_ID || ''],
+        };
+
+        const bufferStream = new Readable();
+        bufferStream.push(file.buffer);
+        bufferStream.push(null);
+
+        const media = {
+            mimeType: file.mimetype,
+            body: bufferStream,
+        };
+
+        const response = await driveService.files.create({
+            requestBody: fileMetadata,
+            media: media,
+            fields: 'id',
+        });
+
+        const fileId = response.data.id;
+        return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    } catch (error) {
+        return null;
+    }
+};
+
+// Operator Register
 export const operatorRegister = async (req, res) => {
-  const { name, email, password } = req.body;
-  
-  if (!name || !email || !password) {
-    return res.status(400).json({ success: false, message: 'Missing required fields' });
-  }
+    const { name, email, password, panNo } = req.body;
 
-  try {
-    const existingOperator = await Operator.findOne({ email });
-    if (existingOperator) {
-      return res.status(400).json({ success: false, message: 'Operator already exists' });
+    if (!name || !email || !password || !panNo) {
+        return res.status(400).json({
+            success: false,
+            message: 'Missing required fields'
+        });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    try {
+        // Validate PAN number format
+        if (!/^\d+$/.test(panNo)) {
+            return res.status(400).json({
+                success: false,
+                message: 'PAN number must contain only numbers'
+            });
+        }
 
-    const newOperator = new Operator({
-      name,
-      email,
-      password: hashedPassword,
-      isAccountVerified: true, // automatically verified for now
-    });
+        // Validate PAN image if present
+        if (req.file) {
+            // Validate MIME type
+            const allowedMimeTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+            if (!allowedMimeTypes.includes(req.file.mimetype)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid PAN image format. Only PNG, JPG, and JPEG are allowed.'
+                });
+            }
 
-    await newOperator.save();
+            // Validate file size
+            if (req.file.size > 1024 * 1024) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'PAN image exceeds 1MB size limit'
+                });
+            }
+        }
 
-    // Prepare welcome email options
-    const mailOptions = {
-      from: process.env.SENDER_EMAIL,
-      to: email,
-      subject: 'Welcome to Sajilo Ticket!',
-      text: `Hello ${name},\n\nWelcome to Sajilo Ticket! Your operator account has been successfully created.\n\nBest regards,\nThe Sajilo Ticket Team`,
-    };
+        const existingOperator = await Operator.findOne({ email });
+        if (existingOperator) {
+            return res.status(400).json({
+                success: false,
+                message: 'Operator already exists'
+            });
+        }
 
-    // Send the welcome email
-    await transporter.sendMail(mailOptions);
+        const hashedPassword = await bcrypt.hash(password, 10);
+        let panImageUrl = '';
 
-    res.status(201).json({ success: true, message: 'Operator registered successfully.' });
-  } catch (error) {
-    console.error('Operator Registration Error:', error);
-    res.status(500).json({ success: false, message: 'Server error. Try again later.' });
-  }
+        if (req.file) {
+            panImageUrl = await uploadFileToDrive(req.file);
+            if (!panImageUrl) {
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error uploading PAN image'
+                });
+            }
+        }
+
+        const newOperator = new Operator({
+            name,
+            email,
+            password: hashedPassword,
+            panNo,
+            panImage: panImageUrl,
+            isAccountVerified: true,
+        });
+
+        await newOperator.save();
+
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: email,
+            subject: 'Welcome to Sajilo Ticket!',
+            text: `Hello ${name},\n\nWelcome to Sajilo Ticket! Your operator account has been successfully created.\n\nBest regards,\nThe Sajilo Ticket Team`,
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(201).json({
+            success: true,
+            message: 'Operator registered successfully.'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error. Try again later.'
+        });
+    }
 };
 
 // Operator Login
@@ -130,7 +218,6 @@ export const operatorSendResetOtp = async (req, res) => {
     await transporter.sendMail(mailOptions);
     return res.status(200).json({ success: true, message: "OTP successfully sent to your email" });
   } catch (error) {
-    console.error('sendOperatorResetOtp error:', error);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
@@ -169,7 +256,6 @@ export const operatorResendResetOtp = async (req, res) => {
     await transporter.sendMail(mailOptions);
     return res.status(200).json({ success: true, message: "New OTP successfully sent to your email" });
   } catch (error) {
-    console.error('resendOperatorResetOtp error:', error);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
@@ -201,7 +287,6 @@ export const operatorResetPassword = async (req, res) => {
     await operator.save();
     return res.status(200).json({ success: true, message: "Password has been reset successfully" });
   } catch (error) {
-    console.error('resetOperatorPassword error:', error);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
