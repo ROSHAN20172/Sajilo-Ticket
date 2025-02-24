@@ -17,7 +17,7 @@ const OperatorDashboard = () => {
       setSuppressUnauthorizedToast(true);
       setIsOperatorLoggedin(false);
       toast.success("Operator logged out successfully!");
-      navigate('/operator/login');
+      navigate('/');
     } catch (error) {
       toast.error(error.message);
     }

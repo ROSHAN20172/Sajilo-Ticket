@@ -74,7 +74,7 @@ const OperatorSignUp = () => {
 
             if (data.success) {
                 toast.update(toastId, {
-                    render: "Operator registered successfully!",
+                    render: "Operator registration complete! Your account is being verified. Once verified, you will receive a confirmation email.",
                     type: "success",
                     isLoading: false,
                     autoClose: 5000

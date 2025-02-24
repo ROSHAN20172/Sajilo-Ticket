@@ -50,7 +50,6 @@ export const register = async (req, res) => {
         res.status(200).json({ success: true, message: 'OTP sent to email. Please verify to complete signup.' });
 
     } catch (error) {
-        console.error('Registration Error:', error); // Log error for debugging purposes
         res.status(500).json({ success: false, message: 'Internal server error. Please try again later.' });
     }
 };
@@ -111,7 +110,6 @@ export const verifyEmail = async (req, res) => {
         res.status(200).json({ success: true, message: 'Email verified successfully. You are now logged in.' });
 
     } catch (error) {
-        console.error('Email Verification Error:', error); // Log error for debugging purposes
         res.status(500).json({ success: false, message: 'Internal server error. Please try again later.' });
     }
 };
@@ -161,7 +159,6 @@ export const resendOtp = async (req, res) => {
         res.status(200).json({ success: true, message: 'OTP resent successfully. Please check your email.' });
 
     } catch (error) {
-        console.error('Resend OTP Error:', error);
         res.status(500).json({ success: false, message: 'Internal server error. Please try again later.' });
     }
 };
@@ -185,6 +182,13 @@ export const login = async (req, res) => {
 
         if (!isMatch) {
             return res.json({ success: false, message: "Invalid Credentials" })
+        }
+
+        if (user.isBlocked) {
+            return res.json({ 
+                success: false, 
+                message: "Your account has been blocked. Please contact support." 
+            });
         }
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });

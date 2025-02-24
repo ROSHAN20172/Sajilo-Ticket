@@ -5,133 +5,150 @@ import Operator from '../../models/operator/operatorModel.js';
 import transporter from '../../config/nodemailer.js';
 import { Readable } from 'stream';
 
-// Upload Files to Drive
 const uploadFileToDrive = async (file) => {
-    try {
-        const auth = new google.auth.GoogleAuth({
-            keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
-            scopes: ['https://www.googleapis.com/auth/drive'],
-        });
-        const driveService = google.drive({ version: 'v3', auth });
+  try {
+    const auth = new google.auth.GoogleAuth({
+      keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+      scopes: ['https://www.googleapis.com/auth/drive'],
+    });
+    const driveService = google.drive({ version: 'v3', auth });
 
-        const fileMetadata = {
-            name: file.originalname,
-            parents: [process.env.GOOGLE_DRIVE_PAN_FOLDER_ID || ''],
-        };
+    const fileMetadata = {
+      name: file.originalname,
+      parents: [process.env.GOOGLE_DRIVE_PAN_FOLDER_ID || ''],
+    };
 
-        const bufferStream = new Readable();
-        bufferStream.push(file.buffer);
-        bufferStream.push(null);
+    const bufferStream = new Readable();
+    bufferStream.push(file.buffer);
+    bufferStream.push(null);
 
-        const media = {
-            mimeType: file.mimetype,
-            body: bufferStream,
-        };
+    const media = {
+      mimeType: file.mimetype,
+      body: bufferStream,
+    };
 
-        const response = await driveService.files.create({
-            requestBody: fileMetadata,
-            media: media,
-            fields: 'id',
-        });
+    const response = await driveService.files.create({
+      requestBody: fileMetadata,
+      media: media,
+      fields: 'id',
+    });
 
-        const fileId = response.data.id;
-        return `https://drive.google.com/uc?export=view&id=${fileId}`;
-    } catch (error) {
-        return null;
+    const fileId = response.data.id;
+    if (!fileId) {
+      return null;
     }
+    
+    // Retrieve the email that should have access from an environment variable
+    const accessEmail = process.env.IMAGE_ACCESS_EMAIL;
+    if (!accessEmail) {
+      return null;
+    }
+    
+    // Update file permission: only the specified email (accessEmail) can read the file
+    await driveService.permissions.create({
+      fileId: fileId,
+      requestBody: {
+        role: 'reader',
+        type: 'user',
+        emailAddress: accessEmail,
+      },
+    });
+
+    // Return the URL (note: the viewer must be signed into the Google account associated with accessEmail)
+    return `https://drive.google.com/uc?export=view&id=${fileId}`;
+  } catch (error) {
+    return null;
+  }
 };
 
-// Operator Register
 export const operatorRegister = async (req, res) => {
-    const { name, email, password, panNo } = req.body;
+  const { name, email, password, panNo } = req.body;
 
-    if (!name || !email || !password || !panNo) {
+  if (!name || !email || !password || !panNo) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing required fields'
+    });
+  }
+
+  try {
+    // Validate PAN number: only digits allowed
+    if (!/^\d+$/.test(panNo)) {
+      return res.status(400).json({
+        success: false,
+        message: 'PAN number must contain only numbers'
+      });
+    }
+
+    // Validate PAN image if provided
+    if (req.file) {
+      const allowedMimeTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+      if (!allowedMimeTypes.includes(req.file.mimetype)) {
         return res.status(400).json({
-            success: false,
-            message: 'Missing required fields'
+          success: false,
+          message: 'Invalid PAN image format. Only PNG, JPG, and JPEG are allowed.'
         });
+      }
+      if (req.file.size > 1024 * 1024) {
+        return res.status(400).json({
+          success: false,
+          message: 'PAN image exceeds 1MB size limit'
+        });
+      }
     }
 
-    try {
-        // Validate PAN number format
-        if (!/^\d+$/.test(panNo)) {
-            return res.status(400).json({
-                success: false,
-                message: 'PAN number must contain only numbers'
-            });
-        }
-
-        // Validate PAN image if present
-        if (req.file) {
-            // Validate MIME type
-            const allowedMimeTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-            if (!allowedMimeTypes.includes(req.file.mimetype)) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Invalid PAN image format. Only PNG, JPG, and JPEG are allowed.'
-                });
-            }
-
-            // Validate file size
-            if (req.file.size > 1024 * 1024) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'PAN image exceeds 1MB size limit'
-                });
-            }
-        }
-
-        const existingOperator = await Operator.findOne({ email });
-        if (existingOperator) {
-            return res.status(400).json({
-                success: false,
-                message: 'Operator already exists'
-            });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        let panImageUrl = '';
-
-        if (req.file) {
-            panImageUrl = await uploadFileToDrive(req.file);
-            if (!panImageUrl) {
-                return res.status(500).json({
-                    success: false,
-                    message: 'Error uploading PAN image'
-                });
-            }
-        }
-
-        const newOperator = new Operator({
-            name,
-            email,
-            password: hashedPassword,
-            panNo,
-            panImage: panImageUrl,
-            isAccountVerified: true,
-        });
-
-        await newOperator.save();
-
-        const mailOptions = {
-            from: process.env.SENDER_EMAIL,
-            to: email,
-            subject: 'Welcome to Sajilo Ticket!',
-            text: `Hello ${name},\n\nWelcome to Sajilo Ticket! Your operator account has been successfully created.\n\nBest regards,\nThe Sajilo Ticket Team`,
-        };
-
-        await transporter.sendMail(mailOptions);
-
-        res.status(201).json({
-            success: true,
-            message: 'Operator registered successfully.'
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Server error. Try again later.'
-        });
+    const existingOperator = await Operator.findOne({ email });
+    if (existingOperator) {
+      return res.status(400).json({
+        success: false,
+        message: 'Operator already exists'
+      });
     }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    let panImageUrl = '';
+
+    if (req.file) {
+      panImageUrl = await uploadFileToDrive(req.file);
+      if (!panImageUrl) {
+        return res.status(500).json({
+          success: false,
+          message: 'Error uploading PAN image'
+        });
+      }
+    }
+
+    const newOperator = new Operator({
+      name,
+      email,
+      password: hashedPassword,
+      panNo,
+      panImage: panImageUrl, // Save URL here
+      isAccountVerified: false,
+    });
+
+    await newOperator.save();
+
+    // Send welcome email (if needed)
+    const mailOptions = {
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: 'Welcome to Sajilo Ticket!',
+      text: `Hello ${name},\n\nWelcome to Sajilo Ticket! Your account is under verification. \nPlease wait for 24 hours. \nAfter successful verification, you will receive a confirmation email.\n\nBest regards,\nThe Sajilo Ticket Team`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Operator registered successfully.'
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Server error. Try again later.'
+    });
+  }
 };
 
 // Operator Login
@@ -150,6 +167,21 @@ export const operatorLogin = async (req, res) => {
     const isPasswordMatch = await bcrypt.compare(password, operator.password);
     if (!isPasswordMatch) {
       return res.status(400).json({ success: false, message: 'Invalid password' });
+    }
+
+    // Add account verification check
+    if (!operator.isAccountVerified) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Your account is under verification process. Please wait for 24 hours. Once verified, you will receive a confirmation mail.'
+      });
+    }
+
+    if (operator.isBlocked) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Your account has been blocked. Please contact support.' 
+      });
     }
 
     const token = jwt.sign(

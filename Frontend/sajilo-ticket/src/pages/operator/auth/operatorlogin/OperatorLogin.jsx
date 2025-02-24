@@ -45,7 +45,7 @@ const OperatorLogin = () => {
                 toast.error(data.message || "Invalid email or password.");
             }
         } catch (error) {
-            toast.error("Invalid email or password.");
+            toast.error(error.response?.data?.message || "Invalid email or password.");
         }
     };
 
