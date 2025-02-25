@@ -652,17 +652,6 @@ const AdminDashboard = () => {
     if (activeView === 'users') fetchData();
   }, [activeView, selectedTable, searchQuery, statusFilter]);
 
-
-
-
-
-
-
-
-
-
-
-
   const chartData = [
     { name: 'Mon', bookings: 4000, revenue: 2400 },
     { name: 'Tue', bookings: 3000, revenue: 1398 },
@@ -782,27 +771,30 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="fixed inset-y-0 w-64 px-4 py-6 bg-white shadow-lg">
-        <div className="flex items-center pb-8 pl-2">
-          <span className="ml-2 text-xl font-bold">Admin Panel</span>
-        </div>
-
-        <nav className="space-y-1">
-          {navigationItems.map((item) => (
-            <button
-              key={item.name}
-              onClick={() => setActiveView(item.view)}
-              className={`w-full flex items-center px-3 py-2 rounded-lg ${activeView === item.view
-                ? 'bg-blue-50 text-blue-700'
-                : 'text-gray-600 hover:bg-gray-100'
-                }`}
-            >
-              <item.icon className="w-5 h-5 mr-3" />
-              {item.name}
-            </button>
-          ))}
-        </nav>
+    <div className="fixed inset-y-0 w-64 px-4 py-6 bg-white shadow-lg">
+      <div className="flex flex-col items-start pl-2">
+        <span className="text-xl font-bold">Admin Panel</span>
+        <p className="text-sm text-gray-600 mt-1">Welcome, {adminData?.name}</p>
       </div>
+      
+      <hr className="border-t border-gray-200 -mx-4 my-4 shadow-lg" />
+      <nav className="space-y-1">
+        {navigationItems.map((item) => (
+          <button
+            key={item.name}
+            onClick={() => setActiveView(item.view)}
+            className={`w-full flex items-center px-3 py-2 rounded-lg ${activeView === item.view
+              ? 'bg-blue-50 text-blue-700'
+              : 'text-gray-600 hover:bg-gray-100'
+              }`}
+          >
+            <item.icon className="w-5 h-5 mr-3" />
+            {item.name}
+          </button>
+        ))}
+      </nav>
+    </div>
+
 
       <div className="pl-64">
         <header className="bg-white shadow-sm">
@@ -836,9 +828,6 @@ const AdminDashboard = () => {
                 Logout
               </button>
 
-              <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                <FaBell className="w-6 h-6" />
-              </button>
             </div>
           </div>
         </header>

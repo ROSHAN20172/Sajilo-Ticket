@@ -10,7 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "bcryptjs": "^2.4.3",
+    "bcryptjs": "^3.0.2",
     "connect-mongo": "^5.1.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -20,7 +20,7 @@
     "googleapis": "^144.0.0",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.9.6",
+    "mongoose": "^8.10.1",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.10.0",
     "nodemon": "^3.1.9"

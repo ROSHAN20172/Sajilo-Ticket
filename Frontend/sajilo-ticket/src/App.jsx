@@ -30,13 +30,15 @@ import OperatorDashboard from './pages/operator/operatordashboard/OperatorDashbo
 
 import OperatorProtectedRoute from "./components/protectedroutes/operatorProtectedRoute/OperatorProtectedRoute";
 import OperatorResetPassword from "./pages/operator/auth/operatorresetpassword/OperatorResetPassword";
+import OperatorAddBus from "./pages/operator/Bus/addbus/AddBus";
 
 function App() {
   return (
     <Router>
       <main className="w-full flex flex-col bg-neutral-50 min-h-screen">
         {/* Navbar for public routes */}
-        {window.location.pathname.startsWith("/admin") === false && <Navbar />}
+        {window.location.pathname.startsWith("/admin") === false && 
+        window.location.pathname.startsWith("/operator") === false && <Navbar />}
 
         {/* Routing */}
         <Routes>
@@ -73,11 +75,13 @@ function App() {
           {/* Protected Operator Routes */}
           <Route element={<OperatorProtectedRoute />}>
             <Route path="/operator/dashboard" element={<OperatorDashboard />} />
+            <Route path="/operator/add-bus" element={<OperatorAddBus />} />
           </Route>
         </Routes>
 
         {/* Footer for public routes */}
-        {window.location.pathname.startsWith("/admin") === false && <Footer />}
+        {window.location.pathname.startsWith("/admin") === false &&
+        window.location.pathname.startsWith("/operator") === false && <Footer />}
       </main>
     </Router>
   );
