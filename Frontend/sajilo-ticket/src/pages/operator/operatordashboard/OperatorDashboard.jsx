@@ -71,8 +71,8 @@ const OperatorLayout = () => {
 
       {/* Main Content */}
       <main className="ml-64 mt-1 mb-1">
-        <header className="bg-white shadow-sm mb-8"> {/* Added header with shadow */}
-          <div className="flex justify-between items-center px-8 py-4"> {/* Added padding */}
+        <header className="bg-white shadow-sm mb-8">
+          <div className="flex justify-between items-center px-8 py-4">
             <h1 className="text-2xl font-bold text-gray-800">Operator Dashboard</h1>
             <button
               onClick={handleLogout}
@@ -95,7 +95,7 @@ const OperatorLayout = () => {
           </div>
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <h3 className="text-gray-500 text-sm mb-2">Revenue</h3>
-            <p className="text-3xl font-bold text-gray-800">$12,450</p>
+            <p className="text-3xl font-bold text-gray-800">Rs. 12,450</p>
           </div>
         </div>
 

@@ -3,7 +3,7 @@ import { google } from 'googleapis';
 import { Readable } from 'stream';
 
 // Helper function: uploads a file (from memory) to Google Drive and returns the public URL.
-const uploadFileToDrive = async (file, folderId) => {
+const uploadFileToDrive = async (file, folderId, operatorEmail) => {
     try {
         const auth = new google.auth.GoogleAuth({
             keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
@@ -36,19 +36,16 @@ const uploadFileToDrive = async (file, folderId) => {
             return null;
         }
 
-        // Retrieve the email that should have access from an environment variable
-        const accessEmail = process.env.IMAGE_ACCESS_EMAIL;
-        if (!accessEmail) {
+        // Use the operator's email passed from the request
+        if (!operatorEmail) {
             return null;
         }
-
-        // Update file permission: only the specified email (accessEmail) can read the file
         await driveService.permissions.create({
             fileId: fileId,
             requestBody: {
                 role: 'reader',
                 type: 'user',
-                emailAddress: accessEmail,
+                emailAddress: operatorEmail,
             },
         });
 
@@ -124,25 +121,25 @@ export const addBus = async (req, res) => {
 
         if (req.files) {
             if (req.files.bluebook && req.files.bluebook[0]) {
-                bluebookUrl = await uploadFileToDrive(req.files.bluebook[0], folderId);
+                bluebookUrl = await uploadFileToDrive(req.files.bluebook[0], folderId, req.operator.email);
             }
             if (req.files.roadPermit && req.files.roadPermit[0]) {
-                roadPermitUrl = await uploadFileToDrive(req.files.roadPermit[0], folderId);
+                roadPermitUrl = await uploadFileToDrive(req.files.roadPermit[0], folderId, req.operator.email);
             }
             if (req.files.insurance && req.files.insurance[0]) {
-                insuranceUrl = await uploadFileToDrive(req.files.insurance[0], folderId);
+                insuranceUrl = await uploadFileToDrive(req.files.insurance[0], folderId, req.operator.email);
             }
             if (req.files.busImageFront && req.files.busImageFront[0]) {
-                frontImageUrl = await uploadFileToDrive(req.files.busImageFront[0], folderId);
+                frontImageUrl = await uploadFileToDrive(req.files.busImageFront[0], folderId, req.operator.email);
             }
             if (req.files.busImageBack && req.files.busImageBack[0]) {
-                backImageUrl = await uploadFileToDrive(req.files.busImageBack[0], folderId);
+                backImageUrl = await uploadFileToDrive(req.files.busImageBack[0], folderId, req.operator.email);
             }
             if (req.files.busImageLeft && req.files.busImageLeft[0]) {
-                leftImageUrl = await uploadFileToDrive(req.files.busImageLeft[0], folderId);
+                leftImageUrl = await uploadFileToDrive(req.files.busImageLeft[0], folderId, req.operator.email);
             }
             if (req.files.busImageRight && req.files.busImageRight[0]) {
-                rightImageUrl = await uploadFileToDrive(req.files.busImageRight[0], folderId);
+                rightImageUrl = await uploadFileToDrive(req.files.busImageRight[0], folderId, req.operator.email);
             }
         }
 

@@ -1,8 +1,9 @@
 import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { OperatorAppContext } from '../../../../context/OperatorAppContext';
-import { FaPlus, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaTimes } from 'react-icons/fa';
 
 const OperatorAddBus = () => {
     const { backendUrl } = useContext(OperatorAppContext);
@@ -97,6 +98,12 @@ const OperatorAddBus = () => {
         setExtraAmenities(prev => prev.filter((_, i) => i !== index));
     };
 
+    const navigate = useNavigate();
+
+    const handleClose = () => {
+        navigate(-1); // Go back to previous page
+    };
+
     const [isUploading, setIsUploading] = useState(false);
 
     // Custom Validation and Submission
@@ -185,7 +192,17 @@ const OperatorAddBus = () => {
     return (
         <div className="max-w-6xl mx-auto p-6">
             <div className="bg-white rounded-2xl shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-8">Add New Bus</h2>
+                <div className="flex justify-between items-start mb-8">
+                    <h2 className="text-2xl font-bold text-gray-800">Add New Bus</h2>
+                    <button
+                        onClick={handleClose}
+                        className="p-2 text-red-600 hover:bg-gray-100 rounded-full transition-colors"
+                        aria-label="Close"
+                    >
+                        <FaTimes className="w-6 h-6" />
+                    </button>
+                </div>
+
                 <form onSubmit={onSubmitHandler} className="space-y-8" noValidate>
                     {/* Basic Details */}
                     <div className="border-b pb-8">
