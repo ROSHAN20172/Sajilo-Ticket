@@ -130,6 +130,7 @@ import OperatorDashboard from './pages/operator/operatordashboard/OperatorDashbo
 import OperatorProtectedRoute from "./components/protectedroutes/operatorProtectedRoute/OperatorProtectedRoute";
 import OperatorResetPassword from "./pages/operator/auth/operatorresetpassword/OperatorResetPassword";
 import OperatorAddBus from "./pages/operator/Bus/addbus/AddBus";
+import OperatorManageBus from "./pages/operator/Bus/managebus/ManageBus";
 
 const MainContent = () => {
   const location = useLocation();
@@ -179,6 +180,7 @@ const MainContent = () => {
         <Route element={<OperatorProtectedRoute />}>
           <Route path="/operator/dashboard" element={<OperatorDashboard />} />
           <Route path="/operator/add-bus" element={<OperatorAddBus />} />
+          <Route path="/operator/buses" element={<OperatorManageBus />} />
         </Route>
       </Routes>
 

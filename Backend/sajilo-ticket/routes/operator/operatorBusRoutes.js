@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { addBus } from '../../controllers/operator/busController.js';
+import { addBus, getOperatorBuses, getBusById, updateBus, deleteBus, uploadFile } from '../../controllers/operator/busController.js';
 import operatorAuth from '../../middleware/operator/operatorAuth.js';
 
 const router = express.Router();
@@ -20,7 +20,12 @@ const busUploadFields = upload.fields([
   { name: 'busImageRight', maxCount: 1 }
 ]);
 
-// Protected route: only authenticated operators can add a bus.
 router.post('/add', operatorAuth, busUploadFields, addBus);
+router.get('/buses', operatorAuth, getOperatorBuses);
+router.get('/buses/:id', operatorAuth, getBusById);
+router.put('/buses/:id', operatorAuth, updateBus);
+router.delete('/buses/:id', operatorAuth, deleteBus);
+router.post('/upload-file', operatorAuth, upload.single('file'), uploadFile);
+
 
 export default router;

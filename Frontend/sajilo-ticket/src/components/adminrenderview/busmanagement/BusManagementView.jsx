@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { Select, MenuItem, Button, Modal, Box, IconButton } from '@mui/material';
-import { FaImage, FaTimes } from 'react-icons/fa';
+import { FaImage, FaTimes, FaTrash } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import DataFilter from './DataFilter';
@@ -24,9 +24,11 @@ const BusManagementView = ({
     { value: 'unverified', label: 'Unverified' }
   ];
 
-  // Local state for modal details
+  // Local state for detail modal and deletion modal
   const [openModal, setOpenModal] = useState(false);
   const [selectedBus, setSelectedBus] = useState(null);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [busToDelete, setBusToDelete] = useState(null);
 
   // Maintain a local copy of buses so we can update the UI instantly
   const [localBuses, setLocalBuses] = useState(buses);
@@ -44,6 +46,17 @@ const BusManagementView = ({
   const handleCloseModal = () => {
     setOpenModal(false);
     setSelectedBus(null);
+  };
+
+  // Open delete confirmation modal
+  const openDeleteConfirmation = (bus) => {
+    setBusToDelete(bus);
+    setOpenDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setOpenDeleteModal(false);
+    setBusToDelete(null);
   };
 
   // Handle verified status change and update UI immediately
@@ -65,6 +78,22 @@ const BusManagementView = ({
     }
   };
 
+  // Handle bus deletion from database
+  const handleDeleteBus = async () => {
+    try {
+      await axios.delete(
+        `${backendUrl}/api/admin/buses/${busToDelete._id}`,
+        { headers: { Authorization: `Bearer ${adminData?.token}` } }
+      );
+      // Update local state to remove the deleted bus
+      setLocalBuses(prevBuses => prevBuses.filter(bus => bus._id !== busToDelete._id));
+      toast.success('Bus deleted successfully!');
+      closeDeleteModal();
+    } catch (error) {
+      toast.error('Failed to delete bus');
+    }
+  };
+
   // Filter local buses based on search query and selected filter
   const filteredBuses = localBuses.filter((bus) => {
     const matchesSearch =
@@ -74,12 +103,12 @@ const BusManagementView = ({
       selectedFilter === 'all'
         ? true
         : selectedFilter === 'verified'
-        ? bus.verified
-        : !bus.verified;
+          ? bus.verified
+          : !bus.verified;
     return matchesSearch && matchesFilter;
   });
 
-  // Define DataGrid columns
+  // Define DataGrid columns including the new "Delete" column
   const columns = [
     {
       field: 'sno',
@@ -90,8 +119,8 @@ const BusManagementView = ({
         return <span>{rowIndex}</span>;
       }
     },
-    { field: 'busName', headerName: 'Bus Name', width: 400 },
-    { field: 'busNumber', headerName: 'Bus Number', width: 325 },
+    { field: 'busName', headerName: 'Bus Name', width: 350 },
+    { field: 'busNumber', headerName: 'Bus Number', width: 300 },
     {
       field: 'verified',
       headerName: 'Verified Status',
@@ -132,6 +161,19 @@ const BusManagementView = ({
         <Button variant="contained" onClick={() => handleOpenModal(params.row)}>
           View More
         </Button>
+      )
+    },
+    {
+      field: 'delete',
+      headerName: 'Delete',
+      width: 80,
+      renderCell: (params) => (
+        <IconButton
+          onClick={() => openDeleteConfirmation(params.row)}
+          color="error"
+        >
+          <FaTrash />
+        </IconButton>
       )
     }
   ];
@@ -293,6 +335,34 @@ const BusManagementView = ({
               )}
             </div>
           </div>
+        </Box>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal open={openDeleteModal} onClose={closeDeleteModal}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 400,
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            borderRadius: 1,
+            p: 3
+          }}
+        >
+            <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
+            <p>Are you sure you want to delete the bus <strong>{busToDelete?.busName}</strong>?</p>
+            <div className="mt-6 flex justify-end space-x-4">
+              <Button variant="outlined" onClick={closeDeleteModal}>
+                Cancel
+              </Button>
+              <Button variant="contained" color="error" onClick={handleDeleteBus}>
+                Delete
+              </Button>
+            </div>
         </Box>
       </Modal>
     </div>

@@ -65,3 +65,18 @@ export const updateBusStatus = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
   }
 };
+
+// Delete Bus & respond accordingly
+export const deleteBus = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deletedBus = await Bus.findByIdAndDelete(id);
+      if (!deletedBus) {
+        return res.status(404).json({ success: false, message: 'Bus not found' });
+      }
+      res.json({ success: true, message: 'Bus deleted successfully' });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
+    }
+  };
+  

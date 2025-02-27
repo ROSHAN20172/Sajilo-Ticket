@@ -171,3 +171,86 @@ export const addBus = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Server error. Try again later.' });
     }
 };
+
+// GET all buses for the logged-in operator
+export const getOperatorBuses = async (req, res) => {
+    try {
+      const buses = await Bus.find({ createdBy: req.operator.id });
+      res.json(buses);
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error. Try again later.' });
+    }
+  };
+  
+  // GET details for a single bus (only if it belongs to the logged-in operator)
+  export const getBusById = async (req, res) => {
+    try {
+      const bus = await Bus.findOne({ _id: req.params.id, createdBy: req.operator.id });
+      if (!bus) {
+        return res.status(404).json({ success: false, message: 'Bus not found.' });
+      }
+      res.json(bus);
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error. Try again later.' });
+    }
+  };
+  
+  // UPDATE a bus's details
+  // Allowed updates: busDescription, reservationPolicies, amenities, images
+  // Document images can only be updated if the bus is unverified.
+  export const updateBus = async (req, res) => {
+    try {
+      const bus = await Bus.findOne({ _id: req.params.id, createdBy: req.operator.id });
+      if (!bus) {
+        return res.status(404).json({ success: false, message: 'Bus not found.' });
+      }
+  
+      // Update allowed fields
+      const { busDescription, reservationPolicies, amenities, images, documents } = req.body;
+  
+      if (busDescription !== undefined) bus.busDescription = busDescription;
+      if (reservationPolicies !== undefined) bus.reservationPolicies = reservationPolicies;
+      if (amenities !== undefined) bus.amenities = amenities;
+      if (images !== undefined) bus.images = images;
+      
+      // Update documents only if the bus is unverified
+      if (!bus.verified && documents !== undefined) {
+        bus.documents = documents;
+      }
+      
+      const updatedBus = await bus.save();
+      res.json({ success: true, message: 'Bus details updated successfully', bus: updatedBus });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error. Try again later.' });
+    }
+  };
+  
+  // DELETE a bus (only if it belongs to the logged-in operator)
+  export const deleteBus = async (req, res) => {
+    try {
+      const bus = await Bus.findOneAndDelete({ _id: req.params.id, createdBy: req.operator.id });
+      if (!bus) {
+        return res.status(404).json({ success: false, message: 'Bus not found.' });
+      }
+      res.json({ success: true, message: 'Bus deleted successfully.' });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error. Try again later.' });
+    }
+  };
+
+  // New uploadFile endpoint
+export const uploadFile = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: "No file provided." });
+        }
+        const folderId = process.env.GOOGLE_DRIVE_BUS_FOLDER_ID || '';
+        const driveUrl = await uploadFileToDrive(req.file, folderId, req.operator.email);
+        if (!driveUrl) {
+            return res.status(500).json({ success: false, message: "Failed to upload file to Drive." });
+        }
+        res.json({ success: true, driveUrl });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Server error. Try again later." });
+    }
+};
