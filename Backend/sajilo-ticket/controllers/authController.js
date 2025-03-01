@@ -175,13 +175,13 @@ export const login = async (req, res) => {
         const user = await userModel.findOne({ email });
 
         if (!user) {
-            return res.json({ success: false, message: 'Invaild Credentials' })
+            return res.json({ success: false, message: 'Invaild Email or Password' })
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
-            return res.json({ success: false, message: "Invalid Credentials" })
+            return res.json({ success: false, message: "Invaild Email or Password" })
         }
 
         if (user.isBlocked) {

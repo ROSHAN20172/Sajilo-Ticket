@@ -12,6 +12,7 @@ import adminRouter from './routes/admin/adminRoutes.js';
 import operatorAuthRouter from './routes/operator/operatorAuthRoutes.js';
 import operatorRouter from './routes/operator/operatorRoutes.js';
 import operatorBusRouter from './routes/operator/operatorBusRoutes.js';
+import operatorBusRouteRouter from './routes/operator/operatorBusRouteRoutes.js';
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -33,5 +34,6 @@ app.use('/api/admin', adminRouter);
 app.use('/api/operator/auth', operatorAuthRouter);
 app.use('/api/operator', operatorRouter);
 app.use('/api/operator/bus', operatorBusRouter);
+app.use('/api/operator/routes', operatorBusRouteRouter);
 
 app.listen(port, () => console.log(`Server started on PORT: ${port}`));

@@ -867,7 +867,9 @@ import { AdminAppContext } from '../../../context/AdminAppContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { IoBus } from 'react-icons/io5';
-import { FaChartBar, FaUsers, FaTicketAlt, FaCog, FaUserPlus, FaChartLine, FaShieldAlt, FaMap, FaClock, FaDollarSign, FaIdCard, FaThList, FaSearch, FaPlusCircle, FaBell } from 'react-icons/fa';
+import { FaChartBar, FaUsers, FaTicketAlt, FaCog, FaUserPlus, FaChartLine, FaShieldAlt, FaMap, FaClock, FaDollarSign, FaIdCard, FaThList, FaSearch, FaPlusCircle } from 'react-icons/fa';
+import { FaBell } from 'react-icons/fa';
+import { FiLogOut } from 'react-icons/fi';
 import { LineChart, Line, PieChart, Pie, Tooltip } from 'recharts';
 import { DataGrid } from '@mui/x-data-grid';
 import { Select, MenuItem } from '@mui/material';
@@ -1275,6 +1277,7 @@ const AdminDashboard = () => {
                 className="flex items-center px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100"
               >
                 Logout
+                <FiLogOut className='ml-2'/>
               </button>
 
             </div>

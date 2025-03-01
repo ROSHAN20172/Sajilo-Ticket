@@ -27,5 +27,4 @@ router.put('/buses/:id', operatorAuth, updateBus);
 router.delete('/buses/:id', operatorAuth, deleteBus);
 router.post('/upload-file', operatorAuth, upload.single('file'), uploadFile);
 
-
 export default router;

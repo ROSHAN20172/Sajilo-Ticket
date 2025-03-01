@@ -2,8 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { OperatorAppContext } from '../../../../context/OperatorAppContext';
-import { FaEye, FaTrash, FaEdit, FaTimes, FaPlusCircle, FaImage } from 'react-icons/fa';
-import { Modal, Box, Button, IconButton, Input, TextareaAutosize } from '@mui/material';
+import { FaEye, FaTrash, FaEdit, FaTimes, FaPlusCircle, FaImage, FaSearch } from 'react-icons/fa';
+import { Modal, Box, Button, IconButton, Input, TextareaAutosize, TextField, InputAdornment } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 
 const ManageBus = () => {
@@ -15,6 +15,12 @@ const ManageBus = () => {
     const [editMode, setEditMode] = useState(false);
     const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
     const [busToDelete, setBusToDelete] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredBuses = buses.filter((bus) =>
+        bus.busName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        bus.busNumber.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     // formData holds existing field values (including preview URLs)
     const [formData, setFormData] = useState({
@@ -320,13 +326,35 @@ const ManageBus = () => {
                     </div>
                     <hr className="my-14 border-gray-300" />
 
+                    {/* Search Input with Icon and Button */}
+                    <div className="mb-8 flex gap-2">
+                        <TextField
+                            label="Search by Bus Name or Bus Number"
+                            variant="outlined"
+                            fullWidth
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <FaSearch />
+                                    </InputAdornment>
+                                )
+                            }}
+                        />
+                        <Button variant="contained" color="primary" onClick={() => { /* Optionally trigger additional search actions */ }}>
+                            Search
+                        </Button>
+                    </div>
+                    <hr className="my-8 border-gray-300" />
+
                     {loading ? (
                         <p>Loading buses...</p>
-                    ) : buses.length === 0 ? (
+                    ) : filteredBuses.length === 0 ? (
                         <p>No buses found.</p>
                     ) : (
                         <div className="grid gap-14 md:grid-cols-2 lg:grid-cols-2">
-                            {buses.map((bus) => (
+                            {filteredBuses.map((bus) => (
                                 <div key={bus._id} className="relative border rounded-lg p-4 shadow-md hover:shadow-xl transition-shadow bg-white">
                                     {/* Verified Status Badge */}
                                     <div className="absolute top-6 right-5">

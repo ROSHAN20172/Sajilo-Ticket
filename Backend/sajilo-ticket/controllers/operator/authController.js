@@ -161,12 +161,12 @@ export const operatorLogin = async (req, res) => {
   try {
     const operator = await Operator.findOne({ email });
     if (!operator) {
-      return res.status(404).json({ success: false, message: 'Operator not found' });
+      return res.status(404).json({ success: false, message: 'Invaild Email or Password' });
     }
 
     const isPasswordMatch = await bcrypt.compare(password, operator.password);
     if (!isPasswordMatch) {
-      return res.status(400).json({ success: false, message: 'Invalid password' });
+      return res.status(400).json({ success: false, message: 'Invaild Email or Password' });
     }
 
     // Add account verification check
