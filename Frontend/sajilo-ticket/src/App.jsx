@@ -132,6 +132,7 @@ import OperatorResetPassword from "./pages/operator/auth/operatorresetpassword/O
 import OperatorAddBus from "./pages/operator/Bus/addbus/AddBus";
 import OperatorManageBus from "./pages/operator/Bus/managebus/ManageBus";
 import OperatorManageBusRoutes from "./pages/operator/Bus/manageroutes/ManageRoutes";
+import OperatorManageBusSchedules from "./pages/operator/Bus/manageschedules/ManageSchedules";
 
 const MainContent = () => {
   const location = useLocation();
@@ -183,6 +184,7 @@ const MainContent = () => {
           <Route path="/operator/add-bus" element={<OperatorAddBus />} />
           <Route path="/operator/buses" element={<OperatorManageBus />} />
           <Route path="/operator/bus-routes" element={<OperatorManageBusRoutes />} />
+          <Route path="/operator/bus-schedules" element={<OperatorManageBusSchedules />} />
         </Route>
       </Routes>
 
