@@ -27,6 +27,7 @@ import { Select, MenuItem } from '@mui/material';
 import UserManagementView from '../../../components/adminrenderview/usermanagement/UserManagementView';
 import BusManagementView from '../../../components/adminrenderview/busmanagement/BusManagementView';
 import RouteManagementView from '../../../components/adminrenderview/busroutesmanagement/BusRoutesManagementView';
+import ScheduleManagementView from '../../../components/adminrenderview/busschedulemanagement/BusScheduleManagementView';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -174,6 +175,50 @@ const AdminDashboard = () => {
     }
   ];
 
+  const handleStatusChange = async (id, type, status) => {
+    try {
+      const isBlocked = status === 'blocked';
+      const endpoint = type === 'user'
+        ? `${backendUrl}/api/admin/users/${id}/blocked`
+        : `${backendUrl}/api/admin/operators/${id}/status`;
+      const response = await axios.put(
+        endpoint,
+        { isBlocked },
+        { headers: { Authorization: `Bearer ${adminData?.token}` } }
+      );
+      // Update local state
+      if (type === 'user') {
+        setUsers(users.map(user =>
+          user._id === id ? { ...user, isBlocked } : user
+        ));
+      } else {
+        setOperators(operators.map(operator =>
+          operator._id === id ? { ...operator, isBlocked } : operator
+        ));
+      }
+      toast.success('Status updated successfully');
+    } catch (error) {
+      toast.error('Failed to update status');
+    }
+  };
+
+  const handleVerificationChange = async (id, status) => {
+    try {
+      const isAccountVerified = status === 'verified';
+      const response = await axios.put(
+        `${backendUrl}/api/admin/operators/${id}/status`,
+        { isAccountVerified },
+        { headers: { Authorization: `Bearer ${adminData?.token}` } }
+      );
+      setOperators(operators.map(operator =>
+        operator._id === id ? { ...operator, isAccountVerified } : operator
+      ));
+      toast.success('Verification status updated');
+    } catch (error) {
+      toast.error('Failed to update verification status');
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -283,7 +328,7 @@ const AdminDashboard = () => {
             ]}
           />
         );
-      
+
       case 'routes':
         return (
           <RouteManagementView
@@ -333,6 +378,8 @@ const AdminDashboard = () => {
             </div>
           </div>
         );
+        case 'schedules':
+        return <ScheduleManagementView />;
 
       default:
         return (
@@ -380,11 +427,10 @@ const AdminDashboard = () => {
             <button
               key={item.name}
               onClick={() => setActiveView(item.view)}
-              className={`w-full flex items-center px-3 py-2 rounded-lg ${
-                activeView === item.view
+              className={`w-full flex items-center px-3 py-2 rounded-lg ${activeView === item.view
                   ? 'bg-blue-50 text-blue-700'
                   : 'text-gray-600 hover:bg-gray-100'
-              }`}
+                }`}
             >
               <item.icon className="w-5 h-5 mr-3" />
               {item.name}
