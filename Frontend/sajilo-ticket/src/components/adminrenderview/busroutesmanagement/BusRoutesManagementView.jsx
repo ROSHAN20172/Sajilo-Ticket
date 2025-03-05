@@ -8,11 +8,7 @@ import DataFilter from './DataFilter';
 import TableController from './TableController';
 import { AdminAppContext } from '../../../context/AdminAppContext';
 
-const BusRouteManagementView = ({
-  routes,
-  searchQuery,
-  onSearchChange
-}) => {
+const BusRouteManagementView = ({ routes, searchQuery, onSearchChange }) => {
   const { backendUrl, adminData } = useContext(AdminAppContext);
   
   // Local state for routes to update UI instantly
@@ -79,7 +75,7 @@ const BusRouteManagementView = ({
     {
       field: 'sno',
       headerName: 'S.No',
-      width: 100,
+      width: 90,
       renderCell: (params) => {
         const rowIndex = params.api.getRowIndexRelativeToVisibleRows(params.id) + 1;
         return <span>{rowIndex}</span>;
@@ -88,13 +84,19 @@ const BusRouteManagementView = ({
     {
       field: 'busName',
       headerName: 'Bus Name',
-      width: 300,
+      width: 265,
       renderCell: (params) => (
         <span>{params.row.bus?.busName || 'N/A'}</span>
       )
     },
-    { field: 'from', headerName: 'From', width: 255 },
-    { field: 'to', headerName: 'To', width: 255 },
+    { field: 'from', headerName: 'From', width: 225 },
+    { field: 'to', headerName: 'To', width: 225 },
+    {
+      field: 'price',
+      headerName: 'Price',
+      width: 120,
+      renderCell: (params) => <span>Rs. {params.row.price}</span>
+    },
     {
       field: 'moreDetails',
       headerName: 'More Details',
@@ -119,7 +121,7 @@ const BusRouteManagementView = ({
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-sm">
-      {/* Header with search field and search button only */}
+      {/* Header with search field and search button */}
       <TableController title="Route Management" headerComponent={null}>
         <DataFilter
           searchQuery={searchQuery}
@@ -186,6 +188,23 @@ const BusRouteManagementView = ({
               <ul style={{ paddingLeft: '20px', listStyleType: 'disc' }}>
                 {selectedRoute.dropPoints.map((point, index) => (
                   <li key={index}>{point}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>N/A</p>
+            )}
+          </div>
+          <hr style={{ margin: '1rem 0' }} />
+          
+          {/* Display Custom Prices */}
+          <div style={{ marginBottom: '1rem' }}>
+            <h3>Custom Prices</h3>
+            {selectedRoute?.customPrices && selectedRoute.customPrices.length > 0 ? (
+              <ul style={{ paddingLeft: '20px', listStyleType: 'disc' }}>
+                {selectedRoute.customPrices.map((item, index) => (
+                  <li key={index}>
+                    {item.origin} → {item.drop}: Rs. {item.price}
+                  </li>
                 ))}
               </ul>
             ) : (

@@ -28,7 +28,7 @@ const OperatorLayout = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg">
-        <div className="p-6 border-b">
+        <div className="p-5 border-b">
           <h2 className="text-xl font-bold text-gray-800">Operator Panel</h2>
           <p className="text-sm text-gray-600 mt-1">Welcome, {operatorData?.name}</p>
         </div>
@@ -90,7 +90,7 @@ const OperatorLayout = () => {
       <main className="ml-64 mt-1 mb-1">
         <header className="bg-white shadow-sm mb-8">
           <div className="flex justify-between items-center px-8 py-4">
-            <h1 className="text-2xl font-bold text-gray-800">Operator Dashboard</h1>
+          <h1 className="text-4xl text-primary font-bold mt-2 mb-2">SAJILO TICKET</h1>
             <button
               onClick={handleLogout}
               className="flex items-center px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100"

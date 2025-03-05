@@ -26,15 +26,16 @@ export const getRouteById = async (req, res) => {
 // ADD a new route
 export const addRoute = async (req, res) => {
   try {
-    const { bus, from, to, pickupPoints, dropPoints } = req.body;
-    if (!bus || !from || !to) {
-      return res.status(400).json({ success: false, message: 'Bus, from and to are required.' });
+    const { bus, from, to, price, pickupPoints, dropPoints } = req.body;
+    if (!bus || !from || !to || price === undefined) {
+      return res.status(400).json({ success: false, message: 'Bus, from, to and price are required.' });
     }
     const newRoute = new Route({
       operator: req.operator.id,
       bus,
       from,
       to,
+      price, // NEW: store price
       pickupPoints: Array.isArray(pickupPoints) ? pickupPoints : [],
       dropPoints: Array.isArray(dropPoints) ? dropPoints : []
     });
@@ -52,10 +53,11 @@ export const updateRoute = async (req, res) => {
     if (!route) {
       return res.status(404).json({ success: false, message: 'Route not found.' });
     }
-    const { bus, from, to, pickupPoints, dropPoints } = req.body;
+    const { bus, from, to, price, pickupPoints, dropPoints } = req.body;
     if (bus !== undefined) route.bus = bus;
     if (from !== undefined) route.from = from;
     if (to !== undefined) route.to = to;
+    if (price !== undefined) route.price = price; // NEW: update price
     if (pickupPoints !== undefined) route.pickupPoints = Array.isArray(pickupPoints) ? pickupPoints : [];
     if (dropPoints !== undefined) route.dropPoints = Array.isArray(dropPoints) ? dropPoints : [];
     const updatedRoute = await route.save();
@@ -73,6 +75,22 @@ export const deleteRoute = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Route not found.' });
     }
     res.json({ success: true, message: 'Route deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error. Try again later.' });
+  }
+};
+
+// Update custom prices for a route
+export const customizePrice = async (req, res) => {
+  try {
+    const route = await Route.findOne({ _id: req.params.id, operator: req.operator.id });
+    if (!route) {
+      return res.status(404).json({ success: false, message: 'Route not found.' });
+    }
+    const { customPrices } = req.body; // Expect an array of { origin, drop, price }
+    route.customPrices = customPrices;
+    await route.save();
+    res.json({ success: true, message: 'Customized prices updated successfully', route });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error. Try again later.' });
   }

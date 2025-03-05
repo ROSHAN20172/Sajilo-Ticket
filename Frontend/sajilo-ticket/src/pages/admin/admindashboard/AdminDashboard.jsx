@@ -444,14 +444,7 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between px-8 py-4">
             <div className="flex-1 max-w-2xl">
               <div className="relative">
-                <FaSearch className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search bookings, routes, or passengers..."
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                <h1 className="text-4xl text-primary font-bold mt-3 mb-2">SAJILO TICKET</h1>
               </div>
             </div>
 

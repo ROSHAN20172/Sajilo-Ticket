@@ -6,8 +6,16 @@ const routeSchema = mongoose.Schema(
     bus: { type: mongoose.Schema.Types.ObjectId, ref: 'Bus', required: true },
     from: { type: String, required: true },
     to: { type: String, required: true },
+    price: { type: Number, required: true },
     pickupPoints: [{ type: String }],
     dropPoints: [{ type: String }],
+    customPrices: [
+      {
+        origin: { type: String },
+        drop: { type: String },
+        price: { type: Number }
+      }
+    ]
   },
   { timestamps: true }
 );

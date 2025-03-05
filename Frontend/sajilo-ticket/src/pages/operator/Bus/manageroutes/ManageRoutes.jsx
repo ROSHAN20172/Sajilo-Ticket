@@ -1,6 +1,16 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Box, Button, Modal, IconButton, TextField, MenuItem, Typography, InputAdornment } from '@mui/material';
+import {
+  Box,
+  Button,
+  Modal,
+  IconButton,
+  TextField,
+  MenuItem,
+  Typography,
+  InputAdornment
+} from '@mui/material';
 import { FaEdit, FaTrash, FaPlusCircle, FaTimes, FaSearch } from 'react-icons/fa';
+import { BiCustomize } from "react-icons/bi";
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { OperatorAppContext } from '../../../../context/OperatorAppContext';
@@ -26,7 +36,7 @@ const ManageRoutes = () => {
   const [loading, setLoading] = useState(true);
   const [buses, setBuses] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false); // false = add new, true = edit existing
+  const [editMode, setEditMode] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState(null);
   const [deleteConfirmRoute, setDeleteConfirmRoute] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,9 +46,14 @@ const ManageRoutes = () => {
     bus: '',
     from: '',
     to: '',
+    price: '',
     pickupPoints: [''],
     dropPoints: ['']
   });
+
+  // State for customizing prices (array of { origin, drop, price })
+  const [customModalOpen, setCustomModalOpen] = useState(false);
+  const [customPriceData, setCustomPriceData] = useState([]);
 
   const navigate = useNavigate();
   const handleClose = () => {
@@ -65,7 +80,7 @@ const ManageRoutes = () => {
       const res = await axios.get(`${backendUrl}/api/operator/bus/buses`, {
         headers: { Authorization: `Bearer ${operatorData?.token}` }
       });
-      const verifiedBuses = res.data.filter(bus => bus.verified);
+      const verifiedBuses = res.data.filter((bus) => bus.verified);
       setBuses(verifiedBuses);
     } catch (error) {
       toast.error('Failed to fetch buses');
@@ -78,7 +93,7 @@ const ManageRoutes = () => {
   }, [backendUrl, operatorData]);
 
   // Filter routes by bus name, from and to
-  const filteredRoutes = routes.filter(route => {
+  const filteredRoutes = routes.filter((route) => {
     const query = searchQuery.toLowerCase();
     const busName = route.bus?.busName?.toLowerCase() || '';
     const from = route.from?.toLowerCase() || '';
@@ -92,6 +107,7 @@ const ManageRoutes = () => {
       bus: '',
       from: '',
       to: '',
+      price: '',
       pickupPoints: [''],
       dropPoints: ['']
     });
@@ -106,6 +122,7 @@ const ManageRoutes = () => {
       bus: route.bus?._id || '',
       from: route.from,
       to: route.to,
+      price: route.price,
       pickupPoints: route.pickupPoints && route.pickupPoints.length > 0 ? route.pickupPoints : [''],
       dropPoints: route.dropPoints && route.dropPoints.length > 0 ? route.dropPoints : ['']
     });
@@ -128,59 +145,61 @@ const ManageRoutes = () => {
     setDeleteConfirmRoute(null);
   };
 
-  // Handle form input changes
+  // Handle form input changes for add/edit
   const handleInputChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   // Pickup points handlers
   const handlePickupChange = (e, index) => {
     const newPickups = [...formData.pickupPoints];
     newPickups[index] = e.target.value;
-    setFormData(prev => ({ ...prev, pickupPoints: newPickups }));
+    setFormData((prev) => ({ ...prev, pickupPoints: newPickups }));
   };
 
   const addPickup = () => {
-    setFormData(prev => ({ ...prev, pickupPoints: [...prev.pickupPoints, ''] }));
+    setFormData((prev) => ({ ...prev, pickupPoints: [...prev.pickupPoints, ''] }));
   };
 
   const removePickup = (index) => {
     const newPickups = formData.pickupPoints.filter((_, i) => i !== index);
-    setFormData(prev => ({ ...prev, pickupPoints: newPickups }));
+    setFormData((prev) => ({ ...prev, pickupPoints: newPickups }));
   };
 
   // Drop points handlers
   const handleDropChange = (e, index) => {
     const newDrops = [...formData.dropPoints];
     newDrops[index] = e.target.value;
-    setFormData(prev => ({ ...prev, dropPoints: newDrops }));
+    setFormData((prev) => ({ ...prev, dropPoints: newDrops }));
   };
 
   const addDrop = () => {
-    setFormData(prev => ({ ...prev, dropPoints: [...prev.dropPoints, ''] }));
+    setFormData((prev) => ({ ...prev, dropPoints: [...prev.dropPoints, ''] }));
   };
 
   const removeDrop = (index) => {
     const newDrops = formData.dropPoints.filter((_, i) => i !== index);
-    setFormData(prev => ({ ...prev, dropPoints: newDrops }));
+    setFormData((prev) => ({ ...prev, dropPoints: newDrops }));
   };
 
-  // Handle form submission for adding or updating a route with field validation
+  // Handle form submission for adding/updating a route
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate required fields
-    if (!formData.bus.trim() || !formData.from.trim() || !formData.to.trim()) {
-      toast.error('Please fill in Bus, From, and To fields.');
+    if (
+      !formData.bus.trim() ||
+      !formData.from.trim() ||
+      !formData.to.trim() ||
+      formData.price === ''
+    ) {
+      toast.error('Please fill in Bus, From, To, and Price fields.');
       return;
     }
-
-    // Validate each pickup and drop point
-    if (formData.pickupPoints.some(point => !point.trim())) {
+    if (formData.pickupPoints.some((point) => !point.trim())) {
       toast.error('Please fill in all Pickup Points.');
       return;
     }
-    if (formData.dropPoints.some(point => !point.trim())) {
+    if (formData.dropPoints.some((point) => !point.trim())) {
       toast.error('Please fill in all Drop Points.');
       return;
     }
@@ -204,19 +223,75 @@ const ManageRoutes = () => {
     }
   };
 
-  // Handle deletion of a route
-  const handleDeleteRoute = async () => {
-    try {
-      await axios.delete(`${backendUrl}/api/operator/routes/${deleteConfirmRoute._id}`, {
-        headers: { Authorization: `Bearer ${operatorData?.token}` }
+  // ---------- CUSTOMIZE PRICE FUNCTIONS ----------
+
+  // Open customize price modal for a given route
+  const openCustomizePriceModal = (route) => {
+    let data = [];
+    // Section 1: "From" location group (using route.from as origin)
+    route.dropPoints.forEach((drop) => {
+      const existing = route.customPrices?.find(
+        (item) => item.origin === route.from && item.drop === drop
+      );
+      data.push({ origin: route.from, drop, price: existing ? existing.price : '' });
+    });
+    // Section 2: For each pickup, include dropPoints and an extra row for the "to" location.
+    route.pickupPoints.forEach((pickup) => {
+      route.dropPoints.forEach((drop) => {
+        const existing = route.customPrices?.find(
+          (item) => item.origin === pickup && item.drop === drop
+        );
+        data.push({ origin: pickup, drop, price: existing ? existing.price : '' });
       });
-      toast.success('Route deleted successfully');
-      closeDeleteConfirmation();
+      // Extra row for "to" location for this pickup
+      const existingTo = route.customPrices?.find(
+        (item) => item.origin === pickup && item.drop === route.to
+      );
+      data.push({ origin: pickup, drop: route.to, price: existingTo ? existingTo.price : '' });
+    });
+    setCustomPriceData(data);
+    setSelectedRoute(route);
+    setCustomModalOpen(true);
+  };
+
+  // Handle price change in customize modal
+  const handleCustomPriceChange = (index, value) => {
+    const updated = [...customPriceData];
+    updated[index].price = value;
+    setCustomPriceData(updated);
+  };
+
+  // Apply same price for all rows in a given group (by origin)
+  const applySameForOrigin = (origin, value) => {
+    const updated = customPriceData.map((item) =>
+      item.origin === origin ? { ...item, price: value } : item
+    );
+    setCustomPriceData(updated);
+  };
+
+  // Submit customized prices to backend
+  const handleCustomPriceSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(
+        `${backendUrl}/api/operator/routes/customize/${selectedRoute._id}`,
+        { customPrices: customPriceData },
+        { headers: { Authorization: `Bearer ${operatorData?.token}` } }
+      );
+      toast.success('Customized prices updated successfully');
+      setCustomModalOpen(false);
       fetchRoutes();
     } catch (error) {
-      toast.error('Failed to delete route');
+      toast.error('Failed to update customized prices');
     }
   };
+
+  const closeCustomModal = () => {
+    setCustomModalOpen(false);
+    setSelectedRoute(null);
+  };
+
+  // -------------------------------------------------
 
   return (
     <div className="p-6">
@@ -226,7 +301,12 @@ const ManageRoutes = () => {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">Manage Your Routes</h1>
             <div className="flex items-center space-x-4">
-              <Button variant="contained" color="primary" onClick={openModalForAdd} startIcon={<FaPlusCircle />}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={openModalForAdd}
+                startIcon={<FaPlusCircle />}
+              >
                 Add New Route
               </Button>
               <button
@@ -240,7 +320,7 @@ const ManageRoutes = () => {
           </div>
           <hr className="my-14 border-gray-300" />
 
-          {/* Search Input with Icon and Button */}
+          {/* Search Input */}
           <div className="mb-8 flex gap-2">
             <TextField
               label="Search routes by Bus Name, From or To"
@@ -256,7 +336,7 @@ const ManageRoutes = () => {
                 )
               }}
             />
-            <Button variant="contained" color="primary" onClick={() => { /* Optionally trigger search */ }}>
+            <Button variant="contained" color="primary" onClick={() => {}}>
               Search
             </Button>
           </div>
@@ -268,7 +348,7 @@ const ManageRoutes = () => {
             <p>No routes found.</p>
           ) : (
             <div className="grid gap-14 md:grid-cols-2 lg:grid-cols-2">
-              {filteredRoutes.map(route => (
+              {filteredRoutes.map((route) => (
                 <div
                   key={route._id}
                   className="relative border rounded-lg p-4 shadow-md hover:shadow-xl transition-shadow bg-white min-w-[600px] w-full mx-auto"
@@ -283,6 +363,13 @@ const ManageRoutes = () => {
                   <hr className="my-2 border-gray-300" />
                   <Typography variant="body1" className="mb-2">
                     <strong>To:</strong> {route.to}
+                  </Typography>
+                  <hr className="my-2 border-gray-300" />
+                  <Typography variant="body1" className="mb-2">
+                    <strong>Price NPR:</strong>
+                  </Typography>
+                  <Typography variant="body1" className="mb-2">
+                    Rs. {route.price}
                   </Typography>
                   <hr className="my-2 border-gray-300" />
                   <Typography variant="body2" className="mb-2">
@@ -302,9 +389,28 @@ const ManageRoutes = () => {
                       ))}
                     </ul>
                   </Typography>
+                  {/* New Section: Custom Price Data */}
+                  {route.customPrices && route.customPrices.length > 0 && (
+                    <>
+                      <hr className="my-2 border-gray-300" />
+                      <Typography variant="body2" className="mb-2">
+                        <strong>Custom Prices:</strong>
+                      </Typography>
+                      <ul className="ml-4 list-disc">
+                        {route.customPrices.map((item, idx) => (
+                          <li key={idx}>
+                            {item.origin} → {item.drop}: Rs. {item.price}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
                   <div className="mt-8 flex space-x-4">
                     <Button variant="outlined" startIcon={<FaEdit />} onClick={() => openModalForEdit(route)}>
                       Edit
+                    </Button>
+                    <Button variant="outlined" startIcon={<BiCustomize />} onClick={() => openCustomizePriceModal(route)}>
+                      Customize Price
                     </Button>
                     <Button variant="contained" color="error" startIcon={<FaTrash />} onClick={() => openDeleteConfirmation(route)}>
                       Delete
@@ -320,12 +426,13 @@ const ManageRoutes = () => {
         <Modal open={modalOpen} onClose={closeModal}>
           <Box sx={modalStyle}>
             <div className="flex justify-between items-center mb-4">
-              <Typography variant="h4">{editMode ? 'Edit Route' : 'Add New Route'}</Typography>
+              <Typography variant="h4">
+                {editMode ? 'Edit Route' : 'Add New Route'}
+              </Typography>
               <IconButton onClick={closeModal}>
                 <FaTimes className="text-red-600" />
               </IconButton>
             </div>
-            {/* Note Message (only in add/edit modal) */}
             <Typography variant="caption" color="textSecondary" className="block mb-4 pb-3">
               Note: Only verified buses will show in the Select Bus dropdown.
             </Typography>
@@ -338,7 +445,7 @@ const ManageRoutes = () => {
                 onChange={handleInputChange}
                 fullWidth
               >
-                {buses.map(bus => (
+                {buses.map((bus) => (
                   <MenuItem key={bus._id} value={bus._id}>
                     {bus.busName} ({bus.busNumber})
                   </MenuItem>
@@ -358,9 +465,21 @@ const ManageRoutes = () => {
                 onChange={handleInputChange}
                 fullWidth
               />
-              {/* Pickup Points */}
+              <TextField
+                label="Price"
+                name="price"
+                type="number"
+                value={formData.price}
+                onChange={handleInputChange}
+                fullWidth
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">Rs. </InputAdornment>
+                }}
+              />
               <Box>
-                <Typography variant="subtitle1" className="mb-1 pb-2">Pickup Points</Typography>
+                <Typography variant="subtitle1" className="mb-1 pb-2">
+                  Pickup Points
+                </Typography>
                 {formData.pickupPoints.map((point, index) => (
                   <Box key={index} className="flex items-center gap-2 mb-4">
                     <TextField
@@ -369,7 +488,10 @@ const ManageRoutes = () => {
                       onChange={(e) => handlePickupChange(e, index)}
                       fullWidth
                     />
-                    <IconButton onClick={() => removePickup(index)} disabled={formData.pickupPoints.length === 1}>
+                    <IconButton
+                      onClick={() => removePickup(index)}
+                      disabled={formData.pickupPoints.length === 1}
+                    >
                       <FaTimes className="text-red-600" />
                     </IconButton>
                   </Box>
@@ -378,9 +500,10 @@ const ManageRoutes = () => {
                   Add Pickup Point
                 </Button>
               </Box>
-              {/* Drop Points */}
               <Box>
-                <Typography variant="subtitle1" className="mb-1 pb-2">Drop Points</Typography>
+                <Typography variant="subtitle1" className="mb-1 pb-2">
+                  Drop Points
+                </Typography>
                 {formData.dropPoints.map((point, index) => (
                   <Box key={index} className="flex items-center gap-2 mb-4">
                     <TextField
@@ -389,7 +512,10 @@ const ManageRoutes = () => {
                       onChange={(e) => handleDropChange(e, index)}
                       fullWidth
                     />
-                    <IconButton onClick={() => removeDrop(index)} disabled={formData.dropPoints.length === 1}>
+                    <IconButton
+                      onClick={() => removeDrop(index)}
+                      disabled={formData.dropPoints.length === 1}
+                    >
                       <FaTimes className="text-red-600" />
                     </IconButton>
                   </Box>
@@ -410,6 +536,114 @@ const ManageRoutes = () => {
           </Box>
         </Modal>
 
+        {/* Modal for Customize Price */}
+        <Modal open={customModalOpen} onClose={closeCustomModal}>
+          <Box sx={modalStyle}>
+            <div className="flex justify-between items-center mb-4">
+              <Typography variant="h4">Customize Prices</Typography>
+              <IconButton onClick={closeCustomModal}>
+                <FaTimes className="text-red-600" />
+              </IconButton>
+            </div>
+            {selectedRoute && (
+              <>
+                <Typography variant="subtitle1" className="mb-2">
+                  Route: {selectedRoute.from} - {selectedRoute.to}
+                </Typography>
+                {/* Section 1: From Location to All Drop Locations */}
+                <Box className="mb-4 border p-2 rounded">
+                  <Typography variant="h6" className="mb-1">
+                    From: {selectedRoute.from} - All Drop Locations
+                  </Typography>
+                  <Box className="mb-2 pt-3">
+                    <TextField
+                      label="Apply same price for all drop locations"
+                      type="number"
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">Rs. </InputAdornment>
+                      }}
+                      onChange={(e) => applySameForOrigin(selectedRoute.from, e.target.value)}
+                    />
+                  </Box>
+                  {customPriceData
+                    .filter((item) => item.origin === selectedRoute.from)
+                    .map((item, idx) => (
+                      <Box key={`from-${item.drop}`} className="flex items-center gap-2 mb-3">
+                        <Typography className="w-2/3">
+                          {selectedRoute.from} - {item.drop}
+                        </Typography>
+                        <TextField
+                          label="Price"
+                          type="number"
+                          value={item.price}
+                          onChange={(e) => {
+                            const index = customPriceData.findIndex(
+                              (i) => i.origin === selectedRoute.from && i.drop === item.drop
+                            );
+                            if (index !== -1) handleCustomPriceChange(index, e.target.value);
+                          }}
+                          InputProps={{
+                            startAdornment: <InputAdornment position="start">Rs. </InputAdornment>
+                          }}
+                        />
+                      </Box>
+                    ))}
+                </Box>
+                {/* Section 2: For each Pickup Location (including an extra row for the 'to' location) */}
+                {selectedRoute.pickupPoints.map((pickup) => {
+                  const group = customPriceData.filter((item) => item.origin === pickup);
+                  return (
+                    <Box key={pickup} className="mb-4 border p-2 rounded">
+                      <Typography variant="h6" className="mb-1">
+                        Pickup: {pickup} - All Drop Locations
+                      </Typography>
+                      <Box className="mb-2 pt-3">
+                        <TextField
+                          label="Apply same price for all drop locations"
+                          type="number"
+                          InputProps={{
+                            startAdornment: <InputAdornment position="start">Rs. </InputAdornment>
+                          }}
+                          onChange={(e) => applySameForOrigin(pickup, e.target.value)}
+                        />
+                      </Box>
+                      {group.map((item) => (
+                        <Box key={`${pickup}-${item.drop}`} className="flex items-center gap-2 mb-3">
+                          <Typography className="w-2/3">
+                            {pickup} - {item.drop}
+                          </Typography>
+                          <TextField
+                            label="Price"
+                            type="number"
+                            value={item.price}
+                            onChange={(e) => {
+                              const index = customPriceData.findIndex(
+                                (i) => i.origin === pickup && i.drop === item.drop
+                              );
+                              if (index !== -1) handleCustomPriceChange(index, e.target.value);
+                            }}
+                            InputProps={{
+                              startAdornment: <InputAdornment position="start">Rs. </InputAdornment>
+                            }}
+                          />
+                        </Box>
+                      ))}
+                    </Box>
+                  );
+                })}
+                <Box className="flex justify-end gap-4">
+                  <Button variant="outlined" onClick={closeCustomModal}>
+                    Cancel
+                  </Button>
+                  <Button variant="contained" color="primary" onClick={handleCustomPriceSubmit}>
+                    Save Customized Prices
+                  </Button>
+                </Box>
+              </>
+            )}
+          </Box>
+        </Modal>
+
         {/* Delete Confirmation Modal */}
         <Modal open={Boolean(deleteConfirmRoute)} onClose={closeDeleteConfirmation}>
           <Box
@@ -424,15 +658,34 @@ const ManageRoutes = () => {
               borderRadius: '4px'
             }}
           >
-            <Typography variant="h5" className="mb-2">Warning</Typography>
+            <Typography variant="h5" className="mb-2">
+              Warning
+            </Typography>
             <Typography variant="body1" className="mb-4">
-              Are you sure you want to delete the route from <strong>{deleteConfirmRoute?.from}</strong> to <strong>{deleteConfirmRoute?.to}</strong>?
+              Are you sure you want to delete the route from{' '}
+              <strong>{deleteConfirmRoute?.from}</strong> to{' '}
+              <strong>{deleteConfirmRoute?.to}</strong>?
             </Typography>
             <Box className="flex justify-end gap-2">
               <Button variant="outlined" onClick={closeDeleteConfirmation}>
                 Cancel
               </Button>
-              <Button variant="contained" color="error" onClick={handleDeleteRoute}>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={async () => {
+                  try {
+                    await axios.delete(`${backendUrl}/api/operator/routes/${deleteConfirmRoute._id}`, {
+                      headers: { Authorization: `Bearer ${operatorData?.token}` }
+                    });
+                    toast.success('Route deleted successfully');
+                    closeDeleteConfirmation();
+                    fetchRoutes();
+                  } catch (error) {
+                    toast.error('Failed to delete route');
+                  }
+                }}
+              >
                 Delete
               </Button>
             </Box>
