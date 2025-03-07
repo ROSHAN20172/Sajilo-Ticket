@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import { FaBars } from 'react-icons/fa';
 import { FaX, FaArrowRight } from "react-icons/fa6";
-import { AppContent } from '../../context/AppContext';
+import { UserAppContext } from '../../context/UserAppContext';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
@@ -13,12 +13,12 @@ const Navbar = () => {
     const [open, setOpen] = useState(false);
 
     const navigate = useNavigate()
-    const { userData, backendUrl, setUserData, setIsLoggedin } = useContext(AppContent)
+    const { userData, backendUrl, setUserData, setIsLoggedin } = useContext(UserAppContext)
 
     const logout = async () => {
         try {
             axios.defaults.withCredentials = true
-            const { data } = await axios.post(backendUrl + '/api/auth/logout')
+            const { data } = await axios.post(`${backendUrl}/api/auth/logout`)
             data.success && setIsLoggedin(false)
             data.success && setUserData(false)
             navigate('/')

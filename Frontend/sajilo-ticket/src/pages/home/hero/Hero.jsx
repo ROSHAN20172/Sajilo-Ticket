@@ -30,10 +30,10 @@ const Hero = () => {
             <div className="hero" style={{ backgroundImage: `url(${skyImage})` }}>
 
                 {/* Highway */}
-                <div className="highway" style={{backgroundImage: `url(${roadImage})`}}></div>
+                <div className="highway" style={{ backgroundImage: `url(${roadImage})` }}></div>
 
                 {/* City */}
-                <div className="city" style={{backgroundImage: `url(${cityImage})`}}></div>
+                <div className="city" style={{ backgroundImage: `url(${cityImage})` }}></div>
 
                 {/* Bus and Wheels */}
                 <div className="bus">
@@ -45,7 +45,7 @@ const Hero = () => {
                 </div>
             </div>
 
-            <RootLayout className="absolute top-0 left-0 w-full h-full py-[9ch] bg-gradient-to-b from-neutral-50/70 via-neutral-50/15 to-neutral-50/5 flex items-center justify-start text-center flex-col gap-9">
+            <RootLayout className="absolute top-6 left-0 w-full h-full py-[9ch] bg-gradient-to-b from-neutral-50/70 via-neutral-50/15 to-neutral-50/5 flex items-center justify-start text-center flex-col gap-9">
                 {/* Title Section */}
                 <div className="space-y-2">
                     <motion.p

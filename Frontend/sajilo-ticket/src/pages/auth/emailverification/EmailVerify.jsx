@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { AppContent } from '../../../context/AppContext';
+import { UserAppContext } from '../../../context/UserAppContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +7,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 const EmailVerify = () => {
     axios.defaults.withCredentials = true;
-    const { backendUrl, isLoggedin, getUserData, setIsLoggedin, setUserData } = useContext(AppContent);
+    const { backendUrl, isLoggedin, getUserData, setIsLoggedin, setUserData } = useContext(UserAppContext);
     const navigate = useNavigate();
     const inputRefs = React.useRef([]);
     

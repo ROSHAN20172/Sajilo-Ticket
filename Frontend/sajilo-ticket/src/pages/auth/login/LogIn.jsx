@@ -2,13 +2,13 @@ import React, { useContext, useState } from 'react';
 import { FaLock } from "react-icons/fa6";
 import { MdEmail } from "react-icons/md";
 import { useNavigate, Link } from 'react-router-dom';
-import { AppContent } from '../../../context/AppContext';
+import { UserAppContext } from '../../../context/UserAppContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const Login = () => {
     const navigate = useNavigate();
-    const { backendUrl, setIsLoggedin, getUserData } = useContext(AppContent);
+    const { backendUrl, setIsLoggedin, getUserData } = useContext(UserAppContext);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 

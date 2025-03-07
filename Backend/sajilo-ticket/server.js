@@ -7,6 +7,7 @@ import connectDB from './config/mongodb.js';
 
 import authRouter from './routes/authRoutes.js';
 import userRouter from "./routes/userRoutes.js";
+import searchRouter from "./routes/searchRoutes.js";
 
 import adminAuthRouter from './routes/admin/adminAuthRoutes.js';
 import adminRouter from './routes/admin/adminRoutes.js';
@@ -34,6 +35,7 @@ app.use(helmet());
 app.get('/', (req, res) => res.send("API is working fine"));
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
+app.use('/api/search', searchRouter);
 
 app.use('/api/admin/auth', adminAuthRouter);
 app.use('/api/admin', adminRouter);
