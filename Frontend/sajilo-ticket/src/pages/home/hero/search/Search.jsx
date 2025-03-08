@@ -4,78 +4,118 @@ import { motion } from 'framer-motion';
 import { TbArrowsExchange } from 'react-icons/tb';
 import { FaMapMarkerAlt, FaSearch } from 'react-icons/fa';
 import { UserAppContext } from '../../../../context/UserAppContext';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
-const Search = () => {
+const Search = ({ setSearchResults }) => {
   const { backendUrl } = useContext(UserAppContext);
+  const navigate = useNavigate();
   const [fromValue, setFromValue] = useState('');
   const [toValue, setToValue] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [suggestions, setSuggestions] = useState([]);
-  const [activeInput, setActiveInput] = useState(null);
+  const [fromSuggestions, setFromSuggestions] = useState([]);
+  const [toSuggestions, setToSuggestions] = useState([]);
+  const [isFromFocused, setIsFromFocused] = useState(false);
+  const [isToFocused, setIsToFocused] = useState(false);
 
-  // Debounced effect: when activeInput or its value changes, fetch suggestions.
+  // Fetch suggestions for the "From" input
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      let searchTerm = '';
-      if (activeInput === 'from') {
-        searchTerm = fromValue;
-      } else if (activeInput === 'to') {
-        searchTerm = toValue;
-      }
-      if (searchTerm) {
+      if (fromValue) {
         axios
-          .get(`${backendUrl}/api/search/routes?query=${searchTerm}`)
+          .get(`${backendUrl}/api/search/routes?query=${fromValue}`)
           .then((response) => {
             const routes = Array.isArray(response.data) ? response.data : [];
             const locationsSet = new Set();
-            routes.forEach(route => {
-              if (route.from && route.from.toLowerCase().includes(searchTerm.toLowerCase())) {
+            routes.forEach((route) => {
+              if (route.from && route.from.toLowerCase().includes(fromValue.toLowerCase())) {
                 locationsSet.add(route.from);
               }
-              if (route.to && route.to.toLowerCase().includes(searchTerm.toLowerCase())) {
+              if (route.to && route.to.toLowerCase().includes(fromValue.toLowerCase())) {
                 locationsSet.add(route.to);
               }
               if (Array.isArray(route.pickupPoints)) {
-                route.pickupPoints.forEach(point => {
-                  if (point && point.toLowerCase().includes(searchTerm.toLowerCase())) {
+                route.pickupPoints.forEach((point) => {
+                  if (point && point.toLowerCase().includes(fromValue.toLowerCase())) {
                     locationsSet.add(point);
                   }
                 });
               }
               if (Array.isArray(route.dropPoints)) {
-                route.dropPoints.forEach(point => {
-                  if (point && point.toLowerCase().includes(searchTerm.toLowerCase())) {
+                route.dropPoints.forEach((point) => {
+                  if (point && point.toLowerCase().includes(fromValue.toLowerCase())) {
                     locationsSet.add(point);
                   }
                 });
               }
             });
-            setSuggestions(Array.from(locationsSet));
+            setFromSuggestions(Array.from(locationsSet));
           })
           .catch((error) => {
-            console.error(error);
-            setSuggestions([]);
+            setFromSuggestions([]);
           });
       } else {
-        setSuggestions([]);
+        setFromSuggestions([]);
       }
-    }, 300); // 300ms debounce delay
-
+    }, 300);
     return () => clearTimeout(delayDebounceFn);
-  }, [activeInput, fromValue, toValue, backendUrl]);
+  }, [fromValue, backendUrl]);
 
-  // When a suggestion is clicked, update the appropriate input and hide suggestions.
-  const handleSuggestionClick = (location) => {
-    if (activeInput === 'from') {
-      setFromValue(location);
-    } else if (activeInput === 'to') {
-      setToValue(location);
-    }
-    setSuggestions([]);
-    setActiveInput(null);
+  // Fetch suggestions for the "To" input
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (toValue) {
+        axios
+          .get(`${backendUrl}/api/search/routes?query=${toValue}`)
+          .then((response) => {
+            const routes = Array.isArray(response.data) ? response.data : [];
+            const locationsSet = new Set();
+            routes.forEach((route) => {
+              if (route.from && route.from.toLowerCase().includes(toValue.toLowerCase())) {
+                locationsSet.add(route.from);
+              }
+              if (route.to && route.to.toLowerCase().includes(toValue.toLowerCase())) {
+                locationsSet.add(route.to);
+              }
+              if (Array.isArray(route.pickupPoints)) {
+                route.pickupPoints.forEach((point) => {
+                  if (point && point.toLowerCase().includes(toValue.toLowerCase())) {
+                    locationsSet.add(point);
+                  }
+                });
+              }
+              if (Array.isArray(route.dropPoints)) {
+                route.dropPoints.forEach((point) => {
+                  if (point && point.toLowerCase().includes(toValue.toLowerCase())) {
+                    locationsSet.add(point);
+                  }
+                });
+              }
+            });
+            setToSuggestions(Array.from(locationsSet));
+          })
+          .catch((error) => {
+            setToSuggestions([]);
+          });
+      } else {
+        setToSuggestions([]);
+      }
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [toValue, backendUrl]);
+
+  // When a suggestion is clicked, update the corresponding input
+  const handleFromSuggestionClick = (location) => {
+    setFromValue(location);
+    setFromSuggestions([]);
   };
 
-  // Functions to update the date.
+  const handleToSuggestionClick = (location) => {
+    setToValue(location);
+    setToSuggestions([]);
+  };
+
+  // Date functions
   const setToday = () => {
     const today = new Date();
     today.setDate(today.getDate() + 1);
@@ -90,12 +130,41 @@ const Search = () => {
     setDate(tomorrow.toISOString().split('T')[0]);
   };
 
-  // Helper to hide suggestions with a slight delay on blur
-  const handleBlur = () => {
-    setTimeout(() => {
-      setActiveInput(null);
-      setSuggestions([]);
-    }, 100);
+  // Submit handler for search
+  const handleSearch = async (e) => {
+    e.preventDefault();
+
+    // Validate that all fields have values
+    if (!fromValue.trim() || !toValue.trim() || !date) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    // Check that the entered date is not in the past
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selectedDate < today) {
+      toast.error("Date cannot be in the past");
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `${backendUrl}/api/search/bus?from=${encodeURIComponent(fromValue)}&to=${encodeURIComponent(toValue)}&date=${date}`
+      );
+
+      if (!response.data || response.data.length === 0) {
+        toast.info("No buses found");
+      } else {
+        toast.success("Buses found!");
+      }
+
+      // Navigate to the bus-tickets page with query parameters
+      navigate(`/bus-tickets?from=${encodeURIComponent(fromValue)}&to=${encodeURIComponent(toValue)}&date=${date}`);
+    } catch (error) {
+      toast.error("No buses found");
+    }
   };
 
   return (
@@ -118,18 +187,18 @@ const Search = () => {
                 className="flex-1 h-full border-none bg-transparent focus:outline-none"
                 value={fromValue}
                 onChange={(e) => setFromValue(e.target.value)}
-                onFocus={() => setActiveInput('from')}
-                onBlur={handleBlur}
+                onFocus={() => setIsFromFocused(true)}
+                onBlur={() => setTimeout(() => setIsFromFocused(false), 100)}
               />
               <FaMapMarkerAlt className="w-5 h-5 text-neutral-400" />
             </div>
             {/* Suggestion list for From input */}
-            {activeInput === 'from' && suggestions.length > 0 && (
-              <div className="absolute z-10 left-0 right-0 bg-white border border-neutral-300 rounded-md mt-1 max-h-[calc(5*2.5rem)] overflow-y-auto">
-                {suggestions.map((location, index) => (
+            {isFromFocused && fromSuggestions.length > 0 && (
+              <div className="absolute z-10 left-0 right-0 bg-white border border-neutral-300 rounded-md mt-1 max-h-40 overflow-y-auto">
+                {fromSuggestions.map((location, index) => (
                   <div
                     key={index}
-                    onMouseDown={() => handleSuggestionClick(location)}
+                    onMouseDown={() => handleFromSuggestionClick(location)}
                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                   >
                     {location}
@@ -147,18 +216,18 @@ const Search = () => {
                 className="flex-1 h-full border-none bg-transparent focus:outline-none"
                 value={toValue}
                 onChange={(e) => setToValue(e.target.value)}
-                onFocus={() => setActiveInput('to')}
-                onBlur={handleBlur}
+                onFocus={() => setIsToFocused(true)}
+                onBlur={() => setTimeout(() => setIsToFocused(false), 100)}
               />
               <FaMapMarkerAlt className="w-5 h-5 text-neutral-400" />
             </div>
             {/* Suggestion list for To input */}
-            {activeInput === 'to' && suggestions.length > 0 && (
-              <div className="absolute z-10 left-0 right-0 bg-white border border-neutral-300 rounded-md mt-1 max-h-[calc(5*2.5rem)] overflow-y-auto">
-                {suggestions.map((location, index) => (
+            {isToFocused && toSuggestions.length > 0 && (
+              <div className="absolute z-10 left-0 right-0 bg-white border border-neutral-300 rounded-md mt-1 max-h-40 overflow-y-auto">
+                {toSuggestions.map((location, index) => (
                   <div
                     key={index}
-                    onMouseDown={() => handleSuggestionClick(location)}
+                    onMouseDown={() => handleToSuggestionClick(location)}
                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                   >
                     {location}
@@ -189,7 +258,11 @@ const Search = () => {
               onChange={(e) => setDate(e.target.value)}
             />
           </div>
-          <button className="w-fit px-5 h-full bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-xl text-base font-medium text-neutral-50 flex items-center justify-center gap-x-2 hover:text-primary ease-in-out duration-300">
+          {/* Search Button with submit handler */}
+          <button
+            onClick={handleSearch}
+            className="w-fit px-5 h-full bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-xl text-base font-medium text-neutral-50 flex items-center justify-center gap-x-2 hover:text-primary ease-in-out duration-300"
+          >
             <FaSearch />
             Search
           </button>
@@ -200,15 +273,3 @@ const Search = () => {
 };
 
 export default Search;
-
-
-
-
-
-
-
-
-
-
-
-
