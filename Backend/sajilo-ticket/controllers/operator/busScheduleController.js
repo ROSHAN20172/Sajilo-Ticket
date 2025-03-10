@@ -39,21 +39,26 @@ export const getScheduleById = async (req, res) => {
   }
 };
 
-// ADD a new schedule
+// Add schedule
 export const addSchedule = async (req, res) => {
   try {
-    const { bus, route, scheduleDates, fromTime, toTime, pickupTimes, dropTimes } = req.body;
+    const { bus, route, scheduleDates, fromTime, toTime, pickupTimes, dropTimes, seats } = req.body;
     if (!bus || !route) {
       return res.status(400).json({ success: false, message: 'Bus or route is not selected.' });
     }
     if (!scheduleDates) {
-      return res.status(400).json({ success: false, message: 'schedule dates is missing.' });
+      return res.status(400).json({ success: false, message: 'Schedule dates are missing.' });
     }
     if (!fromTime || !toTime) {
-      return res.status(400).json({ success: false, message: 'From time or and To time are missing.' });
+      return res.status(400).json({ success: false, message: 'Departure or arrival time is missing.' });
     }
-    // Convert scheduleDates to Date objects (assume scheduleDates is an array of date strings)
-    const dates = Array.isArray(scheduleDates) ? scheduleDates.map(d => new Date(d)) : [new Date(scheduleDates)];
+    // Validate seats object (ensure seats.dates exists)
+    if (!seats || !seats.dates || Object.keys(seats.dates).length === 0) {
+      return res.status(400).json({ success: false, message: 'Seat selection is required.' });
+    }
+    const dates = Array.isArray(scheduleDates)
+      ? scheduleDates.map(d => new Date(d))
+      : [new Date(scheduleDates)];
     const newSchedule = new Schedule({
       operator: req.operator.id,
       bus,
@@ -61,18 +66,18 @@ export const addSchedule = async (req, res) => {
       scheduleDates: dates,
       fromTime,
       toTime,
-      pickupTimes,  // optional
-      dropTimes     // optional
+      pickupTimes,
+      dropTimes,
+      seats
     });
     await newSchedule.save();
     res.status(201).json({ success: true, message: 'Schedule added successfully', schedule: newSchedule });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ success: false, message: 'Server error. Try again later.' });
   }
 };
 
-// UPDATE schedule (only if upcoming)
+// Update schedule
 export const updateSchedule = async (req, res) => {
   try {
     const schedule = await Schedule.findOne({ _id: req.params.id, operator: req.operator.id });
@@ -82,17 +87,22 @@ export const updateSchedule = async (req, res) => {
     if (!isUpcoming(schedule.scheduleDates)) {
       return res.status(400).json({ success: false, message: 'Cannot update past schedule.' });
     }
-    const { bus, route, scheduleDates, fromTime, toTime, pickupTimes, dropTimes } = req.body;
+    const { bus, route, scheduleDates, fromTime, toTime, pickupTimes, dropTimes, seats } = req.body;
     if (bus !== undefined) schedule.bus = bus;
     if (route !== undefined) schedule.route = route;
     if (scheduleDates !== undefined) {
-      const dates = Array.isArray(scheduleDates) ? scheduleDates.map(d => new Date(d)) : [new Date(scheduleDates)];
+      const dates = Array.isArray(scheduleDates)
+        ? scheduleDates.map(d => new Date(d))
+        : [new Date(scheduleDates)];
       schedule.scheduleDates = dates;
     }
     if (fromTime !== undefined) schedule.fromTime = fromTime;
     if (toTime !== undefined) schedule.toTime = toTime;
     if (pickupTimes !== undefined) schedule.pickupTimes = pickupTimes;
     if (dropTimes !== undefined) schedule.dropTimes = dropTimes;
+    if (seats) {
+      schedule.seats = seats;
+    }
     const updatedSchedule = await schedule.save();
     res.json({ success: true, message: 'Schedule updated successfully', schedule: updatedSchedule });
   } catch (error) {

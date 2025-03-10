@@ -10,7 +10,12 @@ import {
   InputAdornment,
   FormControl,
   InputLabel,
-  Select
+  Select,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  Checkbox,
+  ListItemText
 } from '@mui/material';
 import {
   FaEdit,
@@ -24,6 +29,75 @@ import { toast } from 'react-toastify';
 import { OperatorAppContext } from '../../../../context/OperatorAppContext';
 import { useNavigate } from 'react-router-dom';
 
+const allSeats = [
+  ...Array.from({ length: 18 }, (_, i) => `A${i + 1}`),
+  ...Array.from({ length: 18 }, (_, i) => `B${i + 1}`),
+  "19"
+];
+
+// --- Custom Component for Manual Seat Selection ---
+const ManualSeatSelect = ({ label, value, onChange, onConfirm, onSelectAll }) => {
+  const [open, setOpen] = useState(false);
+  const selectedValue = Array.isArray(value) ? value : [];
+
+  return (
+    <FormControl fullWidth sx={{ mt: 2 }}>
+      <InputLabel id={`${label}-label`}>{label}</InputLabel>
+      <Select
+        labelId={`${label}-label`}
+        multiple
+        value={selectedValue}
+        onChange={onChange}
+        label={label}
+        open={open}
+        onOpen={() => setOpen(true)}
+        onClose={() => setOpen(false)}
+        renderValue={(selected) =>
+          Array.isArray(selected) ? selected.join(', ') : ''
+        }
+        MenuProps={{ PaperProps: { sx: { maxHeight: 300 } } }}
+      >
+        {allSeats.map((seat) => (
+          <MenuItem key={seat} value={seat}>
+            <Checkbox checked={selectedValue.indexOf(seat) > -1} />
+            <ListItemText primary={seat} />
+          </MenuItem>
+        ))}
+        {/* OK Button inside dropdown */}
+        <MenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            onConfirm();
+            setOpen(false);
+          }}
+          sx={{ backgroundColor: '#f5f5f5' }}
+        >
+          <Box sx={{ width: '100%', textAlign: 'center' }}>
+            <Button
+              variant="contained"
+              onClick={(e) => {
+                e.stopPropagation();
+                onConfirm();
+                setOpen(false);
+              }}
+            >
+              OK
+            </Button>
+          </Box>
+        </MenuItem>
+      </Select>
+      {/* "Select All Seats" as a separate button */}
+      <Box mt={1}>
+        <Button variant="outlined" onClick={onSelectAll} fullWidth>
+          Select All Seats
+        </Button>
+      </Box>
+    </FormControl>
+  );
+};
+// --- End Custom Component ---
+
+// Modal style
 const modalStyle = {
   position: 'absolute',
   top: '50%',
@@ -57,14 +131,14 @@ const ManageSchedules = () => {
   const [manualFromDate, setManualFromDate] = useState('');
   const [manualToDate, setManualToDate] = useState('');
 
-  // New state for the selected date in the modal
+  // state for the selected date in the modal
   const [selectedDate, setSelectedDate] = useState('');
 
-  const navigate = useNavigate();
-  const handleClosePage = () => navigate(-1);
+  // Confirmation flags for seat selection:
+  const [globalSeatConfirmed, setGlobalSeatConfirmed] = useState(false);
+  const [perDateSeatConfirmed, setPerDateSeatConfirmed] = useState({});
 
-  // Form state for schedule  
-  // fromTime = departure time at route.from, toTime = arrival time at route.to.
+  // Updated form state includes seat configuration options:
   const [formData, setFormData] = useState({
     bus: '',
     route: '',
@@ -72,8 +146,17 @@ const ManageSchedules = () => {
     fromTime: '',
     toTime: '',
     pickupTimes: [],   // times for each pickup location
-    dropTimes: []      // times for each drop location
+    dropTimes: [],     // times for each drop location
+    seatsType: 'all',  // 'all' or 'manual'
+    // For manual seat selection:
+    seatConfigOption: 'global', // 'global' or 'perDate'
+    globalAvailableSeats: allSeats,  // if global, available seats for all dates
+    // if perDate, store an object mapping each date to an array of available seats:
+    dateSeats: {}
   });
+
+  const navigate = useNavigate();
+  const handleClosePage = () => navigate(-1);
 
   // Helper: Check if schedule is upcoming (if any schedule date is today or later)
   const isUpcoming = (scheduleDates) => {
@@ -81,7 +164,7 @@ const ManageSchedules = () => {
     return scheduleDates.some(d => new Date(d) >= new Date(now.toDateString()));
   };
 
-  // Fetch schedules (using filterType)
+  // Fetch schedules
   const fetchSchedules = async () => {
     try {
       const res = await axios.get(`${backendUrl}/api/operator/schedules?filter=${filterType}`, {
@@ -107,7 +190,7 @@ const ManageSchedules = () => {
     }
   };
 
-  // Fetch all routes for operator
+  // Fetch routes for operator
   const fetchRoutesForOperator = async () => {
     try {
       const res = await axios.get(`${backendUrl}/api/operator/routes`, {
@@ -139,9 +222,7 @@ const ManageSchedules = () => {
       overallDateMatch = schedule.scheduleDates.some(d => {
         const dt = new Date(d);
         const now = new Date();
-        if (dateFilter === 'today') {
-          return dt.toDateString() === now.toDateString();
-        }
+        if (dateFilter === 'today') return dt.toDateString() === now.toDateString();
         if (dateFilter === 'this week') {
           const startOfWeek = new Date(now);
           startOfWeek.setDate(now.getDate() - now.getDay());
@@ -149,19 +230,12 @@ const ManageSchedules = () => {
           endOfWeek.setDate(startOfWeek.getDate() + 6);
           return dt >= startOfWeek && dt <= endOfWeek;
         }
-        if (dateFilter === 'this month') {
-          return dt.getMonth() === now.getMonth() && dt.getFullYear() === now.getFullYear();
-        }
-        if (dateFilter === 'this year') {
-          return dt.getFullYear() === now.getFullYear();
-        }
-        if (dateFilter === 'manual') {
-          if (manualFromDate && manualToDate) {
-            const from = new Date(manualFromDate);
-            const to = new Date(manualToDate);
-            return dt >= from && dt <= to;
-          }
-          return false;
+        if (dateFilter === 'this month') return dt.getMonth() === now.getMonth() && dt.getFullYear() === now.getFullYear();
+        if (dateFilter === 'this year') return dt.getFullYear() === now.getFullYear();
+        if (dateFilter === 'manual' && manualFromDate && manualToDate) {
+          const from = new Date(manualFromDate);
+          const to = new Date(manualToDate);
+          return dt >= from && dt <= to;
         }
         return true;
       });
@@ -174,7 +248,7 @@ const ManageSchedules = () => {
     routes.some(route => route.bus && route.bus._id.toString() === bus._id.toString())
   );
 
-  // When a bus is selected, filter routes for that bus.
+  // Filter routes when a bus is selected.
   useEffect(() => {
     if (formData.bus) {
       const filtered = routes.filter(r => r.bus && r.bus._id.toString() === formData.bus.toString());
@@ -195,8 +269,14 @@ const ManageSchedules = () => {
       fromTime: '',
       toTime: '',
       pickupTimes: [],
-      dropTimes: []
+      dropTimes: [],
+      seatsType: 'all',
+      seatConfigOption: 'global',
+      globalAvailableSeats: allSeats,
+      dateSeats: {}
     });
+    setGlobalSeatConfirmed(false);
+    setPerDateSeatConfirmed({});
     setSelectedDate('');
     setEditMode(false);
     setSelectedSchedule(null);
@@ -208,6 +288,7 @@ const ManageSchedules = () => {
       toast.error('Cannot edit past schedule.');
       return;
     }
+    // For simplicity, assume editing uses manual configuration.
     setFormData({
       bus: schedule.bus?._id || '',
       route: schedule.route?._id || '',
@@ -215,8 +296,24 @@ const ManageSchedules = () => {
       fromTime: schedule.fromTime,
       toTime: schedule.toTime,
       pickupTimes: schedule.pickupTimes || [],
-      dropTimes: schedule.dropTimes || []
+      dropTimes: schedule.dropTimes || [],
+      seatsType: 'manual', // always manual for seat configuration
+      // If seats.dates exists, choose global if all dates have same configuration; otherwise perDate.
+      seatConfigOption: 'global',
+      globalAvailableSeats: schedule.seats && schedule.seats.dates
+        ? Object.values(schedule.seats.dates)[0]?.available || allSeats
+        : allSeats,
+      dateSeats: schedule.seats && schedule.seats.dates ? schedule.seats.dates : {}
     });
+    setGlobalSeatConfirmed(true);
+    setPerDateSeatConfirmed(
+      schedule.seats && schedule.seats.dates
+        ? Object.keys(schedule.seats.dates).reduce((acc, date) => {
+            acc[date] = true;
+            return acc;
+          }, {})
+        : {}
+    );
     setSelectedSchedule(schedule);
     setEditMode(true);
     setModalOpen(true);
@@ -248,8 +345,39 @@ const ManageSchedules = () => {
       ...prev,
       scheduleDates: prev.scheduleDates.filter(date => date !== dateToRemove)
     }));
+    setPerDateSeatConfirmed(prev => {
+      const newState = { ...prev };
+      delete newState[dateToRemove];
+      return newState;
+    });
+    setFormData(prev => {
+      const newDateSeats = { ...prev.dateSeats };
+      delete newDateSeats[dateToRemove];
+      return { ...prev, dateSeats: newDateSeats };
+    });
   };
 
+  // Confirmation callbacks for manual seat selection:
+  const handleGlobalSeatConfirm = () => {
+    if (formData.globalAvailableSeats.length === 0) {
+      toast.error('Please select at least one seat.');
+      return;
+    }
+    setGlobalSeatConfirmed(true);
+    toast.success('Global seat selection confirmed.');
+  };
+
+  const handlePerDateSeatConfirm = (date) => {
+    const seatsForDate = formData.dateSeats[date] || [];
+    if (seatsForDate.length === 0) {
+      toast.error(`Please select at least one seat for ${date}.`);
+      return;
+    }
+    setPerDateSeatConfirmed(prev => ({ ...prev, [date]: true }));
+    toast.success(`Seat selection for ${date} confirmed.`);
+  };
+
+  // --- Submission ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (
@@ -281,14 +409,62 @@ const ManageSchedules = () => {
         }
       }
     }
+    let seatsPayload = {};
+    if (formData.seatsType === 'all') {
+      const datesPayload = {};
+      formData.scheduleDates.forEach(date => {
+        datesPayload[date] = { available: allSeats, booked: [] };
+      });
+      seatsPayload = { dates: datesPayload };
+    } else {
+      if (formData.seatConfigOption === 'global') {
+        if (!globalSeatConfirmed) {
+          toast.error('Please confirm your global seat selection.');
+          return;
+        }
+        const datesPayload = {};
+        formData.scheduleDates.forEach(date => {
+          const available = formData.globalAvailableSeats;
+          const booked = allSeats.filter(seat => !available.includes(seat));
+          datesPayload[date] = { available, booked };
+        });
+        seatsPayload = { dates: datesPayload };
+      } else if (formData.seatConfigOption === 'perDate') {
+        const datesPayload = {};
+        for (const date of formData.scheduleDates) {
+          if (!perDateSeatConfirmed[date]) {
+            toast.error(`Please confirm seat selection for ${date}.`);
+            return;
+          }
+          const available = formData.dateSeats[date] || [];
+          if (available.length === 0) {
+            toast.error(`No seats selected for ${date}.`);
+            return;
+          }
+          const booked = allSeats.filter(seat => !available.includes(seat));
+          datesPayload[date] = { available, booked };
+        }
+        seatsPayload = { dates: datesPayload };
+      }
+    }
+    const payload = {
+      bus: formData.bus,
+      route: formData.route,
+      scheduleDates: formData.scheduleDates,
+      fromTime: formData.fromTime,
+      toTime: formData.toTime,
+      pickupTimes: formData.pickupTimes,
+      dropTimes: formData.dropTimes,
+      seats: seatsPayload
+    };
     try {
       if (editMode && selectedSchedule) {
-        await axios.put(`${backendUrl}/api/operator/schedules/${selectedSchedule._id}`, formData, {
+        await axios.put(`${backendUrl}/api/operator/schedules/${selectedSchedule._id}`, payload, {
           headers: { Authorization: `Bearer ${operatorData?.token}` }
         });
         toast.success('Schedule updated successfully');
       } else {
-        await axios.post(`${backendUrl}/api/operator/schedules`, formData, {
+        await axios.post(`${backendUrl}/api/operator/schedules`, payload, {
           headers: { Authorization: `Bearer ${operatorData?.token}` }
         });
         toast.success('Schedule added successfully');
@@ -297,19 +473,6 @@ const ManageSchedules = () => {
       fetchSchedules();
     } catch (error) {
       toast.error('Failed to save schedule');
-    }
-  };
-
-  const handleDeleteSchedule = async () => {
-    try {
-      await axios.delete(`${backendUrl}/api/operator/schedules/${deleteConfirmSchedule._id}`, {
-        headers: { Authorization: `Bearer ${operatorData?.token}` }
-      });
-      toast.success('Schedule deleted successfully');
-      setDeleteConfirmSchedule(null);
-      fetchSchedules();
-    } catch (error) {
-      toast.error('Failed to delete schedule');
     }
   };
 
@@ -335,7 +498,7 @@ const ManageSchedules = () => {
           </div>
           <hr className="my-14 border-gray-300" />
 
-          {/* Filters arranged in one line */}
+          {/* Filters */}
           <div className="flex flex-wrap items-center gap-4 mb-8">
             <TextField
               label="Search by Bus Name"
@@ -345,23 +508,13 @@ const ManageSchedules = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FaSearch />
-                  </InputAdornment>
-                )
+                startAdornment: (<InputAdornment position="start"><FaSearch /></InputAdornment>)
               }}
             />
-            <Button variant="contained" color="primary">
-              Search
-            </Button>
+            <Button variant="contained" color="primary">Search</Button>
             <FormControl variant="outlined" size="small" className="w-[150px]">
               <InputLabel>Date Filter</InputLabel>
-              <Select
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                label="Date Filter"
-              >
+              <Select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} label="Date Filter">
                 <MenuItem value="">All Dates</MenuItem>
                 <MenuItem value="today">Today</MenuItem>
                 <MenuItem value="this week">This Week</MenuItem>
@@ -372,11 +525,7 @@ const ManageSchedules = () => {
             </FormControl>
             <FormControl variant="outlined" size="small" className="w-[200px]">
               <InputLabel>Filter Type</InputLabel>
-              <Select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                label="Filter Type"
-              >
+              <Select value={filterType} onChange={(e) => setFilterType(e.target.value)} label="Filter Type">
                 <MenuItem value="all">All Schedules</MenuItem>
                 <MenuItem value="upcoming">Upcoming Schedules</MenuItem>
                 <MenuItem value="previous">Previous Schedules</MenuItem>
@@ -437,11 +586,15 @@ const ManageSchedules = () => {
                   <Typography variant="body1" className="mb-2">
                     <strong>Bus:</strong> {schedule.bus?.busName || 'N/A'}
                   </Typography>
+                  <hr className="my-2 border-gray-300" />
                   <Typography variant="body1" className="mb-2">
                     <strong>Route:</strong> {schedule.route?.from || 'N/A'} → {schedule.route?.to || 'N/A'}
                   </Typography>
+                  <hr className="my-2 border-gray-300" />
                   <Box className="mb-2">
-                    <Typography variant="body1"><strong>Schedule Dates:</strong></Typography>
+                    <Typography variant="body1">
+                      <strong>Schedule Dates:</strong>
+                    </Typography>
                     <Box ml={2}>
                       <ul className="list-disc">
                         {schedule.scheduleDates.map((d, idx) => (
@@ -450,14 +603,20 @@ const ManageSchedules = () => {
                       </ul>
                     </Box>
                   </Box>
+                  <hr className="my-2 border-gray-300" />
                   <Typography variant="body1" className="mb-2">
                     <strong>Departure at {schedule.route?.from || 'N/A'}:</strong> {schedule.fromTime}
                   </Typography>
+                  <hr className="my-2 border-gray-300" />
                   <Typography variant="body1" className="mb-2">
                     <strong>Arrival at {schedule.route?.to || 'N/A'}:</strong> {schedule.toTime}
                   </Typography>
+                  <hr className="my-2 border-gray-300" />
+                  {/* Pickup Times */}
                   <Box className="mb-2">
-                    <Typography variant="body2"><strong>Pickup Times:</strong></Typography>
+                    <Typography variant="body1">
+                      <strong>Pickup Times:</strong>
+                    </Typography>
                     <Box ml={2}>
                       <ul className="list-disc">
                         {schedule.pickupTimes && schedule.pickupTimes.map((time, idx) => (
@@ -470,8 +629,12 @@ const ManageSchedules = () => {
                       </ul>
                     </Box>
                   </Box>
+                  <hr className="my-2 border-gray-300" />
+                  {/* Drop Times */}
                   <Box className="mb-2">
-                    <Typography variant="body2"><strong>Drop Times:</strong></Typography>
+                    <Typography variant="body1">
+                      <strong>Drop Times:</strong>
+                    </Typography>
                     <Box ml={2}>
                       <ul className="list-disc">
                         {schedule.dropTimes && schedule.dropTimes.map((time, idx) => (
@@ -484,6 +647,43 @@ const ManageSchedules = () => {
                       </ul>
                     </Box>
                   </Box>
+                  <hr className="my-2 border-gray-300" />
+                  {/* Seat Configuration by Date */}
+                  {schedule.seats?.dates && (
+                    <Box className="mt-2">
+                      <Typography variant="body1" className="mb-1">
+                        <strong>Seat Configuration by Date:</strong>
+                      </Typography>
+                      <ul className="list-disc ml-4">
+                        {Object.entries(schedule.seats.dates).map(([date, seatData]) => (
+                          <li key={date}>
+                            <Typography variant="body1" className="font-bold">
+                              {new Date(date).toLocaleDateString()}
+                            </Typography>
+                            <ul className="list-disc ml-6">
+                              <li>
+                                <Typography variant="body1">
+                                  <strong>Available ({seatData.available.length}):</strong>
+                                </Typography>
+                                <Typography variant="body1">
+                                  {seatData.available.join(', ')}
+                                </Typography>
+                              </li>
+                              <li>
+                                <Typography variant="body1">
+                                  <strong>Booked ({seatData.booked.length}):</strong>
+                                </Typography>
+                                <Typography variant="body1">
+                                  {seatData.booked.join(', ')}
+                                </Typography>
+                                <hr className="my-2 border-gray-300" />
+                              </li>
+                            </ul>
+                          </li>
+                        ))}
+                      </ul>
+                    </Box>
+                  )}
                   <div className="mt-8 flex space-x-4">
                     {isUpcoming(schedule.scheduleDates) && (
                       <>
@@ -507,22 +707,13 @@ const ManageSchedules = () => {
           <Box sx={modalStyle}>
             <div className="flex justify-between items-center mb-4">
               <Typography variant="h4">{editMode ? 'Edit Schedule' : 'Add New Schedule'}</Typography>
-              <IconButton onClick={closeModal}>
-                <FaTimes className="text-red-600" />
-              </IconButton>
+              <IconButton onClick={closeModal}><FaTimes className="text-red-600" /></IconButton>
             </div>
             <Typography variant="caption" color="textSecondary" className="block mb-4">
-              Note: Only buses with at least one route are listed in the dropdown. If no bus appears, add a route for that bus first.
+              Note: Only buses with at least one route are listed. If no bus appears, add a route for that bus first.
             </Typography>
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-              <TextField
-                select
-                label="Select Bus"
-                name="bus"
-                value={formData.bus}
-                onChange={handleInputChange}
-                fullWidth
-              >
+              <TextField select label="Select Bus" name="bus" value={formData.bus} onChange={handleInputChange} fullWidth>
                 {busesWithRoutes.length > 0 ? (
                   busesWithRoutes.map(bus => (
                     <MenuItem key={bus._id} value={bus._id}>
@@ -533,14 +724,7 @@ const ManageSchedules = () => {
                   <MenuItem value="">No bus found</MenuItem>
                 )}
               </TextField>
-              <TextField
-                select
-                label="Select Route"
-                name="route"
-                value={formData.route}
-                onChange={handleInputChange}
-                fullWidth
-              >
+              <TextField select label="Select Route" name="route" value={formData.route} onChange={handleInputChange} fullWidth>
                 {filteredRoutes.length > 0 ? (
                   filteredRoutes.map(route => (
                     <MenuItem key={route._id} value={route._id}>
@@ -552,21 +736,8 @@ const ManageSchedules = () => {
                 )}
               </TextField>
               <Box className="flex items-center gap-2">
-                <TextField
-                  label="Select Date"
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => {
-                    addDate(selectedDate);
-                    setSelectedDate('');
-                  }}
-                >
+                <TextField label="Select Date" type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} InputLabelProps={{ shrink: true }} />
+                <Button variant="contained" color="primary" onClick={() => { addDate(selectedDate); setSelectedDate(''); }}>
                   Add Date
                 </Button>
               </Box>
@@ -585,33 +756,107 @@ const ManageSchedules = () => {
                   </ul>
                 </Box>
               )}
+
+              {/* Seat Selection Type */}
+              <FormControl component="fieldset" fullWidth sx={{ mt: 2 }}>
+                <Typography variant="subtitle1" gutterBottom>Seat Selection</Typography>
+                <RadioGroup
+                  row
+                  name="seatsType"
+                  value={formData.seatsType}
+                  onChange={(e) => {
+                    const newType = e.target.value;
+                    setFormData(prev => ({
+                      ...prev,
+                      seatsType: newType,
+                      globalAvailableSeats: newType === 'all' ? allSeats : [],
+                      dateSeats: {}
+                    }));
+                    setGlobalSeatConfirmed(false);
+                    setPerDateSeatConfirmed({});
+                  }}
+                >
+                  <FormControlLabel value="all" control={<Radio />} label="All Seats for All Dates" />
+                  <FormControlLabel value="manual" control={<Radio />} label="Manual Selection" />
+                </RadioGroup>
+              </FormControl>
+
+              {/* Manual Seat Configuration */}
+              {formData.seatsType === 'manual' && (
+                <FormControl component="fieldset" fullWidth sx={{ mt: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom>Seat Configuration</Typography>
+                  <RadioGroup
+                    row
+                    name="seatConfigOption"
+                    value={formData.seatConfigOption}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, seatConfigOption: e.target.value }));
+                      setGlobalSeatConfirmed(false);
+                      setPerDateSeatConfirmed({});
+                    }}
+                  >
+                    <FormControlLabel value="global" control={<Radio />} label="Same for all dates" />
+                    <FormControlLabel value="perDate" control={<Radio />} label="Different for each date" />
+                  </RadioGroup>
+                </FormControl>
+              )}
+
+              {/* Global manual seat selection */}
+              {formData.seatsType === 'manual' && formData.seatConfigOption === 'global' && (
+                <ManualSeatSelect
+                  label="Available Seats (Global)"
+                  value={formData.globalAvailableSeats}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, globalAvailableSeats: e.target.value }));
+                    setGlobalSeatConfirmed(false);
+                  }}
+                  onConfirm={handleGlobalSeatConfirm}
+                  onSelectAll={() => {
+                    setFormData(prev => ({ ...prev, globalAvailableSeats: allSeats }));
+                    setGlobalSeatConfirmed(true);
+                    toast.success('All seats selected');
+                  }}
+                />
+              )}
+
+              {/* Per-date manual seat selection */}
+              {formData.seatsType === 'manual' && formData.seatConfigOption === 'perDate' && (
+                <>
+                  {formData.scheduleDates.map(date => (
+                    <ManualSeatSelect
+                      key={date}
+                      label={`Available Seats (${date})`}
+                      value={formData.dateSeats[date] || []}
+                      onChange={(e) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          dateSeats: { ...prev.dateSeats, [date]: e.target.value }
+                        }));
+                        setPerDateSeatConfirmed(prev => ({ ...prev, [date]: false }));
+                      }}
+                      onConfirm={() => handlePerDateSeatConfirm(date)}
+                      onSelectAll={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          dateSeats: { ...prev.dateSeats, [date]: allSeats }
+                        }));
+                        setPerDateSeatConfirmed(prev => ({ ...prev, [date]: true }));
+                        toast.success(`All seats selected for ${date}`);
+                      }}
+                    />
+                  ))}
+                </>
+              )}
+
               {formData.route && (() => {
                 const selRoute = filteredRoutes.find(r => r._id === formData.route);
                 if (selRoute) {
                   return (
                     <>
-                      <Typography variant="subtitle1" className="mt-2">
-                        <strong>Departure at {selRoute.from}:</strong>
-                      </Typography>
-                      <TextField
-                        type="time"
-                        name="fromTime"
-                        value={formData.fromTime}
-                        onChange={handleInputChange}
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                      />
-                      <Typography variant="subtitle1" className="mt-2">
-                        <strong>Arrival at {selRoute.to}:</strong>
-                      </Typography>
-                      <TextField
-                        type="time"
-                        name="toTime"
-                        value={formData.toTime}
-                        onChange={handleInputChange}
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                      />
+                      <Typography variant="subtitle1" className="mt-2"><strong>Departure at {selRoute.from}:</strong></Typography>
+                      <TextField type="time" name="fromTime" value={formData.fromTime} onChange={handleInputChange} fullWidth InputLabelProps={{ shrink: true }} />
+                      <Typography variant="subtitle1" className="mt-2"><strong>Arrival at {selRoute.to}:</strong></Typography>
+                      <TextField type="time" name="toTime" value={formData.toTime} onChange={handleInputChange} fullWidth InputLabelProps={{ shrink: true }} />
                       <Box>
                         <Typography variant="subtitle1" className="mb-1">Pickup Times</Typography>
                         {selRoute.pickupPoints && selRoute.pickupPoints.length > 0 ? (
@@ -664,12 +909,8 @@ const ManageSchedules = () => {
                 return <Typography variant="body2">Select a route to see location details.</Typography>;
               })()}
               <Box className="flex justify-end gap-4">
-                <Button variant="outlined" onClick={closeModal}>
-                  Cancel
-                </Button>
-                <Button variant="contained" color="primary" type="submit">
-                  {editMode ? 'Update Schedule' : 'Add Schedule'}
-                </Button>
+                <Button variant="outlined" onClick={closeModal}>Cancel</Button>
+                <Button variant="contained" color="primary" type="submit">{editMode ? 'Update Schedule' : 'Add Schedule'}</Button>
               </Box>
             </form>
           </Box>
@@ -703,12 +944,19 @@ const ManageSchedules = () => {
               </Box>
             </Box>
             <Box className="flex justify-end gap-2">
-              <Button variant="outlined" onClick={() => setDeleteConfirmSchedule(null)}>
-                Cancel
-              </Button>
-              <Button variant="contained" color="error" onClick={handleDeleteSchedule}>
-                Delete
-              </Button>
+              <Button variant="outlined" onClick={() => setDeleteConfirmSchedule(null)}>Cancel</Button>
+              <Button variant="contained" color="error" onClick={async () => {
+                try {
+                  await axios.delete(`${backendUrl}/api/operator/schedules/${deleteConfirmSchedule._id}`, {
+                    headers: { Authorization: `Bearer ${operatorData?.token}` }
+                  });
+                  toast.success('Schedule deleted successfully');
+                  setDeleteConfirmSchedule(null);
+                  fetchSchedules();
+                } catch (error) {
+                  toast.error('Failed to delete schedule');
+                }
+              }}>Delete</Button>
             </Box>
           </Box>
         </Modal>

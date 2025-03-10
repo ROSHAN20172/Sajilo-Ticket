@@ -218,6 +218,7 @@ const AdminScheduleManagementView = () => {
     }
   };
 
+  // Updated Details Modal Content with Seat Configuration by Date added.
   const DetailsModalContent = ({ schedule }) => (
     <div>
       <div>
@@ -268,6 +269,29 @@ const AdminScheduleManagementView = () => {
               </li>
             ))}
           </ul>
+        ) : (
+          <p>N/A</p>
+        )}
+      </div>
+      {/* Seat Configuration Section */}
+      <hr className="my-2 border-gray-300" />
+      <div>
+        <h3>Seat Configuration by Date:</h3>
+        {schedule.seats?.dates ? (
+          Object.entries(schedule.seats.dates).map(([date, seatData], idx) => (
+            <div key={idx} style={{ margin: '8px 0' }}>
+              <h4 style={{ margin: 0 }}>{new Date(date).toLocaleDateString()}</h4>
+              <p style={{ margin: '4px 0' }}>
+                <strong>Available ({seatData.available.length}):</strong>
+              </p>
+              <p style={{ margin: '4px 0' }}>{seatData.available.join(', ')}</p>
+              <p style={{ margin: '4px 0' }}>
+                <strong>Booked ({seatData.booked.length}):</strong>
+              </p>
+              <p style={{ margin: '4px 0' }}>{seatData.booked.join(', ')}</p>
+              <hr className="my-2 border-gray-300" />
+            </div> 
+          ))
         ) : (
           <p>N/A</p>
         )}
@@ -329,7 +353,7 @@ const AdminScheduleManagementView = () => {
           </Button>
         </div>
 
-        {/* Manual Date Picker Row - appears on new line when manual is selected */}
+        {/* Manual Date Picker Row - appears when manual is selected */}
         {dateFilter === 'manual' && (
           <div className="flex flex-wrap items-center gap-4">
             <TextField
