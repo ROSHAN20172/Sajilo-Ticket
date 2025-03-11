@@ -11,7 +11,7 @@ const SearchResult = () => {
   const { backendUrl } = useContext(UserAppContext);
   const location = useLocation();
 
-  // Parse query parameters
+  // Parse query parameters from the URL (if any)
   const searchParams = new URLSearchParams(location.search);
   const fromParam = searchParams.get('from');
   const toParam = searchParams.get('to');
@@ -23,42 +23,25 @@ const SearchResult = () => {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  // If query parameters exist, perform the search; otherwise, load default data.
+  // When the search parameters change (or on mount), fetch the ticket data.
   useEffect(() => {
-    if (fromParam && toParam && dateParam) {
-      // Call the search endpoint using the query parameters
-      searchBuses(fromParam, toParam, dateParam);
-    } else {
-      // No search criteria: fetch default bus data
-      fetchBusData(true);
-    }
+    fetchTicketData(true);
   }, [fromParam, toParam, dateParam]);
 
-  const searchBuses = async (from, to, date) => {
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `${backendUrl}/api/search/bus?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${date}`
-      );
-      if (!response.data || response.data.length === 0) {
-        toast.info("No buses found");
-        setDataToShow([]);
-      } else {
-        setDataToShow(response.data);
-      }
-    } catch (error) {
-      toast.error("Error searching for buses");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchBusData = async (reset = false) => {
+  const fetchTicketData = async (reset = false) => {
     if (loading) return;
     setLoading(true);
     try {
+      // Build the query string. If search parameters are provided, add them.
+      const params = new URLSearchParams();
+      params.append("skip", reset ? 0 : skip);
+      params.append("limit", limit);
+      if (fromParam) params.append("from", fromParam);
+      if (toParam) params.append("to", toParam);
+      if (dateParam) params.append("date", dateParam);
+
       const response = await axios.get(
-        `${backendUrl}/api/search/busdata?skip=${reset ? 0 : skip}&limit=${limit}`
+        `${backendUrl}/api/search/busdata?${params.toString()}`
       );
       const fetchedData = response.data;
       if (fetchedData.length === 0) {
@@ -85,18 +68,23 @@ const SearchResult = () => {
     <div className="w-full col-span-3 space-y-10 pt-11">
       <div className="space-y-6">
         {dataToShow && dataToShow.length > 0 ? (
-          dataToShow.map((data, index) => (
+          dataToShow.map((ticket, index) => (
             <TicketCard
               key={index}
               icon={FaBus}
-              busName={data.bus?.busName || "Unknown Bus"}
-              routeFrom={`${data.route?.from || "Origin"} (${data.route?.pickupPoints?.join(", ") || ""})`}
-              routeTo={`${data.route?.to || "Destination"} (${data.route?.dropPoints?.join(", ") || ""})`}
-              arrivalTime={data.fromTime}
-              departureTime={data.toTime}
-              price={data.route?.price || 0}
-              availableSeats={5}
-              amenities={data.bus?.amenities || []}
+              busName={ticket.bus?.busName || "Unknown Bus"}
+              routeFrom={`${ticket.route?.from || "Origin"} (${ticket.route?.pickupPoints?.join(", ") || ""})`}
+              routeTo={`${ticket.route?.to || "Destination"} (${ticket.route?.dropPoints?.join(", ") || ""})`}
+              arrivalTime={ticket.fromTime}
+              departureTime={ticket.toTime}
+              price={ticket.route?.price || 0}
+              availableSeats={
+                ticket.seats?.dates?.[ticket.scheduleDateStr]
+                  ? ticket.seats?.dates?.[ticket.scheduleDateStr].available?.length
+                  : ticket.seats?.global?.available?.length || 0
+              }
+              amenities={ticket.bus?.amenities || []}
+              date={ticket.scheduleDateStr}
             />
           ))
         ) : (
@@ -104,11 +92,11 @@ const SearchResult = () => {
         )}
       </div>
 
-      {/* Only show Load More if no search criteria exist (i.e. default data) */}
-      {!(fromParam && toParam && dateParam) && hasMore && (
+      {/* Load More Button */}
+      {hasMore && (
         <div className="w-full flex items-center justify-center">
           <button
-            onClick={() => fetchBusData(false)}
+            onClick={() => fetchTicketData(false)}
             disabled={loading}
             className="w-fit px-8 py-3 bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-xl text-base font-normal text-neutral-50 flex items-center justify-center gap-x-2 hover:text-primary ease-in-out duration-300"
           >

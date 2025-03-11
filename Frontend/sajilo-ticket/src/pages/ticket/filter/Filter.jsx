@@ -111,6 +111,13 @@ const Filter = ({ className }) => {
                     Amenities
                 </h1>
 
+                <div className="w-full flex items-center gap-2">
+                    <input type="checkbox" id='superac' className="h-3.5 w-3.5 border border-neutral-300 text-neutral-300 cursor-pointer" />
+                    <label htmlFor="superac" className="text-sm text-neutral-600 font-normal cursor-pointer">
+                        Ac <span className="text-xs text-neutral-600">(10)</span>
+                    </label>
+                </div>
+
                 <div className="space-y-2.5">
                     <div className="w-full flex items-center gap-2">
                         <input type="checkbox" id='internet' className="h-3.5 w-3.5 border border-neutral-300 text-neutral-300 cursor-pointer" />
@@ -129,14 +136,14 @@ const Filter = ({ className }) => {
                     <div className="w-full flex items-center gap-2">
                         <input type="checkbox" id='waterbottles' className="h-3.5 w-3.5 border border-neutral-300 text-neutral-300 cursor-pointer" />
                         <label htmlFor="waterbottles" className="text-sm text-neutral-600 font-normal cursor-pointer">
-                           Water Bottles
+                            Water Bottles
                         </label>
                     </div>
 
                     <div className="w-full flex items-center gap-2">
                         <input type="checkbox" id='tvmusic' className="h-3.5 w-3.5 border border-neutral-300 text-neutral-300 cursor-pointer" />
                         <label htmlFor="tvmusic" className="text-sm text-neutral-600 font-normal cursor-pointer">
-                            Led TV & Music <span className="text-xs text-neutral-600">(10)</span>
+                            Led TV <span className="text-xs text-neutral-600">(10)</span>
                         </label>
                     </div>
 
@@ -154,12 +161,6 @@ const Filter = ({ className }) => {
                         </label>
                     </div>
 
-                    <div className="w-full flex items-center gap-2">
-                        <input type="checkbox" id='superac' className="h-3.5 w-3.5 border border-neutral-300 text-neutral-300 cursor-pointer" />
-                        <label htmlFor="superac" className="text-sm text-neutral-600 font-normal cursor-pointer">
-                            Super Ac <span className="text-xs text-neutral-600">(10)</span>
-                        </label>
-                    </div>
                 </div>
             </div>
 

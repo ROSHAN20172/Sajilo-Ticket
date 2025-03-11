@@ -117,48 +117,38 @@ const ManageSchedules = () => {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busList, setBusList] = useState([]);
-  const [routes, setRoutes] = useState([]); // all routes for operator
-  const [filteredRoutes, setFilteredRoutes] = useState([]); // routes for selected bus in form
+  const [routes, setRoutes] = useState([]);
+  const [filteredRoutes, setFilteredRoutes] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false); // false = add new, true = edit existing
+  const [editMode, setEditMode] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [deleteConfirmSchedule, setDeleteConfirmSchedule] = useState(null);
-  const [filterType, setFilterType] = useState('all'); // all, upcoming, previous
-  const [dateFilter, setDateFilter] = useState(''); // today, this week, this month, this year, manual
+  const [filterType, setFilterType] = useState('all');
+  const [dateFilter, setDateFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-
-  // State for manual date range filter
   const [manualFromDate, setManualFromDate] = useState('');
   const [manualToDate, setManualToDate] = useState('');
-
-  // state for the selected date in the modal
   const [selectedDate, setSelectedDate] = useState('');
-
-  // Confirmation flags for seat selection:
   const [globalSeatConfirmed, setGlobalSeatConfirmed] = useState(false);
   const [perDateSeatConfirmed, setPerDateSeatConfirmed] = useState({});
 
-  // Updated form state includes seat configuration options:
   const [formData, setFormData] = useState({
     bus: '',
     route: '',
-    scheduleDates: [], // array of date strings (YYYY-MM-DD)
+    scheduleDates: [],
     fromTime: '',
     toTime: '',
-    pickupTimes: [],   // times for each pickup location
-    dropTimes: [],     // times for each drop location
-    seatsType: 'all',  // 'all' or 'manual'
-    // For manual seat selection:
-    seatConfigOption: 'global', // 'global' or 'perDate'
-    globalAvailableSeats: allSeats,  // if global, available seats for all dates
-    // if perDate, store an object mapping each date to an array of available seats:
+    pickupTimes: [],
+    dropTimes: [],
+    seatsType: 'all',
+    seatConfigOption: 'global',
+    globalAvailableSeats: allSeats,
     dateSeats: {}
   });
 
   const navigate = useNavigate();
   const handleClosePage = () => navigate(-1);
 
-  // Helper: Check if schedule is upcoming (if any schedule date is today or later)
   const isUpcoming = (scheduleDates) => {
     const now = new Date();
     return scheduleDates.some(d => new Date(d) >= new Date(now.toDateString()));
@@ -178,7 +168,7 @@ const ManageSchedules = () => {
     }
   };
 
-  // Fetch verified buses for operator
+  // Fetch buses
   const fetchBuses = async () => {
     try {
       const res = await axios.get(`${backendUrl}/api/operator/bus/buses`, {
@@ -190,7 +180,7 @@ const ManageSchedules = () => {
     }
   };
 
-  // Fetch routes for operator
+  // Fetch routes
   const fetchRoutesForOperator = async () => {
     try {
       const res = await axios.get(`${backendUrl}/api/operator/routes`, {
@@ -208,7 +198,7 @@ const ManageSchedules = () => {
     fetchRoutesForOperator();
   }, [backendUrl, operatorData, filterType]);
 
-  // Filter schedules based on searchQuery and dateFilter.
+  // Filter schedules
   const filteredSchedules = schedules.filter(schedule => {
     const query = searchQuery.toLowerCase();
     const busName = schedule.bus?.busName?.toLowerCase() || '';
@@ -243,12 +233,10 @@ const ManageSchedules = () => {
     return searchMatch && overallDateMatch;
   });
 
-  // Compute buses that have at least one route
   const busesWithRoutes = busList.filter(bus =>
     routes.some(route => route.bus && route.bus._id.toString() === bus._id.toString())
   );
 
-  // Filter routes when a bus is selected.
   useEffect(() => {
     if (formData.bus) {
       const filtered = routes.filter(r => r.bus && r.bus._id.toString() === formData.bus.toString());
@@ -288,7 +276,6 @@ const ManageSchedules = () => {
       toast.error('Cannot edit past schedule.');
       return;
     }
-    // For simplicity, assume editing uses manual configuration.
     setFormData({
       bus: schedule.bus?._id || '',
       route: schedule.route?._id || '',
@@ -297,8 +284,7 @@ const ManageSchedules = () => {
       toTime: schedule.toTime,
       pickupTimes: schedule.pickupTimes || [],
       dropTimes: schedule.dropTimes || [],
-      seatsType: 'manual', // always manual for seat configuration
-      // If seats.dates exists, choose global if all dates have same configuration; otherwise perDate.
+      seatsType: 'manual',
       seatConfigOption: 'global',
       globalAvailableSeats: schedule.seats && schedule.seats.dates
         ? Object.values(schedule.seats.dates)[0]?.available || allSeats
@@ -309,9 +295,9 @@ const ManageSchedules = () => {
     setPerDateSeatConfirmed(
       schedule.seats && schedule.seats.dates
         ? Object.keys(schedule.seats.dates).reduce((acc, date) => {
-            acc[date] = true;
-            return acc;
-          }, {})
+          acc[date] = true;
+          return acc;
+        }, {})
         : {}
     );
     setSelectedSchedule(schedule);
@@ -333,6 +319,12 @@ const ManageSchedules = () => {
       toast.error('Please select a date.');
       return;
     }
+    const today = new Date(new Date().toDateString());
+    const selectedDate = new Date(dateToAdd);
+    if (selectedDate < today) {
+      toast.error('Cannot add a past date.');
+      return;
+    }
     if (!formData.scheduleDates.includes(dateToAdd)) {
       setFormData(prev => ({ ...prev, scheduleDates: [...prev.scheduleDates, dateToAdd] }));
     } else {
@@ -341,6 +333,14 @@ const ManageSchedules = () => {
   };
 
   const removeDate = (dateToRemove) => {
+    const today = new Date(new Date().toDateString());
+    const dateObj = new Date(dateToRemove);
+
+    if (dateObj < today) {
+      toast.error("Cannot remove past dates");
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       scheduleDates: prev.scheduleDates.filter(date => date !== dateToRemove)
@@ -357,7 +357,6 @@ const ManageSchedules = () => {
     });
   };
 
-  // Confirmation callbacks for manual seat selection:
   const handleGlobalSeatConfirm = () => {
     if (formData.globalAvailableSeats.length === 0) {
       toast.error('Please select at least one seat.');
@@ -377,7 +376,6 @@ const ManageSchedules = () => {
     toast.success(`Seat selection for ${date} confirmed.`);
   };
 
-  // --- Submission ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (
@@ -387,66 +385,102 @@ const ManageSchedules = () => {
       !formData.fromTime.trim() ||
       !formData.toTime.trim()
     ) {
-      toast.error('Please fill in Bus, Route, Schedule Dates, Departure Time, and Arrival Time.');
+      toast.error('Please fill in required fields.');
       return;
     }
-    // Validate pickup times
+
     const selRoute = filteredRoutes.find(r => r._id === formData.route);
-    if (selRoute && selRoute.pickupPoints && selRoute.pickupPoints.length > 0) {
+    if (selRoute?.pickupPoints?.length > 0) {
       for (let i = 0; i < selRoute.pickupPoints.length; i++) {
-        if (!formData.pickupTimes[i] || !formData.pickupTimes[i].trim()) {
-          toast.error(`Please fill in the pickup time for ${selRoute.pickupPoints[i]}.`);
+        if (!formData.pickupTimes[i]?.trim()) {
+          toast.error(`Missing pickup time for ${selRoute.pickupPoints[i]}`);
           return;
         }
       }
     }
-    // Validate drop times
-    if (selRoute && selRoute.dropPoints && selRoute.dropPoints.length > 0) {
+    if (selRoute?.dropPoints?.length > 0) {
       for (let i = 0; i < selRoute.dropPoints.length; i++) {
-        if (!formData.dropTimes[i] || !formData.dropTimes[i].trim()) {
-          toast.error(`Please fill in the drop time for ${selRoute.dropPoints[i]}.`);
+        if (!formData.dropTimes[i]?.trim()) {
+          toast.error(`Missing drop time for ${selRoute.dropPoints[i]}`);
           return;
         }
       }
     }
+
     let seatsPayload = {};
     if (formData.seatsType === 'all') {
       const datesPayload = {};
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Preserve existing past dates
+      if (editMode && selectedSchedule?.seats?.dates) {
+        Object.entries(selectedSchedule.seats.dates).forEach(([date, seatData]) => {
+          const dateObj = new Date(date);
+          dateObj.setHours(0, 0, 0, 0);
+          if (dateObj < today) {
+            datesPayload[date] = seatData;
+          }
+        });
+      }
+
+      // Set all seats for upcoming dates
       formData.scheduleDates.forEach(date => {
-        datesPayload[date] = { available: allSeats, booked: [] };
+        const dateObj = new Date(date);
+        dateObj.setHours(0, 0, 0, 0);
+        if (dateObj >= today) {
+          datesPayload[date] = { available: allSeats, booked: [] };
+        }
       });
+
       seatsPayload = { dates: datesPayload };
     } else {
       if (formData.seatConfigOption === 'global') {
-        if (!globalSeatConfirmed) {
-          toast.error('Please confirm your global seat selection.');
-          return;
+        let datesPayload = {};
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (editMode && selectedSchedule?.seats?.dates) {
+          Object.entries(selectedSchedule.seats.dates).forEach(([date, seatData]) => {
+            const dateObj = new Date(date);
+            dateObj.setHours(0, 0, 0, 0);
+            if (dateObj < today) {
+              datesPayload[date] = seatData;
+            }
+          });
         }
-        const datesPayload = {};
+
         formData.scheduleDates.forEach(date => {
-          const available = formData.globalAvailableSeats;
-          const booked = allSeats.filter(seat => !available.includes(seat));
-          datesPayload[date] = { available, booked };
+          const dateObj = new Date(date);
+          dateObj.setHours(0, 0, 0, 0);
+          if (dateObj >= today) {
+            const available = formData.globalAvailableSeats;
+            const booked = allSeats.filter(seat => !available.includes(seat));
+            datesPayload[date] = { available, booked };
+          }
         });
         seatsPayload = { dates: datesPayload };
       } else if (formData.seatConfigOption === 'perDate') {
-        const datesPayload = {};
+        let datesPayload = {};
+        if (editMode && selectedSchedule?.seats?.dates) {
+          datesPayload = { ...selectedSchedule.seats.dates };
+        }
         for (const date of formData.scheduleDates) {
+          const today = new Date(new Date().toDateString());
+          const dateObj = new Date(date);
+          if (dateObj < today) continue;
           if (!perDateSeatConfirmed[date]) {
-            toast.error(`Please confirm seat selection for ${date}.`);
+            toast.error(`Confirm seats for ${date}`);
             return;
           }
           const available = formData.dateSeats[date] || [];
-          if (available.length === 0) {
-            toast.error(`No seats selected for ${date}.`);
-            return;
-          }
           const booked = allSeats.filter(seat => !available.includes(seat));
           datesPayload[date] = { available, booked };
         }
         seatsPayload = { dates: datesPayload };
       }
     }
+
     const payload = {
       bus: formData.bus,
       route: formData.route,
@@ -457,29 +491,29 @@ const ManageSchedules = () => {
       dropTimes: formData.dropTimes,
       seats: seatsPayload
     };
+
     try {
       if (editMode && selectedSchedule) {
         await axios.put(`${backendUrl}/api/operator/schedules/${selectedSchedule._id}`, payload, {
           headers: { Authorization: `Bearer ${operatorData?.token}` }
         });
-        toast.success('Schedule updated successfully');
+        toast.success('Schedule updated');
       } else {
         await axios.post(`${backendUrl}/api/operator/schedules`, payload, {
           headers: { Authorization: `Bearer ${operatorData?.token}` }
         });
-        toast.success('Schedule added successfully');
+        toast.success('Schedule added');
       }
       closeModal();
       fetchSchedules();
     } catch (error) {
-      toast.error('Failed to save schedule');
+      toast.error('Error saving schedule');
     }
   };
 
   return (
     <div className="p-6">
       <div className="max-w-screen-2xl mx-auto p-8">
-        {/* Header */}
         <Box className="bg-white rounded-2xl shadow-lg p-8">
           <div className="flex justify-between items-center mb-6">
             <Typography variant="h3" className="font-bold">Manage Bus Schedules</Typography>
@@ -498,7 +532,6 @@ const ManageSchedules = () => {
           </div>
           <hr className="my-14 border-gray-300" />
 
-          {/* Filters */}
           <div className="flex flex-wrap items-center gap-4 mb-8">
             <TextField
               label="Search by Bus Name"
@@ -511,7 +544,6 @@ const ManageSchedules = () => {
                 startAdornment: (<InputAdornment position="start"><FaSearch /></InputAdornment>)
               }}
             />
-            <Button variant="contained" color="primary">Search</Button>
             <FormControl variant="outlined" size="small" className="w-[150px]">
               <InputLabel>Date Filter</InputLabel>
               <Select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} label="Date Filter">
@@ -533,7 +565,6 @@ const ManageSchedules = () => {
             </FormControl>
           </div>
 
-          {/* Manual Date Range Fields */}
           {dateFilter === 'manual' && (
             <div className="flex items-center gap-2 mb-8">
               <TextField
@@ -612,7 +643,6 @@ const ManageSchedules = () => {
                     <strong>Arrival at {schedule.route?.to || 'N/A'}:</strong> {schedule.toTime}
                   </Typography>
                   <hr className="my-2 border-gray-300" />
-                  {/* Pickup Times */}
                   <Box className="mb-2">
                     <Typography variant="body1">
                       <strong>Pickup Times:</strong>
@@ -630,7 +660,6 @@ const ManageSchedules = () => {
                     </Box>
                   </Box>
                   <hr className="my-2 border-gray-300" />
-                  {/* Drop Times */}
                   <Box className="mb-2">
                     <Typography variant="body1">
                       <strong>Drop Times:</strong>
@@ -648,7 +677,6 @@ const ManageSchedules = () => {
                     </Box>
                   </Box>
                   <hr className="my-2 border-gray-300" />
-                  {/* Seat Configuration by Date */}
                   {schedule.seats?.dates && (
                     <Box className="mt-2">
                       <Typography variant="body1" className="mb-1">
@@ -700,226 +728,247 @@ const ManageSchedules = () => {
               ))}
             </div>
           )}
-        </Box>
 
-        {/* Modal for Add/Edit Schedule */}
-        <Modal open={modalOpen} onClose={closeModal}>
-          <Box sx={modalStyle}>
-            <div className="flex justify-between items-center mb-4">
-              <Typography variant="h4">{editMode ? 'Edit Schedule' : 'Add New Schedule'}</Typography>
-              <IconButton onClick={closeModal}><FaTimes className="text-red-600" /></IconButton>
-            </div>
-            <Typography variant="caption" color="textSecondary" className="block mb-4">
-              Note: Only buses with at least one route are listed. If no bus appears, add a route for that bus first.
-            </Typography>
-            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-              <TextField select label="Select Bus" name="bus" value={formData.bus} onChange={handleInputChange} fullWidth>
-                {busesWithRoutes.length > 0 ? (
-                  busesWithRoutes.map(bus => (
-                    <MenuItem key={bus._id} value={bus._id}>
-                      {bus.busName} ({bus.busNumber})
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem value="">No bus found</MenuItem>
-                )}
-              </TextField>
-              <TextField select label="Select Route" name="route" value={formData.route} onChange={handleInputChange} fullWidth>
-                {filteredRoutes.length > 0 ? (
-                  filteredRoutes.map(route => (
-                    <MenuItem key={route._id} value={route._id}>
-                      {route.from} to {route.to}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem value="">No route found for this bus</MenuItem>
-                )}
-              </TextField>
-              <Box className="flex items-center gap-2">
-                <TextField label="Select Date" type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} InputLabelProps={{ shrink: true }} />
-                <Button variant="contained" color="primary" onClick={() => { addDate(selectedDate); setSelectedDate(''); }}>
-                  Add Date
-                </Button>
-              </Box>
-              {formData.scheduleDates.length > 0 && (
-                <Box>
-                  <Typography variant="subtitle1" className="mb-1">Schedule Dates:</Typography>
-                  <ul className="list-disc ml-4">
-                    {formData.scheduleDates.map((date, idx) => (
-                      <li key={idx} className="flex items-center">
-                        <span>{date}</span>
-                        <IconButton size="small" onClick={() => removeDate(date)} className="ml-2">
-                          <FaTrash className="text-red-600" />
-                        </IconButton>
-                      </li>
-                    ))}
-                  </ul>
+          <Modal open={modalOpen} onClose={closeModal}>
+            <Box sx={modalStyle}>
+              <div className="flex justify-between items-center mb-4">
+                <Typography variant="h4">{editMode ? 'Edit Schedule' : 'Add New Schedule'}</Typography>
+                <IconButton onClick={closeModal}><FaTimes className="text-red-600" /></IconButton>
+              </div>
+              <Typography variant="caption" color="textSecondary" className="block mb-4">
+                Note: Only buses with at least one route are listed. If no bus appears, add a route for that bus first.
+              </Typography>
+              <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                <TextField select label="Select Bus" name="bus" value={formData.bus} onChange={handleInputChange} fullWidth>
+                  {busesWithRoutes.length > 0 ? (
+                    busesWithRoutes.map(bus => (
+                      <MenuItem key={bus._id} value={bus._id}>
+                        {bus.busName} ({bus.busNumber})
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem value="">No bus found</MenuItem>
+                  )}
+                </TextField>
+                <TextField select label="Select Route" name="route" value={formData.route} onChange={handleInputChange} fullWidth>
+                  {filteredRoutes.length > 0 ? (
+                    filteredRoutes.map(route => (
+                      <MenuItem key={route._id} value={route._id}>
+                        {route.from} to {route.to}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem value="">No route found for this bus</MenuItem>
+                  )}
+                </TextField>
+                <Box className="flex items-center gap-2">
+                  <TextField
+                    label="Select Date"
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    inputProps={{
+                      min: new Date().toISOString().split('T')[0]
+                    }}
+                  />
+                  <Button variant="contained" color="primary" onClick={() => { addDate(selectedDate); setSelectedDate(''); }}>
+                    Add Date
+                  </Button>
                 </Box>
-              )}
+                {formData.scheduleDates.length > 0 && (
+                  <Box>
+                    <Typography variant="subtitle1" className="mb-1">Schedule Dates:</Typography>
+                    <ul className="list-disc ml-4">
+                      {formData.scheduleDates.map((date, idx) => {
+                        const today = new Date(new Date().toDateString());
+                        const dateObj = new Date(date);
+                        const canDelete = dateObj >= today;
+                        return (
+                          <li key={idx} className="flex items-center">
+                            <span>{date}</span>
+                            {canDelete ? (
+                              <IconButton size="small" onClick={() => removeDate(date)} className="ml-2">
+                                <FaTrash className="text-red-600" />
+                              </IconButton>
+                            ) : (
+                              <span className="ml-2 text-gray-500">(Past date)</span>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </Box>
+                )}
 
-              {/* Seat Selection Type */}
-              <FormControl component="fieldset" fullWidth sx={{ mt: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>Seat Selection</Typography>
-                <RadioGroup
-                  row
-                  name="seatsType"
-                  value={formData.seatsType}
-                  onChange={(e) => {
-                    const newType = e.target.value;
-                    setFormData(prev => ({
-                      ...prev,
-                      seatsType: newType,
-                      globalAvailableSeats: newType === 'all' ? allSeats : [],
-                      dateSeats: {}
-                    }));
-                    setGlobalSeatConfirmed(false);
-                    setPerDateSeatConfirmed({});
-                  }}
-                >
-                  <FormControlLabel value="all" control={<Radio />} label="All Seats for All Dates" />
-                  <FormControlLabel value="manual" control={<Radio />} label="Manual Selection" />
-                </RadioGroup>
-              </FormControl>
-
-              {/* Manual Seat Configuration */}
-              {formData.seatsType === 'manual' && (
                 <FormControl component="fieldset" fullWidth sx={{ mt: 2 }}>
-                  <Typography variant="subtitle1" gutterBottom>Seat Configuration</Typography>
+                  <Typography variant="subtitle1" gutterBottom>Seat Selection</Typography>
                   <RadioGroup
                     row
-                    name="seatConfigOption"
-                    value={formData.seatConfigOption}
+                    name="seatsType"
+                    value={formData.seatsType}
                     onChange={(e) => {
-                      setFormData(prev => ({ ...prev, seatConfigOption: e.target.value }));
+                      const newType = e.target.value;
+                      setFormData(prev => ({
+                        ...prev,
+                        seatsType: newType,
+                        globalAvailableSeats: newType === 'all' ? allSeats : [],
+                        dateSeats: {}
+                      }));
                       setGlobalSeatConfirmed(false);
                       setPerDateSeatConfirmed({});
                     }}
                   >
-                    <FormControlLabel value="global" control={<Radio />} label="Same for all dates" />
-                    <FormControlLabel value="perDate" control={<Radio />} label="Different for each date" />
+                    <FormControlLabel value="all" control={<Radio />} label="All Seats for All Upcoming Dates" />
+                    <FormControlLabel value="manual" control={<Radio />} label="Manual Selection" />
                   </RadioGroup>
                 </FormControl>
-              )}
 
-              {/* Global manual seat selection */}
-              {formData.seatsType === 'manual' && formData.seatConfigOption === 'global' && (
-                <ManualSeatSelect
-                  label="Available Seats (Global)"
-                  value={formData.globalAvailableSeats}
-                  onChange={(e) => {
-                    setFormData(prev => ({ ...prev, globalAvailableSeats: e.target.value }));
-                    setGlobalSeatConfirmed(false);
-                  }}
-                  onConfirm={handleGlobalSeatConfirm}
-                  onSelectAll={() => {
-                    setFormData(prev => ({ ...prev, globalAvailableSeats: allSeats }));
-                    setGlobalSeatConfirmed(true);
-                    toast.success('All seats selected');
-                  }}
-                />
-              )}
-
-              {/* Per-date manual seat selection */}
-              {formData.seatsType === 'manual' && formData.seatConfigOption === 'perDate' && (
-                <>
-                  {formData.scheduleDates.map(date => (
-                    <ManualSeatSelect
-                      key={date}
-                      label={`Available Seats (${date})`}
-                      value={formData.dateSeats[date] || []}
+                {formData.seatsType === 'manual' && (
+                  <FormControl component="fieldset" fullWidth sx={{ mt: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>Seat Configuration</Typography>
+                    <RadioGroup
+                      row
+                      name="seatConfigOption"
+                      value={formData.seatConfigOption}
                       onChange={(e) => {
-                        setFormData(prev => ({
-                          ...prev,
-                          dateSeats: { ...prev.dateSeats, [date]: e.target.value }
-                        }));
-                        setPerDateSeatConfirmed(prev => ({ ...prev, [date]: false }));
+                        setFormData(prev => ({ ...prev, seatConfigOption: e.target.value }));
+                        setGlobalSeatConfirmed(false);
+                        setPerDateSeatConfirmed({});
                       }}
-                      onConfirm={() => handlePerDateSeatConfirm(date)}
-                      onSelectAll={() => {
-                        setFormData(prev => ({
-                          ...prev,
-                          dateSeats: { ...prev.dateSeats, [date]: allSeats }
-                        }));
-                        setPerDateSeatConfirmed(prev => ({ ...prev, [date]: true }));
-                        toast.success(`All seats selected for ${date}`);
-                      }}
-                    />
-                  ))}
-                </>
-              )}
+                    >
+                      <FormControlLabel value="global" control={<Radio />} label="Same for All Upcoming Dates" />
+                      <FormControlLabel value="perDate" control={<Radio />} label="Different for Each Date" />
+                    </RadioGroup>
+                  </FormControl>
+                )}
 
-              {formData.route && (() => {
-                const selRoute = filteredRoutes.find(r => r._id === formData.route);
-                if (selRoute) {
-                  return (
-                    <>
-                      <Typography variant="subtitle1" className="mt-2"><strong>Departure at {selRoute.from}:</strong></Typography>
-                      <TextField type="time" name="fromTime" value={formData.fromTime} onChange={handleInputChange} fullWidth InputLabelProps={{ shrink: true }} />
-                      <Typography variant="subtitle1" className="mt-2"><strong>Arrival at {selRoute.to}:</strong></Typography>
-                      <TextField type="time" name="toTime" value={formData.toTime} onChange={handleInputChange} fullWidth InputLabelProps={{ shrink: true }} />
-                      <Box>
-                        <Typography variant="subtitle1" className="mb-1">Pickup Times</Typography>
-                        {selRoute.pickupPoints && selRoute.pickupPoints.length > 0 ? (
-                          selRoute.pickupPoints.map((point, index) => (
-                            <TextField
-                              key={index}
-                              label={`Pickup at ${point}`}
-                              type="time"
-                              value={formData.pickupTimes[index] || ''}
-                              onChange={(e) => {
-                                const newTimes = [...formData.pickupTimes];
-                                newTimes[index] = e.target.value;
-                                setFormData(prev => ({ ...prev, pickupTimes: newTimes }));
-                              }}
-                              fullWidth
-                              margin="dense"
-                              InputLabelProps={{ shrink: true }}
-                            />
-                          ))
-                        ) : (
-                          <Typography variant="body2">No pickup locations defined for this route.</Typography>
-                        )}
-                      </Box>
-                      <Box>
-                        <Typography variant="subtitle1" className="mb-1">Drop Times</Typography>
-                        {selRoute.dropPoints && selRoute.dropPoints.length > 0 ? (
-                          selRoute.dropPoints.map((point, index) => (
-                            <TextField
-                              key={index}
-                              label={`Drop at ${point}`}
-                              type="time"
-                              value={formData.dropTimes[index] || ''}
-                              onChange={(e) => {
-                                const newTimes = [...formData.dropTimes];
-                                newTimes[index] = e.target.value;
-                                setFormData(prev => ({ ...prev, dropTimes: newTimes }));
-                              }}
-                              fullWidth
-                              margin="dense"
-                              InputLabelProps={{ shrink: true }}
-                            />
-                          ))
-                        ) : (
-                          <Typography variant="body2">No drop locations defined for this route.</Typography>
-                        )}
-                      </Box>
-                    </>
-                  );
-                }
-                return <Typography variant="body2">Select a route to see location details.</Typography>;
-              })()}
-              <Box className="flex justify-end gap-4">
-                <Button variant="outlined" onClick={closeModal}>Cancel</Button>
-                <Button variant="contained" color="primary" type="submit">{editMode ? 'Update Schedule' : 'Add Schedule'}</Button>
-              </Box>
-            </form>
-          </Box>
-        </Modal>
+                {formData.seatsType === 'manual' && formData.seatConfigOption === 'global' && (
+                  <ManualSeatSelect
+                    label="Available Seats (Global)"
+                    value={formData.globalAvailableSeats}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, globalAvailableSeats: e.target.value }));
+                      setGlobalSeatConfirmed(false);
+                    }}
+                    onConfirm={handleGlobalSeatConfirm}
+                    onSelectAll={() => {
+                      setFormData(prev => ({ ...prev, globalAvailableSeats: allSeats }));
+                      setGlobalSeatConfirmed(true);
+                      toast.success('All seats selected');
+                    }}
+                  />
+                )}
 
-        {/* Delete Confirmation Modal */}
-        <Modal open={Boolean(deleteConfirmSchedule)} onClose={() => setDeleteConfirmSchedule(null)}>
-          <Box
-            sx={{
+                {formData.seatsType === 'manual' && formData.seatConfigOption === 'perDate' && (
+                  <>
+                    {formData.scheduleDates.map(date => {
+                      const today = new Date(new Date().toDateString());
+                      const dateObj = new Date(date);
+                      if (dateObj < today) {
+                        return (
+                          <div key={date}>
+                            <p>{date} (Past Date – Seat configuration not editable)</p>
+                          </div>
+                        );
+                      }
+                      return (
+                        <ManualSeatSelect
+                          key={date}
+                          label={`Available Seats (${date})`}
+                          value={formData.dateSeats[date] || []}
+                          onChange={(e) => {
+                            setFormData(prev => ({
+                              ...prev,
+                              dateSeats: { ...prev.dateSeats, [date]: e.target.value }
+                            }));
+                            setPerDateSeatConfirmed(prev => ({ ...prev, [date]: false }));
+                          }}
+                          onConfirm={() => handlePerDateSeatConfirm(date)}
+                          onSelectAll={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              dateSeats: { ...prev.dateSeats, [date]: allSeats }
+                            }));
+                            setPerDateSeatConfirmed(prev => ({ ...prev, [date]: true }));
+                            toast.success(`All seats selected for ${date}`);
+                          }}
+                        />
+                      );
+                    })}
+                  </>
+                )}
+
+                {formData.route && (() => {
+                  const selRoute = filteredRoutes.find(r => r._id === formData.route);
+                  if (selRoute) {
+                    return (
+                      <>
+                        <Typography variant="subtitle1" className="mt-2"><strong>Departure at {selRoute.from}:</strong></Typography>
+                        <TextField type="time" name="fromTime" value={formData.fromTime} onChange={handleInputChange} fullWidth InputLabelProps={{ shrink: true }} />
+                        <Typography variant="subtitle1" className="mt-2"><strong>Arrival at {selRoute.to}:</strong></Typography>
+                        <TextField type="time" name="toTime" value={formData.toTime} onChange={handleInputChange} fullWidth InputLabelProps={{ shrink: true }} />
+                        <Box>
+                          <Typography variant="subtitle1" className="mb-1">Pickup Times</Typography>
+                          {selRoute.pickupPoints && selRoute.pickupPoints.length > 0 ? (
+                            selRoute.pickupPoints.map((point, index) => (
+                              <TextField
+                                key={index}
+                                label={`Pickup at ${point}`}
+                                type="time"
+                                value={formData.pickupTimes[index] || ''}
+                                onChange={(e) => {
+                                  const newTimes = [...formData.pickupTimes];
+                                  newTimes[index] = e.target.value;
+                                  setFormData(prev => ({ ...prev, pickupTimes: newTimes }));
+                                }}
+                                fullWidth
+                                margin="dense"
+                                InputLabelProps={{ shrink: true }}
+                              />
+                            ))
+                          ) : (
+                            <Typography variant="body2">No pickup locations defined for this route.</Typography>
+                          )}
+                        </Box>
+                        <Box>
+                          <Typography variant="subtitle1" className="mb-1">Drop Times</Typography>
+                          {selRoute.dropPoints && selRoute.dropPoints.length > 0 ? (
+                            selRoute.dropPoints.map((point, index) => (
+                              <TextField
+                                key={index}
+                                label={`Drop at ${point}`}
+                                type="time"
+                                value={formData.dropTimes[index] || ''}
+                                onChange={(e) => {
+                                  const newTimes = [...formData.dropTimes];
+                                  newTimes[index] = e.target.value;
+                                  setFormData(prev => ({ ...prev, dropTimes: newTimes }));
+                                }}
+                                fullWidth
+                                margin="dense"
+                                InputLabelProps={{ shrink: true }}
+                              />
+                            ))
+                          ) : (
+                            <Typography variant="body2">No drop locations defined for this route.</Typography>
+                          )}
+                        </Box>
+                      </>
+                    );
+                  }
+                  return <Typography variant="body2">Select a route to see location details.</Typography>;
+                })()}
+                <Box className="flex justify-end gap-4">
+                  <Button variant="outlined" onClick={closeModal}>Cancel</Button>
+                  <Button variant="contained" color="primary" type="submit">{editMode ? 'Update Schedule' : 'Add Schedule'}</Button>
+                </Box>
+              </form>
+            </Box>
+          </Modal>
+
+          <Modal open={Boolean(deleteConfirmSchedule)} onClose={() => setDeleteConfirmSchedule(null)}>
+            <Box sx={{
               position: 'absolute',
               top: '50%',
               left: '50%',
@@ -928,41 +977,100 @@ const ManageSchedules = () => {
               bgcolor: 'background.paper',
               p: 4,
               borderRadius: '4px'
-            }}
-          >
-            <Typography variant="h5" className="mb-2">Warning</Typography>
-            <Box className="mb-4">
-              <Typography variant="body1">
-                Are you sure you want to delete the schedule for bus <strong>{deleteConfirmSchedule?.bus?.busName}</strong> on:
-              </Typography>
-              <Box ml={2}>
-                <ul className="list-disc">
-                  {deleteConfirmSchedule?.scheduleDates.map((date, idx) => (
-                    <li key={idx}>{new Date(date).toLocaleDateString()}</li>
-                  ))}
-                </ul>
-              </Box>
+            }}>
+              {deleteConfirmSchedule && (() => {
+                const now = new Date(new Date().toDateString());
+                const scheduleDates = deleteConfirmSchedule.scheduleDates.map(d => new Date(d).toISOString().split('T')[0]);
+                const futureDates = scheduleDates.filter(d => new Date(d) >= now);
+                const pastDates = scheduleDates.filter(d => new Date(d) < now);
+
+                return (
+                  <>
+                    <Typography variant="h5" className="mb-2">Delete Confirmation</Typography>
+                    <Box className="mb-4">
+                      {futureDates.length > 0 ? (
+                        <>
+                          <Typography variant="body1">
+                            {pastDates.length > 0
+                              ? "This schedule contains historical data. Delete only future dates:"
+                              : "Delete entire schedule:"}
+                          </Typography>
+                          <Box ml={2}>
+                            <ul className="list-disc">
+                              {futureDates.map((date, idx) => (
+                                <li key={idx}>{new Date(date).toLocaleDateString()}</li>
+                              ))}
+                            </ul>
+                          </Box>
+                          <Typography variant="body2" color="textSecondary" mt={1}>
+                            {pastDates.length > 0 && "Historical seat data for past dates will be preserved."}
+                          </Typography>
+                        </>
+                      ) : (
+                        <Typography variant="body1">
+                          This schedule only contains past dates and cannot be modified.
+                        </Typography>
+                      )}
+                    </Box>
+                    {futureDates.length > 0 && (
+                      <Box className="flex justify-end gap-2">
+                        <Button variant="outlined" onClick={() => setDeleteConfirmSchedule(null)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="contained"
+                          color="error"
+                          onClick={async () => {
+                            try {
+                              if (pastDates.length > 0) {
+                                // Preserve past dates and their seat data
+                                const updatedSeats = Object.fromEntries(
+                                  Object.entries(deleteConfirmSchedule.seats.dates)
+                                    .filter(([date]) => pastDates.includes(date))
+                                );
+
+                                // Update schedule to keep only past dates
+                                await axios.put(
+                                  `${backendUrl}/api/operator/schedules/${deleteConfirmSchedule._id}`,
+                                  {
+                                    scheduleDates: pastDates,
+                                    seats: {
+                                      dates: updatedSeats
+                                    }
+                                  },
+                                  {
+                                    headers: { Authorization: `Bearer ${operatorData?.token}` }
+                                  });
+                                toast.success('Future dates removed successfully');
+                              } else {
+                                // Delete entire schedule if no past dates
+                                await axios.delete(
+                                  `${backendUrl}/api/operator/schedules/${deleteConfirmSchedule._id}`,
+                                  {
+                                    headers: { Authorization: `Bearer ${operatorData?.token}` }
+                                  });
+                                toast.success('Schedule deleted successfully');
+                              }
+                              setDeleteConfirmSchedule(null);
+                              fetchSchedules();
+                            } catch (error) {
+                              toast.error(error.response?.data?.message || 'Deletion failed');
+                            }
+                          }}
+                        >
+                          Confirm Delete
+                        </Button>
+                      </Box>
+                    )}
+                  </>
+                );
+              })()}
             </Box>
-            <Box className="flex justify-end gap-2">
-              <Button variant="outlined" onClick={() => setDeleteConfirmSchedule(null)}>Cancel</Button>
-              <Button variant="contained" color="error" onClick={async () => {
-                try {
-                  await axios.delete(`${backendUrl}/api/operator/schedules/${deleteConfirmSchedule._id}`, {
-                    headers: { Authorization: `Bearer ${operatorData?.token}` }
-                  });
-                  toast.success('Schedule deleted successfully');
-                  setDeleteConfirmSchedule(null);
-                  fetchSchedules();
-                } catch (error) {
-                  toast.error('Failed to delete schedule');
-                }
-              }}>Delete</Button>
-            </Box>
-          </Box>
-        </Modal>
+          </Modal>
+        </Box>
       </div>
     </div>
   );
-};
+}
 
 export default ManageSchedules;

@@ -84,9 +84,6 @@ export const updateSchedule = async (req, res) => {
     if (!schedule) {
       return res.status(404).json({ success: false, message: 'Schedule not found.' });
     }
-    if (!isUpcoming(schedule.scheduleDates)) {
-      return res.status(400).json({ success: false, message: 'Cannot update past schedule.' });
-    }
     const { bus, route, scheduleDates, fromTime, toTime, pickupTimes, dropTimes, seats } = req.body;
     if (bus !== undefined) schedule.bus = bus;
     if (route !== undefined) schedule.route = route;
