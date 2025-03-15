@@ -44,6 +44,9 @@ const ManageBus = () => {
     const [newImages, setNewImages] = useState({});
     const [newDocuments, setNewDocuments] = useState({});
 
+    // Store file names for uploads
+    const [fileNames, setFileNames] = useState({});
+
     // Fetch operator's buses
     useEffect(() => {
         const fetchBuses = async () => {
@@ -105,6 +108,8 @@ const ManageBus = () => {
                 insurance: bus.documents?.insurance || ''
             }
         });
+        // Clear any previously stored file names
+        setFileNames({});
         // Clear any previously stored new files
         setNewImages({});
         setNewDocuments({});
@@ -149,6 +154,39 @@ const ManageBus = () => {
         setFormData(prev => ({ ...prev, amenities: newAmenities }));
     };
 
+    // Helper: Open image in a new tab - revert to original behavior to direct link
+    const handleOpenImage = (url) => {
+        if (!url) {
+            toast.error('Image not found');
+            return;
+        }
+
+        // Open directly using the original URL without proxy
+        window.open(url, '_blank');
+    };
+
+    // Simple text display for image URLs instead of preview component
+    const ImageUrlDisplay = ({ url, fileName }) => {
+        if (!url) return <div className="text-gray-400 text-sm">No image selected</div>;
+
+        // For blob URLs (new image selections), show the file name
+        if (url.startsWith('blob:') && fileName) {
+            return (
+                <div className="text-sm text-gray-500 break-all">
+                    <span className="text-green-600 font-medium">Selected: {fileName}</span>
+                </div>
+            );
+        }
+
+        // In edit mode for existing URLs, show the URL text
+        if (editMode) {
+            return <div className="text-sm text-gray-500 mt-1 break-all">{url}</div>;
+        }
+
+        // In view mode, don't show URLs
+        return null;
+    };
+
     // --- Bus Image Upload Handler ---
     const handleImageUpload = (e, position) => {
         const file = e.target.files[0];
@@ -176,6 +214,12 @@ const ManageBus = () => {
             ...prev,
             [position]: file
         }));
+
+        // Store the file name
+        setFileNames(prev => ({
+            ...prev,
+            [position]: file.name
+        }));
     };
 
     // --- Document Image Upload Handler ---
@@ -202,6 +246,12 @@ const ManageBus = () => {
             ...prev,
             [docKey]: file
         }));
+
+        // Store the file name
+        setFileNames(prev => ({
+            ...prev,
+            [docKey]: file.name
+        }));
     };
 
     // Save changes handler: uploads any new files to drive then updates bus details.
@@ -210,13 +260,21 @@ const ManageBus = () => {
             // Show a loading toast for image uploads.
             const uploadToastId = toast.loading("Uploading image, please wait...");
 
-            // Updated images: if a new file exists for any position, upload it first.
-            let updatedImages = { ...formData.images };
+            // Start with the existing images from the selected bus (which should be Drive URLs)
+            let updatedImages = {
+                front: selectedBus.images?.front || '',
+                back: selectedBus.images?.back || '',
+                left: selectedBus.images?.left || '',
+                right: selectedBus.images?.right || ''
+            };
+
+            // Upload any new image files to Google Drive
             for (const position in newImages) {
                 const file = newImages[position];
                 const data = new FormData();
                 data.append('file', file);
                 data.append('type', position);
+
                 // Call your upload endpoint to upload file to drive.
                 const res = await axios.post(`${backendUrl}/api/operator/bus/upload-file`, data, {
                     headers: {
@@ -224,11 +282,18 @@ const ManageBus = () => {
                         Authorization: `Bearer ${operatorData?.token}`
                     }
                 });
-                updatedImages[position] = res.data.driveUrl; // assume driveUrl is returned
+
+                // Make sure we got a valid Drive URL back
+                if (res.data.success && res.data.driveUrl) {
+                    console.log(`Uploaded ${position} image, received Drive URL: ${res.data.driveUrl}`);
+                    updatedImages[position] = res.data.driveUrl;
+                } else {
+                    toast.error(`Failed to upload ${position} image`);
+                }
             }
 
             // Updated documents: only if bus is unverified.
-            let updatedDocuments = { ...formData.documents };
+            let updatedDocuments = { ...selectedBus.documents };
             if (!selectedBus.verified) {
                 for (const docKey in newDocuments) {
                     const file = newDocuments[docKey];
@@ -241,7 +306,12 @@ const ManageBus = () => {
                             Authorization: `Bearer ${operatorData?.token}`
                         }
                     });
-                    updatedDocuments[docKey] = res.data.driveUrl;
+
+                    if (res.data.success && res.data.driveUrl) {
+                        updatedDocuments[docKey] = res.data.driveUrl;
+                    } else {
+                        toast.error(`Failed to upload ${docKey} document`);
+                    }
                 }
             }
 
@@ -256,29 +326,37 @@ const ManageBus = () => {
                 ...(selectedBus.verified ? {} : { documents: updatedDocuments })
             };
 
+            // Log what we're saving to help debug
+            console.log('Saving updated bus data:', updatedData);
+
             const res = await axios.put(
                 `${backendUrl}/api/operator/bus/buses/${selectedBus._id}`,
                 updatedData,
                 { headers: { Authorization: `Bearer ${operatorData?.token}` } }
             );
+
+            // Update the bus list with the new data
             setBuses(prev => prev.map(bus => bus._id === selectedBus._id ? res.data.bus : bus));
+
+            // Update the selected bus with the latest data (with Drive URLs)
+            setSelectedBus(res.data.bus);
+
+            // Update formData with the new Drive URLs for consistency
+            setFormData(prev => ({
+                ...prev,
+                images: updatedImages,
+                documents: updatedDocuments
+            }));
+
             toast.success('Bus details updated successfully');
             setEditMode(false);
-            setSelectedBus(res.data.bus);
+
             // Clear the new files state after successful upload.
             setNewImages({});
             setNewDocuments({});
         } catch (error) {
-            toast.error('Failed to update bus details');
-        }
-    };
-
-    // Helper: Open image in a new tab
-    const handleOpenImage = (url) => {
-        if (url) {
-            window.open(url, '_blank');
-        } else {
-            toast.error('Image not found');
+            console.error('Error updating bus:', error);
+            toast.error('Failed to update bus details: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -459,19 +537,29 @@ const ManageBus = () => {
                                         <hr className="my-4 border-gray-200" />
                                         <div className="mt-2">
                                             <strong>Document Images:</strong>
+                                            <div className="mt-1 text-sm bg-amber-50 border border-amber-200 rounded p-2 mb-3">
+                                                <p className="flex items-center text-amber-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    Note: Sign in to your Google account with the same operator email to view document images.
+                                                </p>
+                                            </div>
                                             <div className="mt-1 grid grid-rows-1 gap-3">
                                                 {selectedBus.documents ? (
                                                     Object.entries(selectedBus.documents).map(([key, url], idx) => (
-                                                        <Button
-                                                            key={idx}
-                                                            variant="outlined"
-                                                            size="small"
-                                                            startIcon={<FaImage />}
-                                                            onClick={() => handleOpenImage(url)}
-                                                            className="w-fit"
-                                                        >
-                                                            View {key.charAt(0).toUpperCase() + key.slice(1)}
-                                                        </Button>
+                                                        <div key={idx} className="flex flex-col gap-2">
+                                                            <Button
+                                                                variant="outlined"
+                                                                size="small"
+                                                                startIcon={<FaImage />}
+                                                                onClick={() => handleOpenImage(url)}
+                                                                className="w-fit"
+                                                            >
+                                                                View {key.charAt(0).toUpperCase() + key.slice(1)}
+                                                            </Button>
+                                                            <ImageUrlDisplay url={url} fileName={fileNames[key]} />
+                                                        </div>
                                                     ))
                                                 ) : (
                                                     <p>N/A</p>
@@ -484,16 +572,18 @@ const ManageBus = () => {
                                             <div className="mt-1 grid grid-rows-1 gap-3">
                                                 {selectedBus.images ? (
                                                     Object.entries(selectedBus.images).map(([key, url], idx) => (
-                                                        <Button
-                                                            key={idx}
-                                                            variant="outlined"
-                                                            size="small"
-                                                            startIcon={<FaImage />}
-                                                            onClick={() => handleOpenImage(url)}
-                                                            className="w-fit"
-                                                        >
-                                                            View {key.charAt(0).toUpperCase() + key.slice(1)}
-                                                        </Button>
+                                                        <div key={idx} className="flex flex-col gap-2">
+                                                            <Button
+                                                                variant="outlined"
+                                                                size="small"
+                                                                startIcon={<FaImage />}
+                                                                onClick={() => handleOpenImage(url)}
+                                                                className="w-fit"
+                                                            >
+                                                                View {key.charAt(0).toUpperCase() + key.slice(1)}
+                                                            </Button>
+                                                            <ImageUrlDisplay url={url} fileName={fileNames[key]} />
+                                                        </div>
                                                     ))
                                                 ) : (
                                                     <p>N/A</p>
@@ -591,11 +681,9 @@ const ManageBus = () => {
                                                             />
                                                         </label>
                                                     </div>
-                                                    {formData.images[position] && (
-                                                        <p className="text-sm text-gray-500 mt-1 break-all">
-                                                            {formData.images[position]}
-                                                        </p>
-                                                    )}
+                                                    <div className="mt-2">
+                                                        <ImageUrlDisplay url={formData.images[position]} fileName={fileNames[position]} />
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -626,11 +714,9 @@ const ManageBus = () => {
                                                                 />
                                                             </label>
                                                         </div>
-                                                        {formData.documents[docKey] && (
-                                                            <p className="text-sm text-gray-500 mt-1 break-all">
-                                                                {formData.documents[docKey]}
-                                                            </p>
-                                                        )}
+                                                        <div className="mt-2">
+                                                            <ImageUrlDisplay url={formData.documents[docKey]} fileName={fileNames[docKey]} />
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>

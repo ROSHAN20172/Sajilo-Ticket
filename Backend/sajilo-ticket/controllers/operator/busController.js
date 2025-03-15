@@ -2,8 +2,8 @@ import Bus from '../../models/operator/busModel.js';
 import { google } from 'googleapis';
 import { Readable } from 'stream';
 
-// Helper function: uploads a file (from memory) to Google Drive and returns the public URL.
-const uploadFileToDrive = async (file, folderId, operatorEmail) => {
+// Helper function: uploads a file (from memory) to Google Drive and returns the URL.
+const uploadFileToDrive = async (file, folderId, operatorEmail, isPublic = false) => {
     try {
         const auth = new google.auth.GoogleAuth({
             keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
@@ -36,18 +36,30 @@ const uploadFileToDrive = async (file, folderId, operatorEmail) => {
             return null;
         }
 
-        // Use the operator's email passed from the request
-        if (!operatorEmail) {
-            return null;
+        // Set permissions based on isPublic flag
+        if (isPublic) {
+            // Public read access for anyone
+            await driveService.permissions.create({
+                fileId: fileId,
+                requestBody: {
+                    role: 'reader',
+                    type: 'anyone',
+                },
+            });
+        } else {
+            // Private access for the operator's email
+            if (!operatorEmail) {
+                return null;
+            }
+            await driveService.permissions.create({
+                fileId: fileId,
+                requestBody: {
+                    role: 'reader',
+                    type: 'user',
+                    emailAddress: operatorEmail,
+                },
+            });
         }
-        await driveService.permissions.create({
-            fileId: fileId,
-            requestBody: {
-                role: 'reader',
-                type: 'user',
-                emailAddress: operatorEmail,
-            },
-        });
 
         return `https://drive.google.com/uc?export=view&id=${fileId}`;
     } catch (error) {
@@ -119,28 +131,29 @@ export const addBus = async (req, res) => {
         let leftImageUrl = '';
         let rightImageUrl = '';
 
-        if (req.files) {
-            if (req.files.bluebook && req.files.bluebook[0]) {
-                bluebookUrl = await uploadFileToDrive(req.files.bluebook[0], folderId, req.operator.email);
-            }
-            if (req.files.roadPermit && req.files.roadPermit[0]) {
-                roadPermitUrl = await uploadFileToDrive(req.files.roadPermit[0], folderId, req.operator.email);
-            }
-            if (req.files.insurance && req.files.insurance[0]) {
-                insuranceUrl = await uploadFileToDrive(req.files.insurance[0], folderId, req.operator.email);
-            }
-            if (req.files.busImageFront && req.files.busImageFront[0]) {
-                frontImageUrl = await uploadFileToDrive(req.files.busImageFront[0], folderId, req.operator.email);
-            }
-            if (req.files.busImageBack && req.files.busImageBack[0]) {
-                backImageUrl = await uploadFileToDrive(req.files.busImageBack[0], folderId, req.operator.email);
-            }
-            if (req.files.busImageLeft && req.files.busImageLeft[0]) {
-                leftImageUrl = await uploadFileToDrive(req.files.busImageLeft[0], folderId, req.operator.email);
-            }
-            if (req.files.busImageRight && req.files.busImageRight[0]) {
-                rightImageUrl = await uploadFileToDrive(req.files.busImageRight[0], folderId, req.operator.email);
-            }
+        // Upload documents with operator access
+        if (req.files.bluebook && req.files.bluebook[0]) {
+            bluebookUrl = await uploadFileToDrive(req.files.bluebook[0], folderId, req.operator.email);
+        }
+        if (req.files.roadPermit && req.files.roadPermit[0]) {
+            roadPermitUrl = await uploadFileToDrive(req.files.roadPermit[0], folderId, req.operator.email);
+        }
+        if (req.files.insurance && req.files.insurance[0]) {
+            insuranceUrl = await uploadFileToDrive(req.files.insurance[0], folderId, req.operator.email);
+        }
+
+        // Upload bus images with public access
+        if (req.files.busImageFront && req.files.busImageFront[0]) {
+            frontImageUrl = await uploadFileToDrive(req.files.busImageFront[0], folderId, req.operator.email, true);
+        }
+        if (req.files.busImageBack && req.files.busImageBack[0]) {
+            backImageUrl = await uploadFileToDrive(req.files.busImageBack[0], folderId, req.operator.email, true);
+        }
+        if (req.files.busImageLeft && req.files.busImageLeft[0]) {
+            leftImageUrl = await uploadFileToDrive(req.files.busImageLeft[0], folderId, req.operator.email, true);
+        }
+        if (req.files.busImageRight && req.files.busImageRight[0]) {
+            rightImageUrl = await uploadFileToDrive(req.files.busImageRight[0], folderId, req.operator.email, true);
         }
 
         // Create a new Bus document with the authenticated operator's id
@@ -175,77 +188,86 @@ export const addBus = async (req, res) => {
 // GET all buses for the logged-in operator
 export const getOperatorBuses = async (req, res) => {
     try {
-      const buses = await Bus.find({ createdBy: req.operator.id });
-      res.json(buses);
+        const buses = await Bus.find({ createdBy: req.operator.id });
+        res.json(buses);
     } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error. Try again later.' });
+        res.status(500).json({ success: false, message: 'Server error. Try again later.' });
     }
-  };
-  
-  // GET details for a single bus (only if it belongs to the logged-in operator)
-  export const getBusById = async (req, res) => {
-    try {
-      const bus = await Bus.findOne({ _id: req.params.id, createdBy: req.operator.id });
-      if (!bus) {
-        return res.status(404).json({ success: false, message: 'Bus not found.' });
-      }
-      res.json(bus);
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error. Try again later.' });
-    }
-  };
-  
-  // UPDATE a bus's details
-  // Allowed updates: busDescription, reservationPolicies, amenities, images
-  // Document images can only be updated if the bus is unverified.
-  export const updateBus = async (req, res) => {
-    try {
-      const bus = await Bus.findOne({ _id: req.params.id, createdBy: req.operator.id });
-      if (!bus) {
-        return res.status(404).json({ success: false, message: 'Bus not found.' });
-      }
-  
-      // Update allowed fields
-      const { busDescription, reservationPolicies, amenities, images, documents } = req.body;
-  
-      if (busDescription !== undefined) bus.busDescription = busDescription;
-      if (reservationPolicies !== undefined) bus.reservationPolicies = reservationPolicies;
-      if (amenities !== undefined) bus.amenities = amenities;
-      if (images !== undefined) bus.images = images;
-      
-      // Update documents only if the bus is unverified
-      if (!bus.verified && documents !== undefined) {
-        bus.documents = documents;
-      }
-      
-      const updatedBus = await bus.save();
-      res.json({ success: true, message: 'Bus details updated successfully', bus: updatedBus });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error. Try again later.' });
-    }
-  };
-  
-  // DELETE a bus (only if it belongs to the logged-in operator)
-  export const deleteBus = async (req, res) => {
-    try {
-      const bus = await Bus.findOneAndDelete({ _id: req.params.id, createdBy: req.operator.id });
-      if (!bus) {
-        return res.status(404).json({ success: false, message: 'Bus not found.' });
-      }
-      res.json({ success: true, message: 'Bus deleted successfully.' });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error. Try again later.' });
-    }
-  };
+};
 
-  // New uploadFile endpoint
+// GET details for a single bus (only if it belongs to the logged-in operator)
+export const getBusById = async (req, res) => {
+    try {
+        const bus = await Bus.findOne({ _id: req.params.id, createdBy: req.operator.id });
+        if (!bus) {
+            return res.status(404).json({ success: false, message: 'Bus not found.' });
+        }
+        res.json(bus);
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error. Try again later.' });
+    }
+};
+
+// UPDATE a bus's details
+// Allowed updates: busDescription, reservationPolicies, amenities, images
+// Document images can only be updated if the bus is unverified.
+export const updateBus = async (req, res) => {
+    try {
+        const bus = await Bus.findOne({ _id: req.params.id, createdBy: req.operator.id });
+        if (!bus) {
+            return res.status(404).json({ success: false, message: 'Bus not found.' });
+        }
+
+        // Update allowed fields
+        const { busDescription, reservationPolicies, amenities, images, documents } = req.body;
+
+        if (busDescription !== undefined) bus.busDescription = busDescription;
+        if (reservationPolicies !== undefined) bus.reservationPolicies = reservationPolicies;
+        if (amenities !== undefined) bus.amenities = amenities;
+        if (images !== undefined) bus.images = images;
+
+        // Update documents only if the bus is unverified
+        if (!bus.verified && documents !== undefined) {
+            bus.documents = documents;
+        }
+
+        const updatedBus = await bus.save();
+        res.json({ success: true, message: 'Bus details updated successfully', bus: updatedBus });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error. Try again later.' });
+    }
+};
+
+// DELETE a bus (only if it belongs to the logged-in operator)
+export const deleteBus = async (req, res) => {
+    try {
+        const bus = await Bus.findOneAndDelete({ _id: req.params.id, createdBy: req.operator.id });
+        if (!bus) {
+            return res.status(404).json({ success: false, message: 'Bus not found.' });
+        }
+        res.json({ success: true, message: 'Bus deleted successfully.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error. Try again later.' });
+    }
+};
+
+// New uploadFile endpoint
 export const uploadFile = async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, message: "No file provided." });
         }
+
         const folderId = process.env.GOOGLE_DRIVE_BUS_FOLDER_ID || '';
-        const driveUrl = await uploadFileToDrive(req.file, folderId, req.operator.email);
+
+        // Check if this is a bus image or a document based on the type field
+        const fileType = req.body.type;
+
+        // If it's a bus image (front, back, left, right), set isPublic to true
+        const isPublic = ['front', 'back', 'left', 'right'].includes(fileType);
+
+        const driveUrl = await uploadFileToDrive(req.file, folderId, req.operator.email, isPublic);
+
         if (!driveUrl) {
             return res.status(500).json({ success: false, message: "Failed to upload file to Drive." });
         }

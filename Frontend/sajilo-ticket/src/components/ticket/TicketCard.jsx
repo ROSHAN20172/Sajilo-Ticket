@@ -1,18 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaBus, FaStar, FaCalendar } from 'react-icons/fa6';
-import { TbAirConditioning } from 'react-icons/tb';
-import { RiVipFill } from 'react-icons/ri';
+import { FaBus, FaCalendar } from 'react-icons/fa6';
 import { MdOutlineChair } from 'react-icons/md';
 
-const TicketCard = ({ 
-  icon: Icon, 
-  busName, 
-  routeFrom, 
-  routeTo, 
-  arrivalTime, 
-  departureTime, 
-  price, 
+const TicketCard = ({
+  busId,
+  icon: Icon,
+  busName,
+  routeFrom,
+  routeTo,
+  arrivalTime,
+  departureTime,
+  price,
   availableSeats,
   amenities = [],
   date
@@ -79,8 +78,8 @@ const TicketCard = ({
             {availableSeats} Seats Available
           </span>
         </h1>
-        <Link 
-          to="/bus-tickets/detail" 
+        <Link
+          to={`/bus-tickets/detail/${busId}`} 
           className="w-fit px-5 py-1.5 bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-xl text-sm font-normal text-neutral-50 flex items-center justify-center gap-x-2 hover:text-primary ease-in-out duration-300"
         >
           Reserve Seat

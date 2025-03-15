@@ -9,7 +9,7 @@ const Checkout = () => {
     <div className='w-full space-y-12 pb-16'>
       {/* Top Layout */}
       <TopLayout
-        bgImg={"https://th.bing.com/th?id=OIP.q3iPPIRV3Dlb1X30h5tKcwHaE8&w=306&h=204&c=8&rs=1&qlt=90&o=6&dpr=1.3&pid=3.1&rm=2"}
+        bgImg={"https://ts1.mm.bing.net/th?id=OIP.gNpTYgggmsWFW_ITmPOinwHaDf&pid=15.1"}
         title={"Checkout"}
       />
 

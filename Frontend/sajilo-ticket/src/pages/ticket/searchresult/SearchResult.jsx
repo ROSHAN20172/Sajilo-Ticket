@@ -71,6 +71,7 @@ const SearchResult = () => {
           dataToShow.map((ticket, index) => (
             <TicketCard
               key={index}
+              busId={ticket.bus?._id}
               icon={FaBus}
               busName={ticket.bus?.busName || "Unknown Bus"}
               routeFrom={`${ticket.route?.from || "Origin"} (${ticket.route?.pickupPoints?.join(", ") || ""})`}

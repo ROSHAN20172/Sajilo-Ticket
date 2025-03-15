@@ -336,7 +336,7 @@ const ManageRoutes = () => {
                 )
               }}
             />
-            <Button variant="contained" color="primary" onClick={() => {}}>
+            <Button variant="contained" color="primary" onClick={() => { }}>
               Search
             </Button>
           </div>
@@ -432,6 +432,14 @@ const ManageRoutes = () => {
               <IconButton onClick={closeModal}>
                 <FaTimes className="text-red-600" />
               </IconButton>
+            </div>
+            <div className="mt-1 text-sm bg-amber-50 border border-amber-200 rounded p-2 mb-3">
+              <p className="flex items-center text-amber-700">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Note: Only verified buses will show in the Select Bus dropdown.
+              </p>
             </div>
             <Typography variant="caption" color="textSecondary" className="block mb-4 pb-3">
               Note: Only verified buses will show in the Select Bus dropdown.

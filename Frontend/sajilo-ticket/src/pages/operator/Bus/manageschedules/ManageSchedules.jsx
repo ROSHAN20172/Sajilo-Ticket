@@ -276,6 +276,22 @@ const ManageSchedules = () => {
       toast.error('Cannot edit past schedule.');
       return;
     }
+
+    // Analyze seat configuration from database
+    const seatDates = schedule.seats?.dates || {};
+    const dates = Object.keys(seatDates);
+    const isGlobalConfig = dates.length > 0 &&
+      dates.every(date =>
+        JSON.stringify(seatDates[date].available) === JSON.stringify(seatDates[dates[0]].available)
+      );
+
+    // Determine seatsType (all seats or manual)
+    const isAllSeats = dates.length > 0 &&
+      dates.every(date =>
+        seatDates[date].available.length === allSeats.length &&
+        seatDates[date].available.every(seat => allSeats.includes(seat))
+      );
+
     setFormData({
       bus: schedule.bus?._id || '',
       route: schedule.route?._id || '',
@@ -284,22 +300,26 @@ const ManageSchedules = () => {
       toTime: schedule.toTime,
       pickupTimes: schedule.pickupTimes || [],
       dropTimes: schedule.dropTimes || [],
-      seatsType: 'manual',
-      seatConfigOption: 'global',
-      globalAvailableSeats: schedule.seats && schedule.seats.dates
-        ? Object.values(schedule.seats.dates)[0]?.available || allSeats
+      seatsType: isAllSeats ? 'all' : 'manual',
+      seatConfigOption: isGlobalConfig ? 'global' : 'perDate',
+      globalAvailableSeats: isGlobalConfig && dates.length > 0
+        ? seatDates[dates[0]].available
         : allSeats,
-      dateSeats: schedule.seats && schedule.seats.dates ? schedule.seats.dates : {}
+      dateSeats: Object.entries(seatDates).reduce((acc, [date, data]) => {
+        acc[date] = data.available;
+        return acc;
+      }, {})
     });
-    setGlobalSeatConfirmed(true);
+
+    // Set confirmation states
+    setGlobalSeatConfirmed(isGlobalConfig);
     setPerDateSeatConfirmed(
-      schedule.seats && schedule.seats.dates
-        ? Object.keys(schedule.seats.dates).reduce((acc, date) => {
-          acc[date] = true;
-          return acc;
-        }, {})
-        : {}
+      Object.keys(seatDates).reduce((acc, date) => {
+        acc[date] = true;
+        return acc;
+      }, {})
     );
+
     setSelectedSchedule(schedule);
     setEditMode(true);
     setModalOpen(true);
@@ -735,9 +755,14 @@ const ManageSchedules = () => {
                 <Typography variant="h4">{editMode ? 'Edit Schedule' : 'Add New Schedule'}</Typography>
                 <IconButton onClick={closeModal}><FaTimes className="text-red-600" /></IconButton>
               </div>
-              <Typography variant="caption" color="textSecondary" className="block mb-4">
-                Note: Only buses with at least one route are listed. If no bus appears, add a route for that bus first.
-              </Typography>
+              <div className="mt-1 text-sm bg-amber-50 border border-amber-200 rounded p-2 mb-3">
+                <p className="flex items-center text-amber-700">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Note: Only buses with at least one route are listed. If no bus appears, add a route for that bus first.
+                </p>
+              </div>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                 <TextField select label="Select Bus" name="bus" value={formData.bus} onChange={handleInputChange} fullWidth>
                   {busesWithRoutes.length > 0 ? (
