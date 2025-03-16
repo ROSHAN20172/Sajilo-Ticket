@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo, forwardRef, useImperativeHandle } from 'react';
 import TicketCard from '../../../components/ticket/TicketCard';
 import { FaBus } from 'react-icons/fa6';
 import { GrRefresh } from 'react-icons/gr';
@@ -7,7 +7,7 @@ import { UserAppContext } from '../../../context/UserAppContext';
 import { toast } from 'react-toastify';
 import { useLocation } from 'react-router-dom';
 
-const SearchResult = () => {
+const SearchResult = forwardRef((props, ref) => {
   const { backendUrl } = useContext(UserAppContext);
   const location = useLocation();
 
@@ -17,11 +17,64 @@ const SearchResult = () => {
   const toParam = searchParams.get('to');
   const dateParam = searchParams.get('date');
 
+  const [originalData, setOriginalData] = useState([]); // Keep the original data
   const [dataToShow, setDataToShow] = useState([]);
   const [skip, setSkip] = useState(0);
   const limit = 10;
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [filters, setFilters] = useState({
+    amenities: [],
+    sortOption: ''
+  });
+
+  // Format tickets for Filter component
+  const ticketsForFilter = useMemo(() => {
+    // Ensure only return valid amenities data
+    if (!originalData || originalData.length === 0) {
+      return [];
+    }
+
+    try {
+      return originalData.map(ticket => ({
+        amenities: Array.isArray(ticket.bus?.amenities)
+          ? ticket.bus.amenities.filter(amenity =>
+            typeof amenity === 'string' && amenity.trim() !== ''
+          )
+          : []
+      }));
+    } catch (error) {
+      return [];
+    }
+  }, [originalData]);
+
+  // Format filtered tickets for Filter component to show accurate counts
+  const filteredTicketsForFilter = useMemo(() => {
+    // Ensure only return valid amenities data
+    if (!dataToShow || dataToShow.length === 0) {
+      return [];
+    }
+
+    try {
+      return dataToShow.map(ticket => ({
+        amenities: Array.isArray(ticket.bus?.amenities)
+          ? ticket.bus.amenities.filter(amenity =>
+            typeof amenity === 'string' && amenity.trim() !== ''
+          )
+          : []
+      }));
+    } catch (error) {
+      return [];
+    }
+  }, [dataToShow]);
+
+  // Expose methods and data to parent component via ref
+  useImperativeHandle(ref, () => ({
+    handleFilterChange,
+    ticketsForFilter,
+    filteredTicketsForFilter,
+    loading
+  }));
 
   // When the search parameters change (or on mount), fetch the ticket data.
   useEffect(() => {
@@ -49,11 +102,17 @@ const SearchResult = () => {
         setHasMore(false);
       } else {
         if (reset) {
+          setOriginalData(fetchedData);
           setDataToShow(fetchedData);
           setSkip(limit);
           setHasMore(true);
         } else {
-          setDataToShow(prev => [...prev, ...fetchedData]);
+          const newCombinedData = [...originalData, ...fetchedData];
+          setOriginalData(newCombinedData);
+
+          // Apply current filters to the combined data
+          const filteredData = applyFilters(newCombinedData, filters);
+          setDataToShow(filteredData);
           setSkip(prev => prev + limit);
         }
       }
@@ -62,6 +121,62 @@ const SearchResult = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Apply filters to the data
+  const applyFilters = (data, currentFilters) => {
+    let filteredData = [...data];
+
+    // Filter by amenities
+    if (currentFilters.amenities && currentFilters.amenities.length > 0) {
+      filteredData = filteredData.filter(ticket => {
+        if (!ticket.bus || !ticket.bus.amenities || !Array.isArray(ticket.bus.amenities)) {
+          return false;
+        }
+
+        // Check if the bus has all selected amenities
+        return currentFilters.amenities.every(selectedAmenity => {
+          const selectedAmenityLower = selectedAmenity.toLowerCase();
+
+          return ticket.bus.amenities.some(busAmenity => {
+            if (typeof busAmenity !== 'string') {
+              return false;
+            }
+
+            const busAmenityLower = busAmenity.toLowerCase();
+
+            // Try different matching strategies for more accurate results
+            return busAmenityLower === selectedAmenityLower ||
+              busAmenityLower.includes(selectedAmenityLower) ||
+              selectedAmenityLower.includes(busAmenityLower);
+          });
+        });
+      });
+    }
+
+    // Sort by price
+    if (currentFilters.sortOption) {
+      filteredData.sort((a, b) => {
+        const priceA = a.route?.price || 0;
+        const priceB = b.route?.price || 0;
+
+        if (currentFilters.sortOption === 'asc') {
+          return priceA - priceB;
+        } else if (currentFilters.sortOption === 'desc') {
+          return priceB - priceA;
+        }
+        return 0;
+      });
+    }
+
+    return filteredData;
+  };
+
+  // Handle filter changes from Filter component
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    const filteredData = applyFilters(originalData, newFilters);
+    setDataToShow(filteredData);
   };
 
   return (
@@ -99,19 +214,15 @@ const SearchResult = () => {
           <button
             onClick={() => fetchTicketData(false)}
             disabled={loading}
-            className="w-fit px-8 py-3 bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-xl text-base font-normal text-neutral-50 flex items-center justify-center gap-x-2 hover:text-primary ease-in-out duration-300"
+            className="flex items-center justify-center gap-x-2 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 rounded-lg text-neutral-600"
           >
-            {loading ? "Loading..." : (
-              <>
-                <GrRefresh />
-                Load More
-              </>
-            )}
+            <GrRefresh className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Loading...' : 'Load More'}
           </button>
         </div>
       )}
     </div>
   );
-};
+});
 
 export default SearchResult;

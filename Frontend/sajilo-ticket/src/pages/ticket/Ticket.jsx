@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TopLayout from '../../layout/toppage/TopLayout';
 import RootLayout from '../../layout/RootLayout';
 import { motion } from 'framer-motion';
@@ -7,8 +7,49 @@ import Filter from './filter/Filter';
 import SearchResult from './searchresult/SearchResult';
 
 const Ticket = () => {
-  // This state will hold search results if a search is performed.
+  // For search results and filtering
   const [searchResults, setSearchResults] = useState(null);
+
+  // State to track bus data for filter component
+  const [busData, setBusData] = useState([]);
+  const [filteredBusData, setFilteredBusData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Refs for components to share data between them
+  const searchResultRef = useRef(null);
+
+  // Update the bus data whenever the search results ref changes
+  useEffect(() => {
+    const updateBusData = () => {
+      if (searchResultRef.current) {
+        // Get the data from the ref
+        const tickets = searchResultRef.current.ticketsForFilter || [];
+        const filteredTickets = searchResultRef.current.filteredTicketsForFilter || [];
+        const loading = searchResultRef.current.loading || false;
+
+        // Update the state with the latest data
+        setBusData(tickets);
+        setFilteredBusData(filteredTickets);
+        setIsLoading(loading);
+      }
+    };
+
+    // Set up an interval to check for updates
+    const interval = setInterval(updateBusData, 500);
+
+    // Initial update
+    updateBusData();
+
+    // Clean up interval
+    return () => clearInterval(interval);
+  }, [searchResultRef.current]);
+
+  // Handle filter changes from the Filter component
+  const handleFilterChange = (filterData) => {
+    if (searchResultRef.current && searchResultRef.current.handleFilterChange) {
+      searchResultRef.current.handleFilterChange(filterData);
+    }
+  };
 
   return (
     <div className='w-full space-y-12 pb-16'>
@@ -39,12 +80,21 @@ const Ticket = () => {
         <div className="w-full h-auto grid grid-cols-4 gap-16 relative">
           {/* Filter Section */}
           <div className="col-span-1">
-            <Filter className="space-y-4 sticky top-52 z-20" />
+            {/* Pass the latest data as props */}
+            <Filter
+              className="space-y-4 sticky top-52 z-20"
+              buses={busData}
+              filteredBuses={filteredBusData}
+              loading={isLoading}
+              onFilterChange={handleFilterChange}
+            />
           </div>
 
-          {/* Search Tickets */}
-          {/* If searchResults is not null, show them; otherwise load default data */}
-          <SearchResult searchResults={searchResults} />
+          {/* Search Results */}
+          <SearchResult
+            ref={searchResultRef}
+            searchResults={searchResults}
+          />
         </div>
       </RootLayout>
     </div>

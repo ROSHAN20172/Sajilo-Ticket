@@ -81,7 +81,7 @@ const BusSeat = ({ busId, date }) => {
       } else {
         return [...prevSelectedSeats, seatId];
       }
-    });    
+    });
   };
 
   // Function to determine the seat class or seat name on status
@@ -250,10 +250,10 @@ const BusSeat = ({ busId, date }) => {
           <div className="space-y-0.5 w-full">
             <div className="w-full flex items-center justify-between gap-x-5">
               <p className="text-sm text-neutral-400 font-normal">
-                From <span className='text-xs'>({routeInfo.pickupPoint})</span>
+                From
               </p>
               <p className="text-sm text-neutral-400 font-normal">
-                To <span className='text-xs'>({routeInfo.dropPoint})</span>
+                To
               </p>
             </div>
 

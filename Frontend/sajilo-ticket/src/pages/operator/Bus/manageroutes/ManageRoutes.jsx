@@ -354,7 +354,7 @@ const ManageRoutes = () => {
                   className="relative border rounded-lg p-4 shadow-md hover:shadow-xl transition-shadow bg-white min-w-[600px] w-full mx-auto"
                 >
                   <Typography variant="body1" className="mb-2">
-                    <strong>Bus:</strong> {route.bus?.busName || 'N/A'}
+                    <strong>Bus:</strong> {route.bus?.busName || 'N/A'} ({route.bus?.busNumber || 'N/A'})
                   </Typography>
                   <hr className="my-4 border-gray-300" />
                   <Typography variant="body1" className="mb-2">
