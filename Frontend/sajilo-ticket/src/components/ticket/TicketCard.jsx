@@ -79,7 +79,7 @@ const TicketCard = ({
           </span>
         </h1>
         <Link
-          to={`/bus-tickets/detail/${busId}`} 
+          to={`/bus-tickets/detail/${busId}?date=${date}`}
           className="w-fit px-5 py-1.5 bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-xl text-sm font-normal text-neutral-50 flex items-center justify-center gap-x-2 hover:text-primary ease-in-out duration-300"
         >
           Reserve Seat

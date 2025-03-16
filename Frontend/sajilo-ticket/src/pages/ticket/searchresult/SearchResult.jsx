@@ -79,13 +79,13 @@ const SearchResult = () => {
               arrivalTime={ticket.fromTime}
               departureTime={ticket.toTime}
               price={ticket.route?.price || 0}
+              date={ticket.scheduleDateStr || new Date().toISOString().split('T')[0]}
               availableSeats={
                 ticket.seats?.dates?.[ticket.scheduleDateStr]
                   ? ticket.seats?.dates?.[ticket.scheduleDateStr].available?.length
                   : ticket.seats?.global?.available?.length || 0
               }
               amenities={ticket.bus?.amenities || []}
-              date={ticket.scheduleDateStr}
             />
           ))
         ) : (

@@ -1,4 +1,5 @@
 import Bus from '../models/operator/busModel.js';
+import Schedule from '../models/operator/busScheduleModel.js';
 import axios from 'axios';
 import https from 'https';
 import fs from 'fs';
@@ -120,6 +121,125 @@ export const imageProxy = async (req, res) => {
     // Last resort - just send an error response
     return res.status(500).json({
       message: 'Failed to fetch image',
+      error: error.message
+    });
+  }
+};
+
+// Get bus seat data for a specific date
+export const getBusSeatData = async (req, res) => {
+  try {
+    const { busId, date } = req.query;
+
+    if (!busId) {
+      return res.status(400).json({ success: false, message: 'Bus ID is required' });
+    }
+
+    // If no date is provided, use today's date
+    const searchDate = date ? new Date(date) : new Date();
+
+    // Format date to YYYY-MM-DD for string comparison
+    const searchDateStr = searchDate.toISOString().split('T')[0];
+
+    // Find schedules for this bus on the specified date
+    const schedules = await Schedule.find({
+      bus: busId,
+      scheduleDates: {
+        $elemMatch: {
+          $gte: new Date(searchDateStr),
+          $lt: new Date(new Date(searchDateStr).setDate(new Date(searchDateStr).getDate() + 1))
+        }
+      }
+    }).populate('bus').populate('route');
+
+    if (schedules.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No schedule found for this bus on the specified date'
+      });
+    }
+
+    // Get the most relevant schedule (first one for now)
+    const schedule = schedules[0];
+
+    // Get seat data for this date
+    let seatData = {
+      available: [],
+      booked: []
+    };
+
+    // First check date-specific seat data
+    if (schedule.seats && schedule.seats.dates) {
+      const scheduleDateStr = searchDate.toISOString().split('T')[0];
+
+      // MongoDB stores dates as Map, so we need to check if the date exists
+      const dateData = schedule.seats.dates.get(scheduleDateStr);
+
+      if (dateData) {
+        seatData = dateData;
+      }
+    }
+
+    // If no date-specific data, fall back to global seat data
+    if (seatData.available.length === 0 && seatData.booked.length === 0 &&
+      schedule.seats && schedule.seats.global) {
+      seatData = schedule.seats.global;
+    }
+
+    // Create the seat data structure needed by the frontend
+    const busSeatData = [];
+
+    // Define seat IDs based on the existing pattern
+    const frontRowIds = ['B1', 'B3', 'B5', 'B7', 'B9', 'B11', 'B13', 'B15', 'B17'];
+    const secondRowIds = ['B2', 'B4', 'B6', 'B8', 'B10', 'B12', 'B14', 'B16', 'B18'];
+    const thirdRowId = ['19'];
+    const fourthRowIds = ['A1', 'A3', 'A5', 'A7', 'A9', 'A11', 'A13', 'A15', 'A17'];
+    const fifthRowIds = ['A2', 'A4', 'A6', 'A8', 'A10', 'A12', 'A14', 'A16', 'A18'];
+
+    const allSeatIds = [
+      ...frontRowIds,
+      ...secondRowIds,
+      ...thirdRowId,
+      ...fourthRowIds,
+      ...fifthRowIds
+    ];
+
+    // Get the price from the route
+    const price = schedule.route.price || 1600;
+
+    // Build the complete seat data structure
+    allSeatIds.forEach(seatId => {
+      const seatStatus = seatData.booked.includes(seatId) ? 'booked' : 'available';
+      busSeatData.push({
+        id: seatId,
+        status: seatStatus,
+        price: price
+      });
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        busSeatData,
+        schedule: {
+          _id: schedule._id,
+          fromTime: schedule.fromTime,
+          toTime: schedule.toTime,
+          date: searchDateStr,
+          route: {
+            from: schedule.route.from,
+            to: schedule.route.to,
+            pickupPoints: schedule.route.pickupPoints || [],
+            dropPoints: schedule.route.dropPoints || []
+          }
+        }
+      }
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching seat data',
       error: error.message
     });
   }

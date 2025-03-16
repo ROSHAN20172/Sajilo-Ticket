@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import TopLayout from '../../../layout/toppage/TopLayout';
 import RootLayout from '../../../layout/RootLayout';
@@ -14,8 +14,13 @@ import { toast } from 'react-toastify';
 const Detail = () => {
   const { backendUrl } = useContext(UserAppContext);
   const { busId } = useParams();
+  const location = useLocation();
   const [busDetails, setBusDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Get date from query params or use today's date
+  const searchParams = new URLSearchParams(location.search);
+  const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     const fetchBusDetails = async () => {
@@ -43,7 +48,7 @@ const Detail = () => {
 
       <RootLayout className="space-y-12 w-full pb-16">
         <div className="w-full space-y-8">
-          <BusSeat />
+          <BusSeat busId={busId} date={date} />
         </div>
 
         <div className="w-full flex flex-col items-center justify-center gap-8 text-center">
