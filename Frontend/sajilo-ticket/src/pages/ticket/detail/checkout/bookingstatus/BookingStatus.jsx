@@ -1,8 +1,159 @@
-import React from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { FaArrowRightLong } from 'react-icons/fa6'
 import { Link } from 'react-router-dom'
+import { UserAppContext } from '../../../../../context/UserAppContext'
+import { CheckoutContext } from '../Checkout'
+import axios from 'axios'
 
 const BookingStatus = () => {
+    const { backendUrl } = useContext(UserAppContext);
+    const { bookingData, checkoutData } = useContext(CheckoutContext);
+    const [ticketDetails, setTicketDetails] = useState({
+        fromLocation: '',
+        toLocation: '',
+        departureTime: '',
+        arrivalTime: '',
+        busNumber: '',
+        busName: '',
+        selectedSeats: [],
+        totalPrice: 0,
+        pickupPoint: '',
+        dropPoint: '',
+        pickupTime: '',
+        dropTime: ''
+    });
+    const [seatDisplayData, setSeatDisplayData] = useState([]);
+
+    const { busId, selectedSeats, date, totalPrice, route } = bookingData || {};
+
+    useEffect(() => {
+        // Set initial values from bookingData if available
+        if (route) {
+            setTicketDetails(prev => ({
+                ...prev,
+                fromLocation: route.from || '',
+                toLocation: route.to || '',
+                departureTime: route.departureTime || '',
+                arrivalTime: route.arrivalTime || '',
+                totalPrice: totalPrice || 0,
+                selectedSeats: selectedSeats || [],
+                busName: route.busName || '',
+                busNumber: route.busNumber || ''
+            }));
+        }
+    }, [route, selectedSeats, totalPrice]);
+
+    useEffect(() => {
+        // Fetch seat display data based on seat IDs
+        const fetchSeatData = async () => {
+            if (!busId || !selectedSeats || selectedSeats.length === 0) return;
+
+            try {
+                const response = await axios.get(`${backendUrl}/api/bus/seat-display-data`, {
+                    params: { busId, seatIds: JSON.stringify(selectedSeats) }
+                });
+
+                if (response.data.success) {
+                    setSeatDisplayData(response.data.data.seatDisplayData || selectedSeats);
+                } else {
+                    // If API fails, just use the seat IDs directly for display
+                    setSeatDisplayData(selectedSeats);
+                }
+            } catch (error) {
+                // Fallback to using the raw seat IDs
+                setSeatDisplayData(selectedSeats);
+            }
+        };
+
+        fetchSeatData();
+    }, [busId, selectedSeats, backendUrl]);
+
+    useEffect(() => {
+        const fetchTicketDetails = async () => {
+            if (!busId || !selectedSeats || selectedSeats.length === 0) return;
+
+            try {
+                const response = await axios.get(`${backendUrl}/api/bus/ticket-details`, {
+                    params: { busId, selectedSeats: JSON.stringify(selectedSeats), date }
+                });
+
+                if (response.data.success) {
+                    const { busNumber } = response.data.data;
+
+                    setTicketDetails(prev => ({
+                        ...prev,
+                        busNumber: busNumber || route?.busNumber || ''
+                    }));
+                }
+            } catch (error) {
+                // Fallback to use the bus number from route if available
+                setTicketDetails(prev => ({
+                    ...prev,
+                    busNumber: route?.busNumber || ''
+                }));
+            }
+        };
+
+        fetchTicketDetails();
+    }, [busId, selectedSeats, date, backendUrl, route]);
+
+    // Update pickup and drop points when checkoutData changes
+    useEffect(() => {
+        const updatePickupDropPoints = async () => {
+            if (!checkoutData.pickupPointId && !checkoutData.dropPointId) return;
+
+            try {
+                // Get route points data
+                const response = await axios.get(`${backendUrl}/api/bus/route-points`, {
+                    params: { busId, date }
+                });
+
+                if (response.data.success) {
+                    const { pickupPoints, dropPoints } = response.data.data;
+
+                    // Update pickup point
+                    if (checkoutData.pickupPointId) {
+                        const pickupPoint = pickupPoints.find(p => p.id === checkoutData.pickupPointId);
+                        if (pickupPoint) {
+                            setTicketDetails(prev => ({
+                                ...prev,
+                                pickupPoint: pickupPoint.name,
+                                pickupTime: pickupPoint.time
+                            }));
+                        }
+                    }
+
+                    // Update drop point
+                    if (checkoutData.dropPointId) {
+                        const dropPoint = dropPoints.find(p => p.id === checkoutData.dropPointId);
+                        if (dropPoint) {
+                            setTicketDetails(prev => ({
+                                ...prev,
+                                dropPoint: dropPoint.name,
+                                dropTime: dropPoint.time
+                            }));
+                        }
+                    }
+                }
+            } catch (error) {
+            }
+        };
+
+        updatePickupDropPoints();
+    }, [checkoutData.pickupPointId, checkoutData.dropPointId, busId, date, backendUrl]);
+
+    // Format time to include AM/PM
+    const formatTime = (timeString) => {
+        if (!timeString) return '';
+
+        const date = new Date(`2000-01-01T${timeString}`);
+        return date.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    };
+
     return (
         <div className='w-full col-span-3 sticky top-20 space-y-7'>
             <div className="w-full bg-neutral-50 rounded-xl py-4 px-6 border border-neutral-200 shadow-sm space-y-5">
@@ -13,60 +164,126 @@ const BookingStatus = () => {
                 <div className="space-y-5">
                     <div className="space-y-2 w-full">
                         <h1 className="text-base text-neutral-700 font-medium">
+                            Bus Information
+                        </h1>
+
+                        <div className="w-full space-y-2 border-b border-dashed border-neutral-200 pb-3">
+                            <div className="w-full flex items-center justify-between">
+                                <h3 className="text-sm text-neutral-500 font-medium">Bus Name:</h3>
+                                <p className="text-sm text-neutral-600 font-semibold">{ticketDetails.busName}</p>
+                            </div>
+                            <div className="w-full flex items-center justify-between">
+                                <h3 className="text-sm text-neutral-500 font-medium">Bus Number:</h3>
+                                <p className="text-sm text-neutral-600 font-semibold">{ticketDetails.busNumber}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="w-full space-y-2 border-b border-dashed border-neutral-200 pb-3">
+                    <div className="space-y-2 w-full">
+                        <h1 className="text-base text-neutral-700 font-medium">
                             Your Destination
                         </h1>
 
                         <div className="space-y-0.5 w-full">
                             <div className="w-full flex items-center justify-between gap-x-5">
                                 <p className="text-sm text-neutral-400 font-normal">
-                                    From <span className='text-xs'>(New Buspark)</span>
+                                    From
                                 </p>
                                 <p className="text-sm text-neutral-400 font-normal">
-                                    To <span className='text-xs'>(Ramanand Chowk)</span>
+                                    To
                                 </p>
                             </div>
 
                             <div className="w-full flex items-center justify-between gap-x-4">
                                 <h1 className="text-sm text-neutral-600 font-normal">
-                                    Kathmandu <span className='font-medium'>(06:30 PM)</span>
+                                    {ticketDetails.fromLocation} <span className='font-medium'>({formatTime(ticketDetails.departureTime)})</span>
                                 </h1>
 
                                 <div className="flex-1 border-dashed border border-neutral-300" />
 
                                 <h1 className="text-sm text-neutral-600 font-normal">
-                                    Jankpur <span className='font-medium'>(06:30 AM)</span>
+                                    {ticketDetails.toLocation} <span className='font-medium'>({formatTime(ticketDetails.arrivalTime)})</span>
                                 </h1>
                             </div>
 
-                            <div className="w-full flex items-center justify-between gap-x-4 !mt-1.5">
+                            {/* Pickup and Drop Point Section */}
+                            <div className="w-full flex items-center justify-between gap-x-5 mt-3">
+                                <p className="text-sm text-neutral-400 font-normal">
+                                    Pickup Point
+                                </p>
+                                <p className="text-sm text-neutral-400 font-normal">
+                                    Drop Point
+                                </p>
+                            </div>
+
+                            <div className="w-full flex items-center justify-between gap-x-4">
                                 <h1 className="text-sm text-neutral-600 font-normal">
-                                    Bus No. :
+                                    {ticketDetails.pickupPoint ? (
+                                        <>
+                                            {ticketDetails.pickupPoint}
+                                            {ticketDetails.pickupTime && (
+                                                <span className='font-medium'> ({formatTime(ticketDetails.pickupTime)})</span>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <span className="text-neutral-400">Not Selected</span>
+                                    )}
                                 </h1>
-                                <h1 className="text-base text-neutral-700 font-medium">
-                                    (Ba. 3 Kha. 1234)
+
+                                <div className="flex-1 border-dashed border border-neutral-300" />
+
+                                <h1 className="text-sm text-neutral-600 font-normal">
+                                    {ticketDetails.dropPoint ? (
+                                        <>
+                                            {ticketDetails.dropPoint}
+                                            {ticketDetails.dropTime && (
+                                                <span className='font-medium'> ({formatTime(ticketDetails.dropTime)})</span>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <span className="text-neutral-400">Not Selected</span>
+                                    )}
                                 </h1>
+                            </div>
+
+                            <div className="w-full flex items-center justify-between gap-x-4 !mt-3">
+                                <h1 className="text-sm text-neutral-600 font-normal">
+                                    Date:
+                                </h1>
+                                <p className="text-sm text-neutral-600 font-medium">
+                                    {date ? new Date(date).toLocaleDateString('en-US', {
+                                        weekday: 'short',
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric'
+                                    }) : "Not Selected"}
+                                </p>
                             </div>
                         </div>
-
+                        </div>
                     </div>
 
-                    <div className="space-y-2 w-full">
-                        <h1 className="text-base text-neutral-700 font-medium">
-                            Your Seats
-                        </h1>
+                    <div className="w-full space-y-2 border-b border-dashed border-neutral-200 pb-3">
+                        <div className="space-y-2 w-full">
+                            <h1 className="text-base text-neutral-700 font-medium">
+                                Your Seats
+                            </h1>
 
-                        <div className='w-full flex items-center gap-x-3'>
-
-                            <div className='w-9 h-9 bg-neutral-200/80 rounded-lg flex items-center justify-center text-base to-neutral-700 font-semibold'>
-                                A5
+                            <div className='w-full flex items-center gap-x-3 flex-wrap'>
+                                {selectedSeats && selectedSeats.length > 0 ? (
+                                    selectedSeats.map((seat, index) => (
+                                        <div
+                                            key={index}
+                                            className='w-9 h-9 bg-neutral-200/80 rounded-lg flex items-center justify-center text-base to-neutral-700 font-semibold'>
+                                            {seat}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-neutral-500">No seats selected</p>
+                                )}
                             </div>
-
-                            <div className='w-9 h-9 bg-neutral-200/80 rounded-lg flex items-center justify-center text-base to-neutral-700 font-semibold'>
-                                A6
-                            </div>
-
                         </div>
-
                     </div>
 
                     <div className="space-y-2 w-full">
@@ -84,7 +301,7 @@ const BookingStatus = () => {
 
                             {/* Calculate the total price  */}
                             <p className="text-base text-neutral-600 font-semibold">
-                                NPR 3200
+                                NPR {ticketDetails.totalPrice || 0}
                             </p>
 
                         </div>
@@ -93,9 +310,22 @@ const BookingStatus = () => {
             </div>
 
             <div className="w-full px-1.5">
-                <Link to="/bus-tickets/payment" className='w-full bg-primary hover:bg-primary/90 text-sm text-neutral-50 font-normal py-2.5 flex items-center justify-center uppercase rounded-lg transition'>
-                    Processed to Pay
-                    <FaArrowRightLong />
+                <Link
+                    to="/bus-tickets/payment"
+                    state={{
+                        ticketDetails,
+                        passengerInfo: {
+                            name: checkoutData.passengerName,
+                            email: checkoutData.passengerEmail,
+                            phone: checkoutData.passengerPhone,
+                            alternatePhone: checkoutData.alternatePhone,
+                            pickupPointId: checkoutData.pickupPointId,
+                            dropPointId: checkoutData.dropPointId
+                        }
+                    }}
+                    className='w-full bg-primary hover:bg-primary/90 text-sm text-neutral-50 font-normal py-2.5 flex items-center justify-center uppercase rounded-lg transition'>
+                    Proceed to Pay
+                    <FaArrowRightLong className="ml-2" />
                 </Link>
             </div>
         </div>

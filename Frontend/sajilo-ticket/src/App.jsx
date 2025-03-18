@@ -15,6 +15,7 @@ import LogIn from "./pages/auth/login/LogIn";
 import SignUp from "./pages/auth/signup/SignUp";
 import EmailVerify from "./pages/auth/emailverification/EmailVerify";
 import ResetPassword from "./pages/auth/resetpassword/ResetPassword";
+import UserProtectedRoute from "./components/protectedroutes/userProtectedRoute/UserProtectedRoute";
 
 // Admin Pages
 import AdminLogin from './pages/admin/auth/adminlogin/AdminLogin';
@@ -51,9 +52,13 @@ const MainContent = () => {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/bus-tickets" element={<Ticket />} />
-        <Route path="/bus-tickets/detail/:busId" element={<Detail />} />
-        <Route path="/bus-tickets/checkout" element={<Checkout />} />
-        <Route path="/bus-tickets/payment" element={<Invoice />} />
+
+        {/* Protected Bus Ticket User Routes */}
+        <Route element={<UserProtectedRoute />}>
+          <Route path="/bus-tickets/detail/:busId" element={<Detail />} />
+          <Route path="/bus-tickets/checkout" element={<Checkout />} />
+          <Route path="/bus-tickets/payment" element={<Invoice />} />
+        </Route>
 
         {/* User Auth Routes */}
         <Route path="/login" element={<LogIn />} />
@@ -93,12 +98,12 @@ const MainContent = () => {
   );
 };
 
-function App() {
+const App = () => {
   return (
     <Router>
       <MainContent />
     </Router>
   );
-}
+};
 
 export default App;

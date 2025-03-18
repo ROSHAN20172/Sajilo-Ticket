@@ -5,31 +5,47 @@ import { toast } from "react-toastify";
 export const UserAppContext = createContext()
 
 export const UserAppContextProvider = (props) => {
-
     axios.defaults.withCredentials = true;
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL
     const [isLoggedin, setIsLoggedin] = useState(false)
     const [userData, setUserData] = useState(false)
+    const [authLoading, setAuthLoading] = useState(true)
+    const [suppressUnauthorizedToast, setSuppressUnauthorizedToast] = useState(false)
 
     const getAuthState = async () => {
         try {
             const { data } = await axios.get(`${backendUrl}/api/auth/is-auth`)
             if (data.success) {
                 setIsLoggedin(true)
-                getUserData()
+                await getUserData()
+            } else {
+                setIsLoggedin(false)
             }
         } catch (error) {
-            toast.error(error.message)
+            setIsLoggedin(false)
+            if (!suppressUnauthorizedToast) {
+                toast.error(error.message)
+            }
+        } finally {
+            setAuthLoading(false)
         }
     }
 
     const getUserData = async () => {
         try {
             const { data } = await axios.get(`${backendUrl}/api/user/data`)
-            data.success ? setUserData(data.userData) : toast.error(data.message)
+            if (data.success) {
+                setUserData(data.userData)
+            } else {
+                if (!suppressUnauthorizedToast) {
+                    toast.error(data.message)
+                }
+            }
         } catch (error) {
-            toast.error(error.message)
+            if (!suppressUnauthorizedToast) {
+                toast.error(error.message)
+            }
         }
     }
 
@@ -41,7 +57,11 @@ export const UserAppContextProvider = (props) => {
         backendUrl,
         isLoggedin, setIsLoggedin,
         userData, setUserData,
-        getUserData
+        getUserData,
+        authLoading,
+        suppressUnauthorizedToast,
+        setSuppressUnauthorizedToast,
+        getAuthState
     }
 
     return (

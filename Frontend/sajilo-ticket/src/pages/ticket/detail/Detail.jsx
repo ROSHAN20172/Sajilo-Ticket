@@ -57,6 +57,18 @@ const Detail = () => {
           ) : busDetails ? (
             <>
               <div className="w-full p-4 border rounded-lg bg-neutral-50 shadow-sm">
+                <h2 className="text-2xl font-semibold text-neutral-700 mb-4 text-left">Bus Information</h2>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-dashed border-neutral-200 pb-3">
+                    <h3 className="text-lg text-neutral-500 font-medium">Bus Name: {busDetails.busName}</h3>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg text-neutral-500 font-medium">Bus Number: {busDetails.busNumber}</h3>
+                  </div>
+                </div>
+              </div>
+
+              <div className="w-full p-4 border rounded-lg bg-neutral-50 shadow-sm">
                 <h2 className="text-2xl font-semibold text-neutral-700 mb-4 text-left">Bus Description</h2>
                 {busDetails.busDescription ? (
                   <p className="text-base text-neutral-500 font-normal text-justify">

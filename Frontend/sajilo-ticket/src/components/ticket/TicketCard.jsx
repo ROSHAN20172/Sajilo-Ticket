@@ -1,7 +1,9 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { FaBus, FaCalendar } from 'react-icons/fa6';
+import React, { useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaBus, FaCalendar, FaClock, FaMoneyBillWave, FaUser } from 'react-icons/fa';
 import { MdOutlineChair } from 'react-icons/md';
+import { UserAppContext } from '../../context/UserAppContext';
+import { toast } from 'react-toastify';
 
 const TicketCard = ({
   busId,
@@ -16,6 +18,22 @@ const TicketCard = ({
   amenities = [],
   date
 }) => {
+  const navigate = useNavigate();
+  const { isLoggedin } = useContext(UserAppContext);
+
+  const handleReserveClick = (e) => {
+    e.preventDefault();
+
+    if (!isLoggedin) {
+      toast.error("Please login to reserve seats");
+      navigate('/login');
+      return;
+    }
+
+    // If user is logged in, proceed to details page
+    navigate(`/bus-tickets/detail/${busId}?date=${date}`);
+  };
+
   return (
     <div className="w-full rounded-xl p-5 border-2 border-neutral-300 space-y-5">
       {/* Bus info & Route Details */}
@@ -79,7 +97,7 @@ const TicketCard = ({
           </span>
         </h1>
         <Link
-          to={`/bus-tickets/detail/${busId}?date=${date}`}
+          onClick={handleReserveClick}
           className="w-fit px-5 py-1.5 bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-xl text-sm font-normal text-neutral-50 flex items-center justify-center gap-x-2 hover:text-primary ease-in-out duration-300"
         >
           Reserve Seat
@@ -90,3 +108,4 @@ const TicketCard = ({
 };
 
 export default TicketCard;
+

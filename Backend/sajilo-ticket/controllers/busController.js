@@ -232,6 +232,10 @@ export const getBusSeatData = async (req, res) => {
             pickupPoints: schedule.route.pickupPoints || [],
             dropPoints: schedule.route.dropPoints || []
           }
+        },
+        bus: {
+          name: schedule.bus.busName,
+          busNumber: schedule.bus.busNumber
         }
       }
     });
@@ -240,6 +244,65 @@ export const getBusSeatData = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Server error while fetching seat data',
+      error: error.message
+    });
+  }
+};
+
+export const getRoutePoints = async (req, res) => {
+  try {
+    const { busId, date } = req.query;
+
+    if (!busId || !date) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bus ID and date are required'
+      });
+    }
+
+    // Find the schedule for the given bus and date
+    const schedule = await Schedule.findOne({
+      bus: busId,
+      scheduleDates: {
+        $elemMatch: {
+          $eq: new Date(date)
+        }
+      }
+    }).populate('route');
+
+    if (!schedule) {
+      return res.status(404).json({
+        success: false,
+        message: 'No schedule found for the given bus and date'
+      });
+    }
+
+    // Format pickup points with times
+    const pickupPoints = schedule.route.pickupPoints.map((point, index) => ({
+      id: `pickup${index + 1}`,
+      name: point,
+      time: schedule.pickupTimes[index] || ''
+    }));
+
+    // Format drop points with times
+    const dropPoints = schedule.route.dropPoints.map((point, index) => ({
+      id: `drop${index + 1}`,
+      name: point,
+      time: schedule.dropTimes[index] || ''
+    }));
+
+    return res.json({
+      success: true,
+      data: {
+        pickupPoints,
+        dropPoints
+      }
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching route points',
       error: error.message
     });
   }

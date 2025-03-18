@@ -20,7 +20,9 @@ const BusSeat = ({ busId, date }) => {
     arrivalTime: '',
     pickupPoint: '',
     dropPoint: '',
-    basePrice: 0
+    basePrice: 0,
+    busName: '',
+    busNumber: ''
   });
 
   // Fetch seat data when component mounts
@@ -49,7 +51,9 @@ const BusSeat = ({ busId, date }) => {
               arrivalTime: toTime || '',
               pickupPoint: route.pickupPoints?.length > 0 ? route.pickupPoints[0] : '',
               dropPoint: route.dropPoints?.length > 0 ? route.dropPoints[0] : '',
-              basePrice: response.data.data.busSeatData.length > 0 ? response.data.data.busSeatData[0].price : 0
+              basePrice: response.data.data.busSeatData.length > 0 ? response.data.data.busSeatData[0].price : 0,
+              busName: response.data.data.bus?.name || '',
+              busNumber: response.data.data.bus?.busNumber || ''
             });
           }
         } else {
@@ -101,6 +105,18 @@ const BusSeat = ({ busId, date }) => {
       const seat = busSeatData.find(busSeat => busSeat.id === seatId);
       return total + (seat ? seat.price : 0);
     }, 0);
+  };
+
+  // Format time to include AM/PM
+  const formatTime = (timeString) => {
+    if (!timeString) return '';
+
+    const date = new Date(`2000-01-01T${timeString}`);
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
   if (loading) {
@@ -259,13 +275,13 @@ const BusSeat = ({ busId, date }) => {
 
             <div className="w-full flex items-center justify-between gap-x-4">
               <h1 className="text-sm text-neutral-600 font-normal">
-                {routeInfo.from} <span className='font-medium'>({routeInfo.departureTime})</span>
+                {routeInfo.from} <span className='font-medium'>({formatTime(routeInfo.departureTime)})</span>
               </h1>
 
               <div className="flex-1 border-dashed border border-neutral-300" />
 
               <h1 className="text-sm text-neutral-600 font-normal">
-                {routeInfo.to} <span className='font-medium'>({routeInfo.arrivalTime})</span>
+                {routeInfo.to} <span className='font-medium'>({formatTime(routeInfo.arrivalTime)})</span>
               </h1>
             </div>
           </div>
@@ -345,7 +361,20 @@ const BusSeat = ({ busId, date }) => {
           {
             selectedSeats.length > 0
               ?
-              <Link to="/bus-tickets/checkout" className='w-full bg-primary hover:bg-primary/90 text-sm text-neutral-50 font-normal py-2.5 flex items-center justify-center uppercase rounded-lg transition'>
+              <Link
+                to="/bus-tickets/checkout"
+                state={{
+                  busId,
+                  date,
+                  selectedSeats,
+                  totalPrice: calculateTotalPrice(),
+                  route: {
+                    ...routeInfo,
+                    busName: routeInfo.busName,
+                    busNumber: routeInfo.busNumber
+                  }
+                }}
+                className='w-full bg-primary hover:bg-primary/90 text-sm text-neutral-50 font-normal py-2.5 flex items-center justify-center uppercase rounded-lg transition'>
                 Proceed to Checkout
               </Link>
               :
