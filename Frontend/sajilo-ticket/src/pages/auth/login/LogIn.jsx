@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { FaLock } from "react-icons/fa6";
 import { MdEmail } from "react-icons/md";
 import { useNavigate, Link } from 'react-router-dom';
@@ -8,9 +8,18 @@ import { toast } from 'react-toastify';
 
 const Login = () => {
     const navigate = useNavigate();
-    const { backendUrl, setIsLoggedin, getUserData } = useContext(UserAppContext);
+    const { backendUrl, setIsLoggedin, getUserData, isLoggedin, setSuppressUnauthorizedToast } = useContext(UserAppContext);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [submitted, setSubmitted] = useState(false);
+
+    useEffect(() => {
+        setSuppressUnauthorizedToast(false);
+        if (isLoggedin && !submitted) {
+            toast.info("Already logged in.");
+            navigate('/');
+        }
+    }, [isLoggedin, submitted, navigate, setSuppressUnauthorizedToast]);
 
     const onSubmitHandler = async (e) => {
         e.preventDefault();
@@ -19,6 +28,7 @@ const Login = () => {
             const { data } = await axios.post(`${backendUrl}/api/auth/login`, { email, password });
 
             if (data.success) {
+                setSubmitted(true);
                 toast.success("Login Successfully!");
                 setIsLoggedin(true);
                 getUserData();

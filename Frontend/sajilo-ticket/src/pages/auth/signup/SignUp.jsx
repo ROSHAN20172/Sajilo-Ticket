@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { FaUser, FaLock } from "react-icons/fa6";
 import { MdEmail } from "react-icons/md";
 import { useNavigate, Link } from 'react-router-dom';
@@ -8,10 +8,18 @@ import { toast } from 'react-toastify';
 
 const Signup = () => {
     const navigate = useNavigate();
-    const { backendUrl } = useContext(UserAppContext);
+    const { backendUrl, isLoggedin, setSuppressUnauthorizedToast } = useContext(UserAppContext);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+
+    useEffect(() => {
+        setSuppressUnauthorizedToast(false);
+        if (isLoggedin) {
+            toast.info("Already logged in.");
+            navigate('/');
+        }
+    }, [isLoggedin, navigate, setSuppressUnauthorizedToast]);
 
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const passwordRegex = /^(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]{6,}$/;

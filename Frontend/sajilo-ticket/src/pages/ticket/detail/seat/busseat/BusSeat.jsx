@@ -1,18 +1,22 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { GiSteeringWheel } from 'react-icons/gi';
 import { MdOutlineChair } from 'react-icons/md';
 import { RiMoneyRupeeCircleLine } from 'react-icons/ri';
 import { UserAppContext } from '../../../../../context/UserAppContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import ReservationWarningModal from '../../../../../components/modals/ReservationWarningModal';
 
 const BusSeat = ({ busId, date }) => {
   const { backendUrl } = useContext(UserAppContext);
+  const navigate = useNavigate();
   // Track seat selection
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [busSeatData, setBusSeatData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState(null);
   const [routeInfo, setRouteInfo] = useState({
     from: '',
     to: '',
@@ -26,47 +30,58 @@ const BusSeat = ({ busId, date }) => {
   });
 
   // Fetch seat data when component mounts
-  useEffect(() => {
-    const fetchSeatData = async () => {
-      try {
-        if (!busId) {
-          setLoading(false);
-          return;
-        }
-
-        const response = await axios.get(`${backendUrl}/api/bus/seat-data`, {
-          params: { busId, date }
-        });
-
-        if (response.data.success) {
-          setBusSeatData(response.data.data.busSeatData);
-
-          // Update route info if available
-          if (response.data.data.schedule?.route) {
-            const { route, fromTime, toTime } = response.data.data.schedule;
-            setRouteInfo({
-              from: route.from || '',
-              to: route.to || '',
-              departureTime: fromTime || '',
-              arrivalTime: toTime || '',
-              pickupPoint: route.pickupPoints?.length > 0 ? route.pickupPoints[0] : '',
-              dropPoint: route.dropPoints?.length > 0 ? route.dropPoints[0] : '',
-              basePrice: response.data.data.busSeatData.length > 0 ? response.data.data.busSeatData[0].price : 0,
-              busName: response.data.data.bus?.name || '',
-              busNumber: response.data.data.bus?.busNumber || ''
-            });
-          }
-        } else {
-          toast.error("Could not fetch seat data, using default layout");
-        }
-      } catch (error) {
-        toast.error("Error loading seat availability");
-      } finally {
+  const fetchSeatData = async () => {
+    try {
+      if (!busId) {
         setLoading(false);
+        return;
+      }
+
+      const response = await axios.get(`${backendUrl}/api/bus/seat-data`, {
+        params: { busId, date }
+      });
+
+      if (response.data.success) {
+        setBusSeatData(response.data.data.busSeatData);
+
+        // Update route info if available
+        if (response.data.data.schedule?.route) {
+          const { route, fromTime, toTime } = response.data.data.schedule;
+          setRouteInfo({
+            from: route.from || '',
+            to: route.to || '',
+            departureTime: fromTime || '',
+            arrivalTime: toTime || '',
+            pickupPoint: route.pickupPoints?.length > 0 ? route.pickupPoints[0] : '',
+            dropPoint: route.dropPoints?.length > 0 ? route.dropPoints[0] : '',
+            basePrice: response.data.data.busSeatData.length > 0 ? response.data.data.busSeatData[0].price : 0,
+            busName: response.data.data.bus?.name || '',
+            busNumber: response.data.data.bus?.busNumber || ''
+          });
+        }
+      } else {
+        toast.error("Could not fetch seat data, using default layout");
+      }
+    } catch (error) {
+      toast.error("Error loading seat availability");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSeatData();
+
+    // Set up periodic refresh every 30 seconds
+    const interval = setInterval(fetchSeatData, 30000);
+    setRefreshInterval(interval);
+
+    // Cleanup on unmount
+    return () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
       }
     };
-
-    fetchSeatData();
   }, [busId, date, backendUrl]);
 
   // Toggle seat selection
@@ -117,6 +132,69 @@ const BusSeat = ({ busId, date }) => {
       minute: '2-digit',
       hour12: true
     });
+  };
+
+  // Handle reservation confirmation
+  const handleReservationConfirm = async () => {
+    try {
+      setShowWarningModal(false);
+      setLoading(true); // Show loading state during reservation
+
+      const response = await axios.post(`${backendUrl}/api/bus/reserve-seats`, {
+        busId,
+        date,
+        seatIds: selectedSeats
+      });
+
+      if (response.data.success) {
+        const { reservationId, expirationTime } = response.data.data;
+
+        // Refresh seat data to show updated status
+        await fetchSeatData();
+
+        // Navigate to checkout with reservation data
+        navigate('/bus-tickets/checkout', {
+          state: {
+            busId,
+            date,
+            selectedSeats,
+            totalPrice: calculateTotalPrice(),
+            route: {
+              ...routeInfo,
+              busName: routeInfo.busName,
+              busNumber: routeInfo.busNumber
+            },
+            reservation: {
+              id: reservationId,
+              expirationTime
+            }
+          }
+        });
+      } else {
+        toast.error(response.data.message || "Failed to reserve seats. Please try again.");
+        // Refresh seat data to show current status
+        await fetchSeatData();
+      }
+    } catch (error) {
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to reserve seats. Please try again.");
+      }
+      // Refresh seat data to show current status
+      await fetchSeatData();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle proceed to checkout button click
+  const handleProceedToCheckout = () => {
+    if (selectedSeats.length > 0) {
+      setShowWarningModal(true);
+    } else {
+      toast.warning("Please select at least one seat to proceed");
+    }
   };
 
   if (loading) {
@@ -361,22 +439,11 @@ const BusSeat = ({ busId, date }) => {
           {
             selectedSeats.length > 0
               ?
-              <Link
-                to="/bus-tickets/checkout"
-                state={{
-                  busId,
-                  date,
-                  selectedSeats,
-                  totalPrice: calculateTotalPrice(),
-                  route: {
-                    ...routeInfo,
-                    busName: routeInfo.busName,
-                    busNumber: routeInfo.busNumber
-                  }
-                }}
+              <button
+                onClick={handleProceedToCheckout}
                 className='w-full bg-primary hover:bg-primary/90 text-sm text-neutral-50 font-normal py-2.5 flex items-center justify-center uppercase rounded-lg transition'>
                 Proceed to Checkout
-              </Link>
+              </button>
               :
               <div className='w-full space-y-0.5'>
                 <button
@@ -389,6 +456,14 @@ const BusSeat = ({ busId, date }) => {
         </div>
 
       </div>
+
+      {/* Reservation Warning Modal */}
+      <ReservationWarningModal
+        isOpen={showWarningModal}
+        onClose={() => setShowWarningModal(false)}
+        onConfirm={handleReservationConfirm}
+        selectedSeats={selectedSeats}
+      />
     </div>
   );
 };

@@ -307,3 +307,269 @@ export const getRoutePoints = async (req, res) => {
     });
   }
 };
+
+// Helper function to update seat status in schedule
+const updateSeatStatus = async (scheduleId, date, seatIds, status) => {
+  try {
+    const schedule = await Schedule.findById(scheduleId);
+    if (!schedule) return false;
+
+    const dateStr = new Date(date).toISOString().split('T')[0];
+
+    // Initialize seats structure if it doesn't exist
+    if (!schedule.seats) {
+      schedule.seats = {
+        dates: new Map(),
+        global: { available: [], booked: [] }
+      };
+    }
+
+    // Initialize date-specific data if it doesn't exist
+    if (!schedule.seats.dates.has(dateStr)) {
+      schedule.seats.dates.set(dateStr, {
+        available: schedule.seats.global.available,
+        booked: schedule.seats.global.booked
+      });
+    }
+
+    const dateData = schedule.seats.dates.get(dateStr);
+
+    // Update seat status
+    seatIds.forEach(seatId => {
+      if (status === 'booked') {
+        dateData.available = dateData.available.filter(id => id !== seatId);
+        if (!dateData.booked.includes(seatId)) {
+          dateData.booked.push(seatId);
+        }
+      } else {
+        dateData.booked = dateData.booked.filter(id => id !== seatId);
+        if (!dateData.available.includes(seatId)) {
+          dateData.available.push(seatId);
+        }
+      }
+    });
+
+    await schedule.save();
+    return true;
+  } catch (error) {
+    console.error('Error updating seat status:', error);
+    return false;
+  }
+};
+
+// Modify reserveSeatsTemporarily to update seat status
+export const reserveSeatsTemporarily = async (req, res) => {
+  try {
+    const { busId, date, seatIds } = req.body;
+
+    if (!busId || !date || !seatIds || !Array.isArray(seatIds) || seatIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bus ID, date, and seat IDs are required'
+      });
+    }
+
+    // Format date to YYYY-MM-DD for string comparison
+    const searchDateStr = new Date(date).toISOString().split('T')[0];
+
+    // Find schedules for this bus on the specified date
+    const schedule = await Schedule.findOne({
+      bus: busId,
+      scheduleDates: {
+        $elemMatch: {
+          $gte: new Date(searchDateStr),
+          $lt: new Date(new Date(searchDateStr).setDate(new Date(searchDateStr).getDate() + 1))
+        }
+      }
+    });
+
+    if (!schedule) {
+      return res.status(404).json({
+        success: false,
+        message: 'No schedule found for this bus on the specified date'
+      });
+    }
+
+    // Check if seats are already booked or reserved
+    let seatData = {
+      available: [],
+      booked: []
+    };
+
+    // First check date-specific seat data
+    if (schedule.seats && schedule.seats.dates) {
+      const dateData = schedule.seats.dates.get(searchDateStr);
+      if (dateData) {
+        seatData = dateData;
+      }
+    }
+
+    // If no date-specific data, fall back to global seat data
+    if (seatData.available.length === 0 && seatData.booked.length === 0 &&
+      schedule.seats && schedule.seats.global) {
+      seatData = schedule.seats.global;
+    }
+
+    // Check if any of the requested seats are already booked
+    const alreadyBooked = seatIds.filter(seatId => seatData.booked.includes(seatId));
+
+    if (alreadyBooked.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `The following seats are already booked: ${alreadyBooked.join(', ')}`
+      });
+    }
+
+    // Generate a unique reservation ID
+    const reservationId = `${busId}_${Date.now()}`;
+
+    // Set expiration time (10 minutes from now)
+    const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Update seat status in database
+    const statusUpdated = await updateSeatStatus(schedule._id, date, seatIds, 'booked');
+    if (!statusUpdated) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update seat status'
+      });
+    }
+
+    // Store reservation in memory (or use Redis in production)
+    global.seatReservations = global.seatReservations || {};
+    global.seatReservations[reservationId] = {
+      busId,
+      date: searchDateStr,
+      seatIds,
+      expirationTime,
+      schedule: schedule._id
+    };
+
+    // Setup cleanup after 10 minutes
+    setTimeout(async () => {
+      // Remove the reservation and update seat status
+      if (global.seatReservations && global.seatReservations[reservationId]) {
+        await updateSeatStatus(schedule._id, date, seatIds, 'available');
+        delete global.seatReservations[reservationId];
+      }
+    }, 10 * 60 * 1000);
+
+    return res.json({
+      success: true,
+      data: {
+        reservationId,
+        expirationTime,
+        seatIds
+      }
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while reserving seats',
+      error: error.message
+    });
+  }
+};
+
+// Modify releaseReservedSeats to update seat status
+export const releaseReservedSeats = async (req, res) => {
+  try {
+    const { reservationId } = req.params;
+
+    if (!reservationId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reservation ID is required'
+      });
+    }
+
+    // Check if reservation exists
+    if (!global.seatReservations || !global.seatReservations[reservationId]) {
+      return res.status(404).json({
+        success: false,
+        message: 'Reservation not found or already released'
+      });
+    }
+
+    const reservation = global.seatReservations[reservationId];
+
+    // Update seat status in database
+    const statusUpdated = await updateSeatStatus(
+      reservation.schedule,
+      reservation.date,
+      reservation.seatIds,
+      'available'
+    );
+
+    if (!statusUpdated) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update seat status'
+      });
+    }
+
+    // Remove the reservation
+    delete global.seatReservations[reservationId];
+
+    return res.json({
+      success: true,
+      message: 'Seats released successfully'
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while releasing seats',
+      error: error.message
+    });
+  }
+};
+
+// Check reservation status
+export const checkReservationStatus = async (req, res) => {
+  try {
+    const { reservationId } = req.params;
+
+    if (!reservationId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reservation ID is required'
+      });
+    }
+
+    // Check if reservation exists
+    if (!global.seatReservations || !global.seatReservations[reservationId]) {
+      return res.status(404).json({
+        success: false,
+        message: 'Reservation not found or expired'
+      });
+    }
+
+    const reservation = global.seatReservations[reservationId];
+
+    // Check if reservation is expired
+    if (new Date() > new Date(reservation.expirationTime)) {
+      delete global.seatReservations[reservationId];
+      return res.status(400).json({
+        success: false,
+        message: 'Reservation has expired'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        ...reservation,
+        timeRemaining: Math.floor((new Date(reservation.expirationTime) - new Date()) / 1000)
+      }
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while checking reservation',
+      error: error.message
+    });
+  }
+};

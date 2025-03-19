@@ -10,10 +10,10 @@ const EmailVerify = () => {
     const { backendUrl, isLoggedin, getUserData, setIsLoggedin, setUserData } = useContext(UserAppContext);
     const navigate = useNavigate();
     const inputRefs = React.useRef([]);
-    
+
     const [timer, setTimer] = useState(30);  // ⬅️ Start countdown immediately
     const [canResend, setCanResend] = useState(false);
-    
+
     const { state } = useLocation();
     const email = state?.email || '';
 
@@ -64,7 +64,7 @@ const EmailVerify = () => {
                 toast.success("Login Successfully!");
                 setIsLoggedin(true);
                 getUserData(data.user);
-                navigate('/'); 
+                navigate('/');
             } else {
                 toast.error(data.message || "Verification failed. Please try again.");
             }
@@ -93,8 +93,13 @@ const EmailVerify = () => {
     };
 
     useEffect(() => {
-        if (isLoggedin && getUserData?.isAccountVerified) {
-            navigate('/');
+        if (isLoggedin) {
+            if (getUserData?.isAccountVerified) {
+                toast.info("Already logged in and verified.");
+                navigate('/');
+            } else {
+                toast.info("Already logged in but not verified.");
+            }
         }
     }, [isLoggedin, getUserData, navigate]);
 
@@ -103,7 +108,7 @@ const EmailVerify = () => {
             <form onSubmit={onSubmitHandler} noValidate className='bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm'>
                 <h1 className='text-white text-2xl font-semibold text-center mb-4'>Email Verify OTP</h1>
                 <p className='text-center mb-6 text-indigo-300'>Enter the 6-digit Code Sent to your Email</p>
-                
+
                 <div className='flex justify-between mb-8' onPaste={handlePaste}>
                     {Array(6).fill(0).map((_, index) => (
                         <input type="text" maxLength='1' key={index} required
@@ -116,9 +121,9 @@ const EmailVerify = () => {
 
                 {/* Resend OTP Button - Positioned Above & Left */}
                 <div className="mb-4 text-left">
-                    <button 
-                        type="button" 
-                        onClick={resendOtp} 
+                    <button
+                        type="button"
+                        onClick={resendOtp}
                         className={`text-blue-400 underline ${!canResend ? 'opacity-50 cursor-not-allowed' : ''}`}
                         disabled={!canResend}>
                         Resend OTP {timer > 0 && `(${timer}s)`}

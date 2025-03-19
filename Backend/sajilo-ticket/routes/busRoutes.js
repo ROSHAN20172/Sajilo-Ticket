@@ -1,5 +1,13 @@
 import express from 'express';
-import { getBusDetails, imageProxy, getBusSeatData, getRoutePoints } from '../controllers/busController.js';
+import {
+    getBusDetails,
+    imageProxy,
+    getBusSeatData,
+    getRoutePoints,
+    reserveSeatsTemporarily,
+    checkReservationStatus,
+    releaseReservedSeats
+} from '../controllers/busController.js';
 import userAuth from '../middleware/userAuth.js';
 
 const router = express.Router();
@@ -12,6 +20,15 @@ router.get('/seat-data', userAuth, getBusSeatData);
 
 // GET /api/bus/route-points?busId=123&date=2023-04-01 - get pickup and drop points with times
 router.get('/route-points', userAuth, getRoutePoints);
+
+// POST /api/bus/reserve-seats - temporarily reserve seats
+router.post('/reserve-seats', userAuth, reserveSeatsTemporarily);
+
+// GET /api/bus/reservation/:reservationId - check reservation status
+router.get('/reservation/:reservationId', userAuth, checkReservationStatus);
+
+// DELETE /api/bus/reservation/:reservationId - release reserved seats
+router.delete('/reservation/:reservationId', userAuth, releaseReservedSeats);
 
 // GET /api/bus/:busId - fetch bus details
 router.get('/:busId', userAuth, getBusDetails);

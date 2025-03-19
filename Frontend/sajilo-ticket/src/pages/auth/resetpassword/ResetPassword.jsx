@@ -7,7 +7,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const ResetPassword = () => {
-  const { backendUrl } = useContext(UserAppContext);
+  const { backendUrl, isLoggedin, setSuppressUnauthorizedToast } = useContext(UserAppContext);
   axios.defaults.withCredentials = true;
 
   const navigate = useNavigate();
@@ -18,6 +18,14 @@ const ResetPassword = () => {
   const [isOtpSubmitted, setIsOtpSubmitted] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const inputRefs = useRef([]);
+
+  useEffect(() => {
+    setSuppressUnauthorizedToast(false);
+    if (isLoggedin) {
+      toast.info("Already logged in.");
+      navigate('/');
+    }
+  }, [isLoggedin, navigate, setSuppressUnauthorizedToast]);
 
   useEffect(() => {
     let timer;

@@ -1,15 +1,21 @@
-import React, { createContext, useState, useEffect } from 'react'
+import React, { createContext, useState, useEffect, useContext } from 'react'
 import PassengerData from './passengerdata/PassengerData'
 import TopLayout from '../../../../layout/toppage/TopLayout'
 import RootLayout from '../../../../layout/RootLayout'
 import BookingStatus from './bookingstatus/BookingStatus'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import ReservationTimer from '../../../../components/modals/ReservationTimer'
+import { UserAppContext } from '../../../../context/UserAppContext'
+import { toast } from 'react-toastify'
+import axios from 'axios'
 
 // Create a context for sharing checkout data
 export const CheckoutContext = createContext()
 
 const Checkout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { backendUrl } = useContext(UserAppContext);
   const [checkoutData, setCheckoutData] = useState({
     pickupPointId: '',
     dropPointId: '',
@@ -20,15 +26,39 @@ const Checkout = () => {
   });
 
   // Extract booking data from state passed from BusSeat component
-  // Now the data is directly in location.state, not nested under bookingData
   const bookingData = location.state || {};
 
   // Log received data for debugging
   useEffect(() => {
-
     if (!bookingData.busId || !bookingData.selectedSeats) {
+      toast.error("No booking information available. Please select seats first.");
+      navigate('/bus-tickets');
     }
-  }, [location.state, bookingData]);
+
+    // Verify reservation when component mounts
+    const verifyReservation = async () => {
+      try {
+        if (bookingData.reservation && bookingData.reservation.id) {
+          const response = await axios.get(`${backendUrl}/api/bus/reservation/${bookingData.reservation.id}`);
+          if (!response.data.success) {
+            toast.error("Your seat reservation has expired. You'll be redirected to select seats again.");
+            setTimeout(() => navigate('/bus-tickets'), 2000);
+          }
+        } else {
+          // No reservation data found
+          toast.error("No seat reservation found. You'll be redirected to select seats.");
+          setTimeout(() => navigate('/bus-tickets'), 2000);
+        }
+      } catch (error) {
+        toast.error("Your seat reservation has expired. You'll be redirected to select seats again.");
+        setTimeout(() => navigate('/bus-tickets'), 2000);
+      }
+    };
+
+    if (bookingData.busId && bookingData.selectedSeats) {
+      verifyReservation();
+    }
+  }, [location.state, bookingData, navigate, backendUrl]);
 
   // Function to update checkout data
   const updateCheckoutData = (newData) => {
@@ -59,13 +89,25 @@ const Checkout = () => {
               </h2>
             </div>
           ) : (
-            <div className="w-full grid grid-cols-7 items-start gap-44 relative">
-              {/* Passenger Detail */}
-              <PassengerData />
+            <>
+              {/* Reservation Timer */}
+              {bookingData.reservation && (
+                <div className="w-full max-w-3xl mx-auto">
+                  <ReservationTimer
+                    reservationId={bookingData.reservation.id}
+                    expirationTime={bookingData.reservation.expirationTime}
+                    backendUrl={backendUrl}
+                  />
+                </div>
+              )}
+              <div className="w-full grid grid-cols-7 items-start gap-44 relative">
+                {/* Passenger Detail */}
+                <PassengerData />
 
-              {/* Ticket Report Status */}
-              <BookingStatus />
-            </div>
+                {/* Ticket Report Status */}
+                <BookingStatus />
+              </div>
+            </>
           )}
         </RootLayout>
       </div>
