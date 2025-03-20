@@ -15,6 +15,9 @@ const CompanyInvoice = () => {
                     Bill No.: 1234
                 </p>
                 <p className="text-sm text-neutral-600 font-normal">
+                    Bus No.: Ba. 2 Kha 1234
+                </p>
+                <p className="text-sm text-neutral-600 font-normal">
                     Date: 2025-02-12
                 </p>
                 <p className="text-sm text-neutral-600 font-normal">

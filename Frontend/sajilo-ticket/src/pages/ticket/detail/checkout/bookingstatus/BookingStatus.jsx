@@ -1,9 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { FaArrowRightLong } from 'react-icons/fa6'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { UserAppContext } from '../../../../../context/UserAppContext'
 import { CheckoutContext } from '../Checkout'
 import axios from 'axios'
+import { toast } from 'react-toastify'
 
 const BookingStatus = () => {
     const { backendUrl } = useContext(UserAppContext);
@@ -23,8 +24,10 @@ const BookingStatus = () => {
         dropTime: ''
     });
     const [seatDisplayData, setSeatDisplayData] = useState([]);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
+    const navigate = useNavigate();
 
-    const { busId, selectedSeats, date, totalPrice, route } = bookingData || {};
+    const { busId, selectedSeats, date, totalPrice, route, reservation } = bookingData || {};
 
     useEffect(() => {
         // Set initial values from bookingData if available
@@ -154,6 +157,81 @@ const BookingStatus = () => {
         });
     };
 
+    // Function to handle proceed to payment
+    const handleProceedToPayment = (e) => {
+        e.preventDefault();
+
+        // Validate required fields
+        if (!checkoutData.passengerName || checkoutData.passengerName.trim() === '') {
+            toast.error('Please enter your full name');
+            return;
+        }
+
+        if (!checkoutData.passengerEmail || checkoutData.passengerEmail.trim() === '') {
+            toast.error('Please enter your email address');
+            return;
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(checkoutData.passengerEmail)) {
+            toast.error('Please enter a valid email address');
+            return;
+        }
+
+        if (!checkoutData.passengerPhone || checkoutData.passengerPhone.trim() === '') {
+            toast.error('Please enter your phone number');
+            return;
+        }
+
+        if (!checkoutData.pickupPointId) {
+            toast.error('Please select a pickup point');
+            return;
+        }
+
+        if (!checkoutData.dropPointId) {
+            toast.error('Please select a drop point');
+            return;
+        }
+
+        if (!selectedPaymentMethod) {
+            toast.error('Please select a payment method');
+            return;
+        }
+
+        // All validations passed, navigate to payment page
+        navigate('/bus-tickets/payment', {
+            state: {
+                ticketDetails,
+                passengerInfo: {
+                    name: checkoutData.passengerName,
+                    email: checkoutData.passengerEmail,
+                    phone: checkoutData.passengerPhone,
+                    alternatePhone: checkoutData.alternatePhone,
+                    pickupPointId: checkoutData.pickupPointId,
+                    dropPointId: checkoutData.dropPointId,
+                    paymentMethod: selectedPaymentMethod
+                },
+                reservation
+            }
+        });
+    };
+
+    // Subscribe to changes in payment method
+    useEffect(() => {
+        const handlePaymentMethodChange = (event) => {
+            if (event.detail && event.detail.paymentMethod) {
+                setSelectedPaymentMethod(event.detail.paymentMethod);
+            }
+        };
+
+        window.addEventListener('paymentMethodSelected', handlePaymentMethodChange);
+
+        return () => {
+            window.removeEventListener('paymentMethodSelected', handlePaymentMethodChange);
+        };
+    }, []);
+
     return (
         <div className='w-full col-span-3 sticky top-20 space-y-7'>
             <div className="w-full bg-neutral-50 rounded-xl py-4 px-6 border border-neutral-200 shadow-sm space-y-5">
@@ -180,87 +258,87 @@ const BookingStatus = () => {
                     </div>
 
                     <div className="w-full space-y-2 border-b border-dashed border-neutral-200 pb-3">
-                    <div className="space-y-2 w-full">
-                        <h1 className="text-base text-neutral-700 font-medium">
-                            Your Destination
-                        </h1>
+                        <div className="space-y-2 w-full">
+                            <h1 className="text-base text-neutral-700 font-medium">
+                                Your Destination
+                            </h1>
 
-                        <div className="space-y-0.5 w-full">
-                            <div className="w-full flex items-center justify-between gap-x-5">
-                                <p className="text-sm text-neutral-400 font-normal">
-                                    From
-                                </p>
-                                <p className="text-sm text-neutral-400 font-normal">
-                                    To
-                                </p>
+                            <div className="space-y-0.5 w-full">
+                                <div className="w-full flex items-center justify-between gap-x-5">
+                                    <p className="text-sm text-neutral-400 font-normal">
+                                        From
+                                    </p>
+                                    <p className="text-sm text-neutral-400 font-normal">
+                                        To
+                                    </p>
+                                </div>
+
+                                <div className="w-full flex items-center justify-between gap-x-4">
+                                    <h1 className="text-sm text-neutral-600 font-normal">
+                                        {ticketDetails.fromLocation} <span className='font-medium'>({formatTime(ticketDetails.departureTime)})</span>
+                                    </h1>
+
+                                    <div className="flex-1 border-dashed border border-neutral-300" />
+
+                                    <h1 className="text-sm text-neutral-600 font-normal">
+                                        {ticketDetails.toLocation} <span className='font-medium'>({formatTime(ticketDetails.arrivalTime)})</span>
+                                    </h1>
+                                </div>
+
+                                {/* Pickup and Drop Point Section */}
+                                <div className="w-full flex items-center justify-between gap-x-5 mt-3">
+                                    <p className="text-sm text-neutral-400 font-normal">
+                                        Pickup Point
+                                    </p>
+                                    <p className="text-sm text-neutral-400 font-normal">
+                                        Drop Point
+                                    </p>
+                                </div>
+
+                                <div className="w-full flex items-center justify-between gap-x-4">
+                                    <h1 className="text-sm text-neutral-600 font-normal">
+                                        {ticketDetails.pickupPoint ? (
+                                            <>
+                                                {ticketDetails.pickupPoint}
+                                                {ticketDetails.pickupTime && (
+                                                    <span className='font-medium'> ({formatTime(ticketDetails.pickupTime)})</span>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <span className="text-neutral-400">Not Selected</span>
+                                        )}
+                                    </h1>
+
+                                    <div className="flex-1 border-dashed border border-neutral-300" />
+
+                                    <h1 className="text-sm text-neutral-600 font-normal">
+                                        {ticketDetails.dropPoint ? (
+                                            <>
+                                                {ticketDetails.dropPoint}
+                                                {ticketDetails.dropTime && (
+                                                    <span className='font-medium'> ({formatTime(ticketDetails.dropTime)})</span>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <span className="text-neutral-400">Not Selected</span>
+                                        )}
+                                    </h1>
+                                </div>
+
+                                <div className="w-full flex items-center justify-between gap-x-4 !mt-3">
+                                    <h1 className="text-sm text-neutral-600 font-normal">
+                                        Date:
+                                    </h1>
+                                    <p className="text-sm text-neutral-600 font-medium">
+                                        {date ? new Date(date).toLocaleDateString('en-US', {
+                                            weekday: 'short',
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric'
+                                        }) : "Not Selected"}
+                                    </p>
+                                </div>
                             </div>
-
-                            <div className="w-full flex items-center justify-between gap-x-4">
-                                <h1 className="text-sm text-neutral-600 font-normal">
-                                    {ticketDetails.fromLocation} <span className='font-medium'>({formatTime(ticketDetails.departureTime)})</span>
-                                </h1>
-
-                                <div className="flex-1 border-dashed border border-neutral-300" />
-
-                                <h1 className="text-sm text-neutral-600 font-normal">
-                                    {ticketDetails.toLocation} <span className='font-medium'>({formatTime(ticketDetails.arrivalTime)})</span>
-                                </h1>
-                            </div>
-
-                            {/* Pickup and Drop Point Section */}
-                            <div className="w-full flex items-center justify-between gap-x-5 mt-3">
-                                <p className="text-sm text-neutral-400 font-normal">
-                                    Pickup Point
-                                </p>
-                                <p className="text-sm text-neutral-400 font-normal">
-                                    Drop Point
-                                </p>
-                            </div>
-
-                            <div className="w-full flex items-center justify-between gap-x-4">
-                                <h1 className="text-sm text-neutral-600 font-normal">
-                                    {ticketDetails.pickupPoint ? (
-                                        <>
-                                            {ticketDetails.pickupPoint}
-                                            {ticketDetails.pickupTime && (
-                                                <span className='font-medium'> ({formatTime(ticketDetails.pickupTime)})</span>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <span className="text-neutral-400">Not Selected</span>
-                                    )}
-                                </h1>
-
-                                <div className="flex-1 border-dashed border border-neutral-300" />
-
-                                <h1 className="text-sm text-neutral-600 font-normal">
-                                    {ticketDetails.dropPoint ? (
-                                        <>
-                                            {ticketDetails.dropPoint}
-                                            {ticketDetails.dropTime && (
-                                                <span className='font-medium'> ({formatTime(ticketDetails.dropTime)})</span>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <span className="text-neutral-400">Not Selected</span>
-                                    )}
-                                </h1>
-                            </div>
-
-                            <div className="w-full flex items-center justify-between gap-x-4 !mt-3">
-                                <h1 className="text-sm text-neutral-600 font-normal">
-                                    Date:
-                                </h1>
-                                <p className="text-sm text-neutral-600 font-medium">
-                                    {date ? new Date(date).toLocaleDateString('en-US', {
-                                        weekday: 'short',
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric'
-                                    }) : "Not Selected"}
-                                </p>
-                            </div>
-                        </div>
                         </div>
                     </div>
 
@@ -310,23 +388,12 @@ const BookingStatus = () => {
             </div>
 
             <div className="w-full px-1.5">
-                <Link
-                    to="/bus-tickets/payment"
-                    state={{
-                        ticketDetails,
-                        passengerInfo: {
-                            name: checkoutData.passengerName,
-                            email: checkoutData.passengerEmail,
-                            phone: checkoutData.passengerPhone,
-                            alternatePhone: checkoutData.alternatePhone,
-                            pickupPointId: checkoutData.pickupPointId,
-                            dropPointId: checkoutData.dropPointId
-                        }
-                    }}
+                <button
+                    onClick={handleProceedToPayment}
                     className='w-full bg-primary hover:bg-primary/90 text-sm text-neutral-50 font-normal py-2.5 flex items-center justify-center uppercase rounded-lg transition'>
                     Proceed to Pay
                     <FaArrowRightLong className="ml-2" />
-                </Link>
+                </button>
             </div>
         </div>
     )

@@ -138,7 +138,7 @@ const BusSeat = ({ busId, date }) => {
   const handleReservationConfirm = async () => {
     try {
       setShowWarningModal(false);
-      setLoading(true); // Show loading state during reservation
+      setLoading(true);
 
       const response = await axios.post(`${backendUrl}/api/bus/reserve-seats`, {
         busId,

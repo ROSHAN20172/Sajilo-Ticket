@@ -62,6 +62,10 @@ const PassengerInvoice = () => {
                                 Pickup Point:
                                 <span className="font-medium"> Kalanki, KTM</span>
                             </p>
+                            <p className="text-base text-neutral-600 font-normal">
+                                Drop Point:
+                                <span className="font-medium"> Ramanand Chowk, Janakpur</span>
+                            </p>
                         </div>
 
                         <div className="space-y-4 flex items-center justify-center flex-col">

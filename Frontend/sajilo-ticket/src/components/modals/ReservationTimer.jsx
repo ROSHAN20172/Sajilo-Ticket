@@ -71,7 +71,6 @@ const ReservationTimer = ({ reservationId, expirationTime, backendUrl }) => {
                 await axios.delete(`${backendUrl}/api/bus/reservation/${reservationId}`);
             }
         } catch (error) {
-            // Silent fail, we're redirecting anyway
         }
 
         // Redirect after a small delay to allow toast to be seen

@@ -352,12 +352,11 @@ const updateSeatStatus = async (scheduleId, date, seatIds, status) => {
     await schedule.save();
     return true;
   } catch (error) {
-    console.error('Error updating seat status:', error);
     return false;
   }
 };
 
-// Modify reserveSeatsTemporarily to update seat status
+// reserveSeatsTemporarily to update seat status
 export const reserveSeatsTemporarily = async (req, res) => {
   try {
     const { busId, date, seatIds } = req.body;
@@ -435,7 +434,7 @@ export const reserveSeatsTemporarily = async (req, res) => {
       });
     }
 
-    // Store reservation in memory (or use Redis in production)
+    // Store reservation in memory
     global.seatReservations = global.seatReservations || {};
     global.seatReservations[reservationId] = {
       busId,
@@ -472,7 +471,7 @@ export const reserveSeatsTemporarily = async (req, res) => {
   }
 };
 
-// Modify releaseReservedSeats to update seat status
+// releaseReservedSeats to update seat status
 export const releaseReservedSeats = async (req, res) => {
   try {
     const { reservationId } = req.params;
