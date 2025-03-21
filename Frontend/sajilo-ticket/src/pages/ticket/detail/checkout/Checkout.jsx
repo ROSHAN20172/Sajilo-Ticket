@@ -25,8 +25,19 @@ const Checkout = () => {
     alternatePhone: ''
   });
 
-  // Extract booking data from state passed from BusSeat component
+  // Extract booking data from state passed from Detail component
   const bookingData = location.state || {};
+
+  // Set pickup and drop point IDs directly from the booking data
+  useEffect(() => {
+    if (bookingData.pickupPointId && bookingData.dropPointId) {
+      setCheckoutData(prev => ({
+        ...prev,
+        pickupPointId: bookingData.pickupPointId,
+        dropPointId: bookingData.dropPointId
+      }));
+    }
+  }, [bookingData]);
 
   // Log received data for debugging
   useEffect(() => {

@@ -184,15 +184,8 @@ const BookingStatus = () => {
             return;
         }
 
-        if (!checkoutData.pickupPointId) {
-            toast.error('Please select a pickup point');
-            return;
-        }
-
-        if (!checkoutData.dropPointId) {
-            toast.error('Please select a drop point');
-            return;
-        }
+        // Pickup and drop points are already validated in the detail page
+        // and passed through location state, so we don't need to check them here
 
         if (!selectedPaymentMethod) {
             toast.error('Please select a payment method');

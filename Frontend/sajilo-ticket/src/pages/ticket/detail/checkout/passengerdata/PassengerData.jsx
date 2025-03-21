@@ -9,54 +9,9 @@ import { toast } from 'react-toastify'
 const PassengerData = () => {
   const { backendUrl } = useContext(UserAppContext);
   const { bookingData, checkoutData, updateCheckoutData } = useContext(CheckoutContext);
-  const [pickupPoints, setPickupPoints] = useState([]);
-  const [dropPoints, setDropPoints] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const { busId, selectedSeats, date } = bookingData || {};
-
-  useEffect(() => {
-    const fetchRoutePoints = async () => {
-      if (!busId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await axios.get(`${backendUrl}/api/bus/route-points`, {
-          params: { busId, date }
-        });
-
-        if (response.data.success) {
-          const { pickupPoints, dropPoints } = response.data.data;
-
-          setPickupPoints(pickupPoints || []);
-          setDropPoints(dropPoints || []);
-
-        } else {
-          toast.error("Failed to fetch pickup and drop points");
-        }
-      } catch (error) {
-        toast.error("Error loading pickup and drop points");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRoutePoints();
-  }, [busId, date, backendUrl, checkoutData.pickupPointId, updateCheckoutData, bookingData]);
-
-  // Format time to include AM/PM
-  const formatTime = (timeString) => {
-    if (!timeString) return '';
-
-    const date = new Date(`2000-01-01T${timeString}`);
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
 
   // Handle input changes
   const handleInputChange = (field, value) => {
@@ -135,71 +90,6 @@ const PassengerData = () => {
             placeholder='eg. +977-9800000000'
             className="no-spinner w-full h-14 px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-base text-neutral-600 font-normal placeholder:text-neutral-400"
           />
-        </div>
-
-        <div className="w-full space-y-2">
-          <label className='text-sm text-neutral-500 font-medium'>Pickup Point</label>
-          <select
-            value={checkoutData.pickupPointId}
-            onChange={(e) => handleInputChange('pickupPointId', e.target.value)}
-            style={{
-              appearance: 'none',
-              WebkitAppearance: 'none',
-              MozAppearance: 'none',
-              backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'gray\'><path d=\'M7 10l5 5 5-5z\'/></svg>")',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 12px center',
-              backgroundSize: '25px',
-              paddingRight: '40px',
-            }}
-            className="w-full h-14 px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-base text-neutral-600 font-normal placeholder:text-neutral-400"
-          >
-            <option value="" disabled>
-              Choose your Nearest Pickup Point
-            </option>
-            {pickupPoints && pickupPoints.length > 0 ? (
-              pickupPoints.map((point) => (
-                <option key={point.id} value={point.id}>
-                  {point.name} ({formatTime(point.time)})
-                </option>
-              ))
-            ) : (
-              <option value="" disabled>No pickup points available</option>
-            )}
-          </select>
-        </div>
-
-        <div className="w-full space-y-2">
-          <label className='text-sm text-neutral-500 font-medium'>Drop Point</label>
-          <select
-            value={checkoutData.dropPointId || ""}
-            onChange={(e) => handleInputChange('dropPointId', e.target.value)}
-            style={{
-              appearance: 'none',
-              WebkitAppearance: 'none',
-              MozAppearance: 'none',
-              backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'gray\'><path d=\'M7 10l5 5 5-5z\'/></svg>")',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 12px center',
-              backgroundSize: '25px',
-              paddingRight: '40px',
-            }}
-            className="w-full h-14 px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-base text-neutral-600 font-normal placeholder:text-neutral-400"
-            defaultValue=""
-          >
-            <option value="" disabled>
-              Choose your Nearest Drop Point
-            </option>
-            {dropPoints && dropPoints.length > 0 ? (
-              dropPoints.map((point) => (
-                <option key={point.id} value={point.id}>
-                  {point.name} ({formatTime(point.time)})
-                </option>
-              ))
-            ) : (
-              <option value="" disabled>No drop points available</option>
-            )}
-          </select>
         </div>
       </div>
 
