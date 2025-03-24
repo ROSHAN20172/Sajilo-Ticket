@@ -11,6 +11,7 @@ import Checkout from "./pages/ticket/detail/checkout/Checkout";
 import Invoice from "./pages/ticket/invoice/Invoice";
 import Payment from "./pages/ticket/payment/Payment";
 import PaymentCallback from "./pages/ticket/payment/PaymentCallback";
+import PaymentConfirmation from "./pages/ticket/payment/PaymentConfirmation";
 
 // User Pages
 import LogIn from "./pages/auth/login/LogIn";
@@ -60,6 +61,7 @@ const MainContent = () => {
         <Route element={<UserProtectedRoute />}>
           <Route path="/bus-tickets/detail/:busId" element={<Detail />} />
           <Route path="/bus-tickets/checkout" element={<Checkout />} />
+          <Route path="/bus-tickets/payment-confirmation" element={<PaymentConfirmation />} />
           <Route path="/bus-tickets/payment" element={<Payment />} />
           <Route path="/bus-tickets/payment-callback" element={<PaymentCallback />} />
           <Route path="/bus-tickets/invoice" element={<Invoice />} />

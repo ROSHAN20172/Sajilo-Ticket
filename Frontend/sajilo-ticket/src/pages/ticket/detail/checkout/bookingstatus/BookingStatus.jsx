@@ -196,9 +196,18 @@ const BookingStatus = () => {
         localStorage.removeItem('paymentInitiated');
         localStorage.removeItem('paymentVerified');
         localStorage.removeItem('paymentData');
+        localStorage.removeItem('reservationId');
+        localStorage.removeItem('reservationExpiry');
 
-        // All validations passed, navigate to payment page
-        navigate('/bus-tickets/payment', {
+        // Ensure reservation object has expiresAt property
+        const enhancedReservation = {
+            ...(reservation || {}),
+            id: reservation?.id || null,
+            expiresAt: reservation?.expiresAt || new Date(Date.now() + 10 * 60 * 1000).toISOString()
+        };
+
+        // All validations passed, navigate to payment confirmation page
+        navigate('/bus-tickets/payment-confirmation', {
             state: {
                 ticketDetails: {
                     ...ticketDetails,
@@ -215,8 +224,8 @@ const BookingStatus = () => {
                     dropPointId: checkoutData.dropPointId,
                     paymentMethod: selectedPaymentMethod
                 },
-                reservation,
-                returningFromKhalti: false // Add this flag to indicate we're not returning from Khalti
+                reservation: enhancedReservation,
+                returningFromKhalti: false
             }
         });
     };
