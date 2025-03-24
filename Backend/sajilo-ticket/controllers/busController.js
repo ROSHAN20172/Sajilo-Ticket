@@ -572,3 +572,150 @@ export const checkReservationStatus = async (req, res) => {
     });
   }
 };
+
+// Get custom price for specific pickup and drop points
+export const getCustomPrice = async (req, res) => {
+  try {
+    const { busId, pickupPointId, dropPointId, date } = req.query;
+
+    if (!busId || !pickupPointId || !dropPointId || !date) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bus ID, pickup point, drop point, and date are required'
+      });
+    }
+
+    // Log for debugging
+    console.log('Fetching custom price for:', { busId, pickupPointId, dropPointId, date });
+
+    // Find the schedule for the given bus and date
+    const schedule = await Schedule.findOne({
+      bus: busId,
+      scheduleDates: {
+        $elemMatch: {
+          $eq: new Date(date)
+        }
+      }
+    }).populate('route');
+
+    if (!schedule) {
+      return res.status(404).json({
+        success: false,
+        message: 'No schedule found for the given bus and date'
+      });
+    }
+
+    // Extract pickup and drop point names from the IDs
+    const pickupPointIndex = parseInt(pickupPointId.replace('pickup', '')) - 1;
+    const dropPointIndex = parseInt(dropPointId.replace('drop', '')) - 1;
+
+    if (
+      pickupPointIndex < 0 ||
+      pickupPointIndex >= schedule.route.pickupPoints.length ||
+      dropPointIndex < 0 ||
+      dropPointIndex >= schedule.route.dropPoints.length
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid pickup or drop point ID'
+      });
+    }
+
+    const pickupPointName = schedule.route.pickupPoints[pickupPointIndex];
+    const dropPointName = schedule.route.dropPoints[dropPointIndex];
+
+    // Find custom price for these points
+    const customPriceEntry = schedule.route.customPrices.find(
+      cp => cp.origin === pickupPointName && cp.drop === dropPointName
+    );
+
+    if (customPriceEntry) {
+      console.log('Custom price found:', customPriceEntry.price);
+      return res.json({
+        success: true,
+        data: {
+          customPrice: customPriceEntry.price,
+          basePrice: schedule.route.price,
+          pickupPoint: pickupPointName,
+          dropPoint: dropPointName
+        }
+      });
+    } else {
+      console.log('No custom price found, using base price:', schedule.route.price);
+      return res.json({
+        success: true,
+        data: {
+          customPrice: null,
+          basePrice: schedule.route.price,
+          pickupPoint: pickupPointName,
+          dropPoint: dropPointName
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching custom price:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching custom price',
+      error: error.message
+    });
+  }
+};
+
+// Get available custom prices for a bus route
+export const getAvailableCustomPrices = async (req, res) => {
+  try {
+    const { busId, date } = req.query;
+
+    if (!busId || !date) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bus ID and date are required'
+      });
+    }
+
+    // Find the schedule for the given bus and date
+    const schedule = await Schedule.findOne({
+      bus: busId,
+      scheduleDates: {
+        $elemMatch: {
+          $eq: new Date(date)
+        }
+      }
+    }).populate('route');
+
+    if (!schedule) {
+      return res.status(404).json({
+        success: false,
+        message: 'No schedule found for the given bus and date'
+      });
+    }
+
+    // Map custom prices to response format with pickup and drop point IDs
+    const availableCustomPrices = schedule.route.customPrices.map(cp => {
+      const pickupPointIndex = schedule.route.pickupPoints.findIndex(pp => pp === cp.origin);
+      const dropPointIndex = schedule.route.dropPoints.findIndex(dp => dp === cp.drop);
+
+      return {
+        pickupPointId: pickupPointIndex >= 0 ? `pickup${pickupPointIndex + 1}` : null,
+        dropPointId: dropPointIndex >= 0 ? `drop${dropPointIndex + 1}` : null,
+        pickupPoint: cp.origin,
+        dropPoint: cp.drop,
+        price: cp.price,
+        basePrice: schedule.route.price,
+        discount: schedule.route.price - cp.price
+      };
+    }).filter(cp => cp.pickupPointId && cp.dropPointId); // Only include valid ones
+
+    return res.json({
+      success: true,
+      data: availableCustomPrices
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching available custom prices',
+      error: error.message
+    });
+  }
+};

@@ -9,6 +9,8 @@ import Ticket from "./pages/ticket/Ticket";
 import Detail from "./pages/ticket/detail/Detail";
 import Checkout from "./pages/ticket/detail/checkout/Checkout";
 import Invoice from "./pages/ticket/invoice/Invoice";
+import Payment from "./pages/ticket/payment/Payment";
+import PaymentCallback from "./pages/ticket/payment/PaymentCallback";
 
 // User Pages
 import LogIn from "./pages/auth/login/LogIn";
@@ -16,6 +18,7 @@ import SignUp from "./pages/auth/signup/SignUp";
 import EmailVerify from "./pages/auth/emailverification/EmailVerify";
 import ResetPassword from "./pages/auth/resetpassword/ResetPassword";
 import UserProtectedRoute from "./components/protectedroutes/userProtectedRoute/UserProtectedRoute";
+import UserBookings from "./pages/user/bookings/UserBookings";
 
 // Admin Pages
 import AdminLogin from './pages/admin/auth/adminlogin/AdminLogin';
@@ -57,7 +60,10 @@ const MainContent = () => {
         <Route element={<UserProtectedRoute />}>
           <Route path="/bus-tickets/detail/:busId" element={<Detail />} />
           <Route path="/bus-tickets/checkout" element={<Checkout />} />
-          <Route path="/bus-tickets/payment" element={<Invoice />} />
+          <Route path="/bus-tickets/payment" element={<Payment />} />
+          <Route path="/bus-tickets/payment-callback" element={<PaymentCallback />} />
+          <Route path="/bus-tickets/invoice" element={<Invoice />} />
+          <Route path="/bookings" element={<UserBookings />} />
         </Route>
 
         {/* User Auth Routes */}

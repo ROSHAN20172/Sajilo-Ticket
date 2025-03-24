@@ -21,6 +21,12 @@ import operatorBusRouter from './routes/operator/operatorBusRoutes.js';
 import operatorBusRouteRouter from './routes/operator/operatorBusRouteRoutes.js';
 import operatorBusScheduleRouter from './routes/operator/operatorBusScheduleRoutes.js';
 
+// Import payment routes
+import paymentRouter from './routes/paymentRoutes.js';
+
+// Import reservation routes
+import reservationRouter from './routes/reservationRoutes.js';
+
 const app = express();
 const port = process.env.PORT || 4000;
 connectDB();
@@ -49,5 +55,11 @@ app.use('/api/operator', operatorRouter);
 app.use('/api/operator/bus', operatorBusRouter);
 app.use('/api/operator/routes', operatorBusRouteRouter);
 app.use('/api/operator/schedules', operatorBusScheduleRouter);
+
+// Payment routes
+app.use('/api/payment', paymentRouter);
+
+// Reservation routes
+app.use('/api/reservation', reservationRouter);
 
 app.listen(port, () => console.log(`Server started on PORT: ${port}`));

@@ -19,13 +19,17 @@
     "framer-motion": "^11.18.2",
     "html-to-image": "^1.11.12",
     "js-cookie": "^3.0.5",
+    "khalti-checkout-web": "^2.2.0",
+    "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.3.1",
     "react-icons": "^5.4.0",
+    "react-qr-code": "^2.0.15",
     "react-router-dom": "^7.1.1",
     "react-toastify": "^11.0.3",
-    "recharts": "^2.15.1"
+    "recharts": "^2.15.1",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

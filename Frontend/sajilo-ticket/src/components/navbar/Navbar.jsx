@@ -33,7 +33,7 @@ const Navbar = () => {
         { label: "Tickets", link: "/bus-tickets" },
         { label: "About", link: "/about" },
         { label: "Live Tracking", link: "/live-tracking" },
-        { label: "Operator", link: "/operator"}
+        { label: "Operator", link: "/operator" }
     ]
 
     //Handle click open
@@ -110,6 +110,7 @@ const Navbar = () => {
                             {userData.name[0].toUpperCase()}
                             <div className='absolute hidden group-hover:block top-0 right-0 z-10 text-black rounded pt-10 w-32'>
                                 <ul className='list-none m-0 p-2 bg-gray-100 text-sm shadow-lg rounded'>
+                                    <li onClick={() => navigate('/bookings')} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap'>My Bookings</li>
                                     <li onClick={logout} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap'>Log Out</li>
                                 </ul>
                             </div>

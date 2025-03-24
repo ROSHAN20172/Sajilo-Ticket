@@ -1,11 +1,40 @@
 import React from 'react'
 import { FaCircleCheck, FaPhone } from "react-icons/fa6";
 import { IoCloseCircle } from "react-icons/io5";
+import { QRCodeSVG } from 'qrcode.react';
 
 import BusImg from "../../../../assets/bus.png"
 import QrImg from "../../../../assets/QrImg.jpg"
 
-const PassengerInvoice = () => {
+const PassengerInvoice = ({ data }) => {
+    // Format date to display in a readable format
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    };
+
+    // Format time to display in 12-hour format
+    const formatTime = (timeString) => {
+        if (!timeString) return '';
+        const date = new Date(`2000-01-01T${timeString}`);
+        return date.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    };
+
+    // Join seat numbers with commas
+    const formatSeats = (seats) => {
+        if (!seats || !Array.isArray(seats)) return '';
+        return seats.join(', ');
+    };
+
     return (
         <div className='w-full col-span-4 rounded-3xl relative'>
 
@@ -14,14 +43,14 @@ const PassengerInvoice = () => {
                 <div className="flex items-center gap-x-3">
                     <img src={BusImg} alt="bus img" className='w-auto h-12 object-cover object-center' />
                     <h1 className="text-xl text-neutral-50 font-bold uppercase tracking-wider pt-1">
-                        Bullet AC Deluxe
+                        {data?.busName || 'Bus Name'}
                     </h1>
                 </div>
 
                 <div className="flex items-center gap-x-2">
                     <p className="text-xl text-neutral-50 font-bold">
                         <span className='text-lg'>(Bus No.)</span>
-                        Ba. 2 Kha 1234
+                        {data?.busNumber || 'Bus Number'}
                     </p>
                 </div>
             </div>
@@ -33,13 +62,13 @@ const PassengerInvoice = () => {
                     {/* Billno, seat and date */}
                     <div className="w-full flex items-center justify-between border-dashed border-b-2 border-neutral-200 pb-3">
                         <p className="text-base text-neutral-500 font-normal">
-                            Bill No.: 1234
+                            Bill No.: {data?.bookingId || data?.ticketId || data?.invoiceNumber || 'N/A'}
                         </p>
                         <p className="text-base text-neutral-500 font-normal">
-                            NPR 1600 <span className='text-xs'>/seat</span>
+                            NPR {data?.pricePerSeat || 0} <span className='text-xs'>/seat</span>
                         </p>
                         <p className="text-base text-neutral-500 font-normal">
-                            Date: 2025-02-12
+                            Date: {formatDate(data?.journeyDate) || 'N/A'}
                         </p>
                     </div>
 
@@ -48,23 +77,23 @@ const PassengerInvoice = () => {
                         <div className="space-y-1.5">
                             <p className="text-base text-neutral-600 font-normal">
                                 Name of Passenger:
-                                <span className="font-medium"> Roshan Shah</span>
+                                <span className="font-medium"> {data?.passengerName || 'N/A'}</span>
                             </p>
                             <p className="text-base text-neutral-600 font-normal">
                                 Total Seat No.:
-                                <span className="font-medium"> A1, A2, B1, B2</span>
+                                <span className="font-medium"> {formatSeats(data?.selectedSeats) || 'N/A'}</span>
                             </p>
                             <p className="text-base text-neutral-600 font-normal">
                                 Total No. of Passenger:
-                                <span className="font-medium"> 4</span>
+                                <span className="font-medium"> {data?.selectedSeats?.length || 0}</span>
                             </p>
                             <p className="text-base text-neutral-600 font-normal">
                                 Pickup Point:
-                                <span className="font-medium"> Kalanki, KTM</span>
+                                <span className="font-medium"> {data?.pickupPoint || 'N/A'}</span>
                             </p>
                             <p className="text-base text-neutral-600 font-normal">
                                 Drop Point:
-                                <span className="font-medium"> Ramanand Chowk, Janakpur</span>
+                                <span className="font-medium"> {data?.dropPoint || 'N/A'}</span>
                             </p>
                         </div>
 
@@ -74,7 +103,7 @@ const PassengerInvoice = () => {
                                     Total Price:
                                 </p>
                                 <h1 className="text-xl text-neutral-600 font-bold">
-                                    NPR 8000
+                                    NPR {data?.totalPrice || 0}
                                 </h1>
                             </div>
 
@@ -82,33 +111,40 @@ const PassengerInvoice = () => {
                                 <FaCircleCheck size={16} />
                                 <span>Bill Paid</span>
                             </div>
-
-                            {/* <div className="w-fit px-3 py-1 rounded-full bg-primary/5 border border-primary text-primary text-sm font-medium flex items-center justify-center gap-2">
-                                <IoCloseCircle size={16} />
-                                <span>Pending</span>
-                            </div> */}
                         </div>
                     </div>
 
                     {/* Route detail */}
                     <div className="w-full flex items-center justify-between border-dashed border-t-2 border-neutral-200 pt-3">
                         <p className="text-base text-neutral-600 font-normal">
-                            Kathmandu
+                            {data?.fromLocation || 'From'}
                             <span className="text-neutral-400 px-2">-----</span>
-                            Janakpur
+                            {data?.toLocation || 'To'}
                         </p>
                         <p className="text-base text-neutral-600 font-normal">
-                            Departure at 06:30 PM
+                            Departure at {formatTime(data?.departureTime) || 'N/A'}
                         </p>
                         <p className="text-base text-neutral-600 font-normal">
-                            Arrive at 06:00 AM
+                            Arrive at {formatTime(data?.arrivalTime) || 'N/A'}
                         </p>
                     </div>
 
                 </div>
 
                 <div className="col-span-1 border border-neutral-200 rounded-xl shadow-sm p-1">
-                    <img src={QrImg} alt="Qr Img" className="w-full aspect-square object-cover object-center rounded-xl" />
+                    {data?.qrCodeData ? (
+                        <QRCodeSVG
+                            value={data.qrCodeData}
+                            size={150}
+                            level="M"
+                            className="w-full aspect-square rounded-xl"
+                            includeMargin={true}
+                            bgColor={"#FFFFFF"}
+                            fgColor={"#000000"}
+                        />
+                    ) : (
+                        <img src={QrImg} alt="Qr Img" className="w-full aspect-square object-cover object-center rounded-xl" />
+                    )}
                 </div>
 
             </div>
@@ -121,7 +157,7 @@ const PassengerInvoice = () => {
                 <div className="flex items-center gap-x-2">
                     <FaPhone className='w-3 h-3 text-neutral-100' />
                     <p className="text-sm text-neutral-100 font-light">
-                        +977-9800000000, +9770123456789
+                        {data?.contactPhone || '+977-9800000000, +9770123456789'}
                     </p>
                 </div>
             </div>

@@ -37,6 +37,10 @@ const BusSeat = ({ busId, date }) => {
   const [selectedPickupDetails, setSelectedPickupDetails] = useState({ name: "Not Selected", time: null });
   const [selectedDropDetails, setSelectedDropDetails] = useState({ name: "Not Selected", time: null });
 
+  // Track custom price
+  const [customPrice, setCustomPrice] = useState(null);
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
+
   // Fetch seat data when component mounts
   const fetchSeatData = async () => {
     try {
@@ -96,6 +100,135 @@ const BusSeat = ({ busId, date }) => {
     }
   };
 
+  // Fetch custom price for selected pickup and drop points
+  const fetchCustomPrice = async () => {
+    if (!selectedPickupPoint || !selectedDropPoint || !busId) {
+      setCustomPrice(null);
+      return;
+    }
+
+    try {
+      setIsLoadingPrice(true);
+      console.log('Fetching custom price with params:', {
+        busId,
+        pickupPointId: selectedPickupPoint,
+        dropPointId: selectedDropPoint,
+        date
+      });
+
+      // Try with the main endpoint format
+      const response = await axios.get(`${backendUrl}/api/bus/custom-price`, {
+        params: {
+          busId,
+          pickupPointId: selectedPickupPoint,
+          dropPointId: selectedDropPoint,
+          date
+        }
+      });
+
+      console.log('Custom price API response:', response.data);
+
+      // Handle different possible response formats
+      if (response.data.success) {
+        // Format 1: { success: true, data: { customPrice: 100 } }
+        if (response.data.data?.customPrice) {
+          console.log(`Custom price found in data.customPrice: ${response.data.data.customPrice}`);
+          setCustomPrice(response.data.data.customPrice);
+          return;
+        }
+        // Format 2: { success: true, data: { price: 100 } }
+        else if (response.data.data?.price) {
+          console.log(`Custom price found in data.price: ${response.data.data.price}`);
+          setCustomPrice(response.data.data.price);
+          return;
+        }
+        // Format 3: { success: true, customPrice: 100 }
+        else if (response.data.customPrice) {
+          console.log(`Custom price found directly in response: ${response.data.customPrice}`);
+          setCustomPrice(response.data.customPrice);
+          return;
+        }
+        // Format 4: { success: true, price: 100 }
+        else if (response.data.price) {
+          console.log(`Price found directly in response: ${response.data.price}`);
+          setCustomPrice(response.data.price);
+          return;
+        }
+        else {
+          console.log('No custom price found in the response data');
+
+          // Try an alternative endpoint format
+          try {
+            const altResponse = await axios.get(`${backendUrl}/api/route/price`, {
+              params: {
+                busId,
+                pickupId: selectedPickupPoint,
+                dropId: selectedDropPoint,
+                date
+              }
+            });
+
+            console.log('Alternative endpoint response:', altResponse.data);
+
+            if (altResponse.data.success && (altResponse.data.data?.price || altResponse.data.price)) {
+              const price = altResponse.data.data?.price || altResponse.data.price;
+              console.log(`Custom price found in alternative endpoint: ${price}`);
+              setCustomPrice(price);
+              return;
+            }
+          } catch (altError) {
+            console.log('Alternative endpoint failed:', altError.message);
+          }
+
+          setCustomPrice(null);
+        }
+      } else {
+        console.log('API response indicates failure:', response.data.message);
+        setCustomPrice(null);
+      }
+    } catch (error) {
+      console.error("Error fetching custom price:", error);
+
+      // Log more detailed error information
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+      } else if (error.request) {
+        console.error("No response received:", error.request);
+      } else {
+        console.error("Error message:", error.message);
+      }
+
+      // Try a different endpoint format as fallback
+      try {
+        console.log('Trying alternative endpoint format...');
+        const fallbackResponse = await axios.get(`${backendUrl}/api/routes/custom-fare`, {
+          params: {
+            busId,
+            from: selectedPickupPoint,
+            to: selectedDropPoint,
+            date
+          }
+        });
+
+        console.log('Fallback endpoint response:', fallbackResponse.data);
+
+        if (fallbackResponse.data.success && fallbackResponse.data.fare) {
+          console.log(`Custom price found in fallback endpoint: ${fallbackResponse.data.fare}`);
+          setCustomPrice(fallbackResponse.data.fare);
+          return;
+        }
+      } catch (fallbackError) {
+        console.log('Fallback endpoint also failed:', fallbackError.message);
+        toast.error("Failed to check for custom pricing");
+      }
+
+      setCustomPrice(null);
+    } finally {
+      setIsLoadingPrice(false);
+    }
+  };
+
   useEffect(() => {
     fetchSeatData();
     fetchRoutePoints();
@@ -111,6 +244,46 @@ const BusSeat = ({ busId, date }) => {
       }
     };
   }, [busId, date, backendUrl]);
+
+  // Check if there are any custom prices for this route when points are loaded
+  useEffect(() => {
+    const checkAvailableCustomPrices = async () => {
+      if (pickupPoints.length === 0 || dropPoints.length === 0) return;
+
+      try {
+        const response = await axios.get(`${backendUrl}/api/bus/available-custom-prices`, {
+          params: { busId, date }
+        }).catch(err => {
+          console.log('Available custom prices endpoint not available, this is expected');
+          return null;
+        });
+
+        if (response && response.data && response.data.success) {
+          console.log('Available custom prices:', response.data.data);
+          // If available custom prices found, select the first combination for demonstration
+          if (response.data.data && response.data.data.length > 0) {
+            const firstCustomPrice = response.data.data[0];
+            console.log('Auto-selecting first available custom price route:', firstCustomPrice);
+
+            // Only auto-select if user hasn't made a selection yet
+            if (!selectedPickupPoint && !selectedDropPoint) {
+              if (firstCustomPrice.pickupPointId) {
+                setSelectedPickupPoint(firstCustomPrice.pickupPointId);
+              }
+              if (firstCustomPrice.dropPointId) {
+                setSelectedDropPoint(firstCustomPrice.dropPointId);
+              }
+              // The price will be fetched when the pickup and drop points are set
+            }
+          }
+        }
+      } catch (error) {
+        console.log('Error checking available custom prices:', error);
+      }
+    };
+
+    checkAvailableCustomPrices();
+  }, [pickupPoints, dropPoints, busId, date, backendUrl, selectedPickupPoint, selectedDropPoint]);
 
   // Update pickup details when selection changes
   useEffect(() => {
@@ -137,6 +310,52 @@ const BusSeat = ({ busId, date }) => {
       setSelectedDropDetails({ name: point.name, time: point.time });
     }
   }, [selectedDropPoint, dropPoints]);
+
+  // Update custom price when pickup or drop point changes
+  useEffect(() => {
+    if (selectedPickupPoint && selectedDropPoint) {
+      console.log(`Pickup point changed to: ${selectedPickupPoint}, Drop point changed to: ${selectedDropPoint}`);
+      fetchCustomPrice();
+
+      // Also double-check the endpoint directly
+      const verifyEndpoint = async () => {
+        try {
+          const testResponse = await axios.get(`${backendUrl}/api/bus/verify-custom-price-endpoint`, {
+            params: {
+              busId,
+              pickupPointId: selectedPickupPoint,
+              dropPointId: selectedDropPoint
+            }
+          }).catch(err => {
+            // This endpoint might not exist, just log the error
+            console.log('Verification endpoint not available, this is expected');
+            return null;
+          });
+
+          if (testResponse && testResponse.data) {
+            console.log('Verification endpoint response:', testResponse.data);
+          }
+        } catch (err) {
+          // Ignore errors from this test endpoint
+        }
+      };
+
+      verifyEndpoint();
+    } else {
+      setCustomPrice(null);
+    }
+  }, [selectedPickupPoint, selectedDropPoint, busId, date, backendUrl]);
+
+  // Add event listener to debug pickup and drop point changes
+  useEffect(() => {
+    console.log('Current pickup point:', selectedPickupPoint);
+    console.log('Current pickup details:', selectedPickupDetails);
+  }, [selectedPickupPoint, selectedPickupDetails]);
+
+  useEffect(() => {
+    console.log('Current drop point:', selectedDropPoint);
+    console.log('Current drop details:', selectedDropDetails);
+  }, [selectedDropPoint, selectedDropDetails]);
 
   // Toggle seat selection
   const handleSeatClick = (seatId) => {
@@ -168,12 +387,18 @@ const BusSeat = ({ busId, date }) => {
     }
   };
 
-  // Calculate the total price of selected seats
+  // Calculate the total price of selected seats with custom price if available
   const calculateTotalPrice = () => {
-    return selectedSeats.reduce((total, seatId) => {
-      const seat = busSeatData.find(busSeat => busSeat.id === seatId);
-      return total + (seat ? seat.price : 0);
-    }, 0);
+    const pricePerSeat = customPrice !== null ? customPrice : routeInfo.basePrice;
+    return selectedSeats.length * pricePerSeat;
+  };
+
+  // Get the current price to display (custom or base)
+  const getCurrentPrice = () => {
+    if (isLoadingPrice) {
+      return <span className="text-sm text-neutral-500">Loading price...</span>;
+    }
+    return customPrice !== null ? customPrice : routeInfo.basePrice;
   };
 
   // Format time to include AM/PM
@@ -198,7 +423,7 @@ const BusSeat = ({ busId, date }) => {
     setSelectedDropPoint(e.target.value);
   };
 
-  // Handle reservation confirmation
+  // Handle reservation confirmation with custom price
   const handleReservationConfirm = async () => {
     try {
       // Validate pickup and drop points
@@ -229,6 +454,9 @@ const BusSeat = ({ busId, date }) => {
         // Refresh seat data to show updated status
         await fetchSeatData();
 
+        // Use custom price if available
+        const priceUsed = customPrice !== null ? customPrice : routeInfo.basePrice;
+
         // Navigate to checkout with reservation data
         navigate('/bus-tickets/checkout', {
           state: {
@@ -237,7 +465,9 @@ const BusSeat = ({ busId, date }) => {
             selectedSeats,
             pickupPointId: selectedPickupPoint,
             dropPointId: selectedDropPoint,
-            totalPrice: calculateTotalPrice(),
+            totalPrice: selectedSeats.length * priceUsed,
+            pricePerSeat: priceUsed,
+            isCustomPrice: customPrice !== null,
             route: {
               ...routeInfo,
               busName: routeInfo.busName,
@@ -305,6 +535,10 @@ const BusSeat = ({ busId, date }) => {
         <h1 className="text-lg text-neutral-600 font-medium mb-4">
           Select Pickup & Drop Points
         </h1>
+
+        <p className="text-sm text-neutral-500 italic mb-4">
+          Price may vary based on pickup and drop point selection
+        </p>
 
         <div className="grid grid-cols-2 gap-6">
           {/* Pickup Point Selection */}
@@ -479,10 +713,22 @@ const BusSeat = ({ busId, date }) => {
                 <p className="text-sm text-neutral-500 font-medium">Selected</p>
               </div>
 
-              <div className="flex items-center gap-x-2">
-                <RiMoneyRupeeCircleLine className='text-xl text-neutral-500' />
-                <p className="text-sm text-neutral-500 font-medium">NPR. {routeInfo.basePrice}</p>
-              </div>
+              {isLoadingPrice ? (
+                <div className="flex items-center gap-x-2">
+                  <RiMoneyRupeeCircleLine className='text-xl text-neutral-500' />
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : customPrice !== null ? (
+                <div className="flex items-center gap-x-2">
+                  <RiMoneyRupeeCircleLine className='text-xl text-neutral-500' />
+                  <p className="text-sm text-neutral-500 font-medium">NPR. {customPrice}</p>
+                </div>
+              ) : (
+                <div className="flex items-center gap-x-2">
+                  <RiMoneyRupeeCircleLine className='text-xl text-neutral-500' />
+                  <p className="text-sm text-neutral-500 font-medium">NPR. {routeInfo.basePrice}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -615,9 +861,28 @@ const BusSeat = ({ busId, date }) => {
               </h1>
 
               <div className="w-full flex items-center justify-between border-dashed border-l-[1.5px] border-neutral-400 pl-2">
-                <h3 className="text-sm text-neutral-500 font-medium">Basic Fare:</h3>
-                <p className="text-sm text-neutral-600 font-medium">NPR. {routeInfo.basePrice}</p>
+                <h3 className="text-sm text-neutral-500 font-medium">
+                  Regular Fare:
+                </h3>
+                <div className="text-sm font-medium flex items-center">
+                  <span className={customPrice !== null ? "text-neutral-400 line-through" : "text-neutral-600"}>
+                    NPR. {routeInfo.basePrice}
+                  </span>
+                </div>
               </div>
+
+              {customPrice !== null && (
+                <div className="w-full flex items-center justify-between border-dashed border-l-[1.5px] border-neutral-400 pl-2">
+                  <h3 className="text-sm text-neutral-500 font-medium">Custom Fare:</h3>
+                  <div className="text-sm font-medium flex items-center">
+                    {isLoadingPrice ? (
+                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
+                    ) : (
+                      <span className="text-green-600">NPR. {customPrice}</span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center justify-between gap-x-4">
                 <div className="flex gap-y-0.5 flex-col">

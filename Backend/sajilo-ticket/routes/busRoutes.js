@@ -6,7 +6,9 @@ import {
     getRoutePoints,
     reserveSeatsTemporarily,
     checkReservationStatus,
-    releaseReservedSeats
+    releaseReservedSeats,
+    getCustomPrice,
+    getAvailableCustomPrices
 } from '../controllers/busController.js';
 import userAuth from '../middleware/userAuth.js';
 
@@ -20,6 +22,14 @@ router.get('/seat-data', userAuth, getBusSeatData);
 
 // GET /api/bus/route-points?busId=123&date=2023-04-01 - get pickup and drop points with times
 router.get('/route-points', userAuth, getRoutePoints);
+
+// GET /api/bus/custom-price?busId=123&pickupPointId=pickup1&dropPointId=drop1&date=2023-04-01 
+// - get custom price for specific pickup and drop points
+router.get('/custom-price', userAuth, getCustomPrice);
+
+// GET /api/bus/available-custom-prices?busId=123&date=2023-04-01 
+// - get all available custom prices for a bus route
+router.get('/available-custom-prices', userAuth, getAvailableCustomPrices);
 
 // POST /api/bus/reserve-seats - temporarily reserve seats
 router.post('/reserve-seats', userAuth, reserveSeatsTemporarily);

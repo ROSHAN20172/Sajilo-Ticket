@@ -192,10 +192,20 @@ const BookingStatus = () => {
             return;
         }
 
+        // Clear any existing payment state from localStorage
+        localStorage.removeItem('paymentInitiated');
+        localStorage.removeItem('paymentVerified');
+        localStorage.removeItem('paymentData');
+
         // All validations passed, navigate to payment page
         navigate('/bus-tickets/payment', {
             state: {
-                ticketDetails,
+                ticketDetails: {
+                    ...ticketDetails,
+                    busId,
+                    selectedSeats,
+                    date
+                },
                 passengerInfo: {
                     name: checkoutData.passengerName,
                     email: checkoutData.passengerEmail,
@@ -205,7 +215,8 @@ const BookingStatus = () => {
                     dropPointId: checkoutData.dropPointId,
                     paymentMethod: selectedPaymentMethod
                 },
-                reservation
+                reservation,
+                returningFromKhalti: false // Add this flag to indicate we're not returning from Khalti
             }
         });
     };
