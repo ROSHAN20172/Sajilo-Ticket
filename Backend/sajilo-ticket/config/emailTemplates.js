@@ -178,7 +178,7 @@ export const EMAIL_VERIFY_TEMPLATE = `<html dir="ltr" xmlns="http://www.w3.org/1
                                           <tr>
                                             <td align="center" class="esd-block-text es-p5t es-p5b es-p40r es-p40l es-m-p0r es-m-p0l">
                                               <p>
-                                                You’ve received this message because your email address has been registered with our site. Please click the button below to verify your email address and confirm that you are the owner of this account.
+                                                You've received this message because your email address has been registered with our site. Please click the button below to verify your email address and confirm that you are the owner of this account.
                                               </p>
                                             </td>
                                           </tr>
@@ -914,4 +914,95 @@ export const PASSWORD_RESET_TEMPLATE = `<html dir="ltr" xmlns="http://www.w3.org
   </body>
 </html>
 `
+
+export const BOOKING_CONFIRMATION_TEMPLATE = (bookingDetails) => `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation - Sajilo Ticket</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #1a73e8;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .booking-details {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+        .highlight {
+            color: #1a73e8;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Booking Confirmation</h1>
+        </div>
+        <div class="content">
+            <p>Dear ${bookingDetails.passengerName},</p>
+            
+            <p>Your booking has been confirmed! Here are your booking details:</p>
+            
+            <div class="booking-details">
+                <p><strong>Booking ID:</strong> ${bookingDetails.bookingId}</p>
+                <p><strong>Bus:</strong> ${bookingDetails.busName} (${bookingDetails.busNumber})</p>
+                <p><strong>From:</strong> ${bookingDetails.fromLocation}</p>
+                <p><strong>To:</strong> ${bookingDetails.toLocation}</p>
+                <p><strong>Date:</strong> ${bookingDetails.journeyDate}</p>
+                <p><strong>Departure Time:</strong> ${bookingDetails.departureTime}</p>
+                <p><strong>Arrival Time:</strong> ${bookingDetails.arrivalTime}</p>
+                <p><strong>Seats:</strong> ${bookingDetails.selectedSeats.join(', ')}</p>
+                <p><strong>Pickup Point:</strong> ${bookingDetails.pickupPoint}</p>
+                <p><strong>Drop Point:</strong> ${bookingDetails.dropPoint}</p>
+                <p><strong>Total Amount:</strong> Rs. ${bookingDetails.totalPrice}</p>
+            </div>
+
+            <p>Please arrive at the pickup point 15 minutes before the scheduled departure time.</p>
+            
+            <p>If you need to make any changes to your booking, please contact our support team.</p>
+            
+            <p>Thank you for choosing Sajilo Ticket!</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
 

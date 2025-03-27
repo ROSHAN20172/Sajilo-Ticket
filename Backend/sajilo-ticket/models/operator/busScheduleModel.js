@@ -22,6 +22,19 @@ const scheduleSchema = mongoose.Schema({
       },
       default: {}
     }
+  },
+  permanentlyBookedSeats: {
+    type: [{
+      date: {
+        type: String, // Format: YYYY-MM-DD
+        required: true
+      },
+      seats: {
+        type: [String],
+        default: []
+      }
+    }],
+    default: []
   }
 }, { timestamps: true });
 

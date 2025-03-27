@@ -6,6 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import mongoose from 'mongoose';
 
 // Get directory name for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -207,6 +208,30 @@ export const getBusSeatData = async (req, res) => {
     // Get the price from the route
     const price = schedule.route.price || 1600;
 
+    // Check for permanently booked seats
+    try {
+      const Seat = mongoose.model('Seat');
+      const permanentlyBookedSeats = await Seat.find({
+        busId: busId,
+        isPermanentlyBooked: true
+      });
+
+      if (permanentlyBookedSeats.length > 0) {
+        console.log(`Found ${permanentlyBookedSeats.length} permanently booked seats for bus ${busId}`);
+
+        // Add these to the booked list if they're not already there
+        permanentlyBookedSeats.forEach(seat => {
+          if (seat.seatId && !seatData.booked.includes(seat.seatId)) {
+            seatData.booked.push(seat.seatId);
+            // Also remove from available if it's there
+            seatData.available = seatData.available.filter(id => id !== seat.seatId);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error checking for permanently booked seats:', error);
+    }
+
     // Build the complete seat data structure
     allSeatIds.forEach(seatId => {
       const seatStatus = seatData.booked.includes(seatId) ? 'booked' : 'available';
@@ -334,7 +359,158 @@ const updateSeatStatus = async (scheduleId, date, seatIds, status) => {
 
     const dateData = schedule.seats.dates.get(dateStr);
 
-    // Update seat status
+    // Check permanently booked seats from the Schedule model
+    if (!schedule.permanentlyBookedSeats) {
+      schedule.permanentlyBookedSeats = [];
+    }
+
+    // If setting to 'available', first check if any of these seats are permanently booked
+    if (status === 'available') {
+      try {
+        // First check Schedule's permanently booked seats
+        let permanentlyBookedInSchedule = [];
+
+        if (schedule.permanentlyBookedSeats && Array.isArray(schedule.permanentlyBookedSeats)) {
+          // Check if we're dealing with the new format (array of objects with date and seats)
+          if (schedule.permanentlyBookedSeats.length > 0 && schedule.permanentlyBookedSeats[0].date) {
+            // New format with date-based structure
+            console.log('Using new date-based permanentlyBookedSeats format');
+
+            // Check all date entries for any permanently booked seats
+            schedule.permanentlyBookedSeats.forEach(dateEntry => {
+              const matchingSeats = seatIds.filter(id => dateEntry.seats.includes(id));
+              permanentlyBookedInSchedule = [...permanentlyBookedInSchedule, ...matchingSeats];
+            });
+          } else {
+            // Old format (flat array of seat IDs)
+            console.log('Using old flat array permanentlyBookedSeats format');
+            permanentlyBookedInSchedule = seatIds.filter(id =>
+              schedule.permanentlyBookedSeats.includes(id)
+            );
+          }
+        }
+
+        if (permanentlyBookedInSchedule.length > 0) {
+          console.log(`Skipping release for ${permanentlyBookedInSchedule.length} seats permanently booked in schedule`);
+          seatIds = seatIds.filter(id => !permanentlyBookedInSchedule.includes(id));
+
+          if (seatIds.length === 0) {
+            console.log('All seats are permanently booked in schedule, skipping update');
+            return true;
+          }
+        }
+
+        // Then check Seat model
+        const Seat = mongoose.model('Seat');
+        const permanentlyBookedSeats = await Seat.find({
+          busId: schedule.bus,
+          seatId: { $in: seatIds },
+          isPermanentlyBooked: true
+        });
+
+        if (permanentlyBookedSeats.length > 0) {
+          // Filter out permanently booked seats from the operation
+          const permanentSeatIds = permanentlyBookedSeats.map(seat => seat.seatId);
+          console.log(`Skipping release for ${permanentSeatIds.length} permanently booked seats from Seat model`);
+
+          // Remove permanently booked seats from the seatIds array
+          seatIds = seatIds.filter(id => !permanentSeatIds.includes(id));
+
+          if (seatIds.length === 0) {
+            console.log('All seats are permanently booked in Seat model, skipping update');
+            return true; // Return success since we're intentionally skipping
+          }
+        }
+
+        // Finally, check for paid tickets for these seats
+        const Ticket = mongoose.model('Ticket');
+        const paidTicketsWithSeats = await Ticket.find({
+          'ticketInfo.busId': schedule.bus,
+          'ticketInfo.selectedSeats': { $in: seatIds },
+          paymentStatus: 'paid'
+        });
+
+        if (paidTicketsWithSeats.length > 0) {
+          console.log(`Found ${paidTicketsWithSeats.length} paid tickets with these seats`);
+
+          // Collect all seat IDs from paid tickets
+          const paidSeatIds = new Set();
+          paidTicketsWithSeats.forEach(ticket => {
+            if (ticket.ticketInfo && ticket.ticketInfo.selectedSeats) {
+              ticket.ticketInfo.selectedSeats.forEach(seatId => {
+                paidSeatIds.add(seatId);
+              });
+            }
+          });
+
+          // Filter out seats with paid tickets
+          seatIds = seatIds.filter(id => !paidSeatIds.has(id));
+
+          if (seatIds.length === 0) {
+            console.log('All seats have paid tickets, skipping update');
+            return true;
+          }
+
+          // Mark these seats as permanently booked 
+          const seatIdsFromPaidTickets = Array.from(paidSeatIds);
+          if (!schedule.permanentlyBookedSeats) {
+            schedule.permanentlyBookedSeats = [];
+          }
+
+          // Add any seats with paid tickets to the permanentlyBookedSeats array using the new structure
+          if (schedule.permanentlyBookedSeats.length > 0 && schedule.permanentlyBookedSeats[0].date) {
+            // Using the new date-based structure
+            console.log('Adding seats to date-based permanentlyBookedSeats structure');
+
+            // Format the date for storage
+            const formattedDate = new Date(date).toISOString().split('T')[0];
+
+            // Find if there's already an entry for this date
+            let dateEntry = schedule.permanentlyBookedSeats.find(entry => entry.date === formattedDate);
+
+            if (dateEntry) {
+              // Add seats to the existing date entry
+              seatIdsFromPaidTickets.forEach(seatId => {
+                if (!dateEntry.seats.includes(seatId)) {
+                  dateEntry.seats.push(seatId);
+                  console.log(`Added seat ${seatId} to permanentlyBookedSeats for date ${formattedDate}`);
+                }
+              });
+            } else {
+              // Create a new entry for this date
+              schedule.permanentlyBookedSeats.push({
+                date: formattedDate,
+                seats: [...seatIdsFromPaidTickets]
+              });
+              console.log(`Created new entry in permanentlyBookedSeats for date ${formattedDate} with ${seatIdsFromPaidTickets.length} seats`);
+            }
+          } else {
+            // Old format (flat array) - keep for backward compatibility during migration
+            console.log('Using old format for permanentlyBookedSeats');
+
+            // Add any seats that aren't already in the permanently booked list
+            seatIdsFromPaidTickets.forEach(seatId => {
+              if (!schedule.permanentlyBookedSeats.includes(seatId)) {
+                schedule.permanentlyBookedSeats.push(seatId);
+                console.log(`Added seat ${seatId} to permanentlyBookedSeats (old format)`);
+              }
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error checking for permanently booked seats:', error);
+        // Continue with the update if there's an error in the check
+      }
+    }
+
+    // If there are no seats left to update, we're done
+    if (seatIds.length === 0) {
+      console.log('No seats left to update after permanent booking checks');
+      await schedule.save(); // Save the schedule with any updates to permanentlyBookedSeats
+      return true;
+    }
+
+    // Update seat status for remaining seats
     seatIds.forEach(seatId => {
       if (status === 'booked') {
         dateData.available = dateData.available.filter(id => id !== seatId);
@@ -352,6 +528,7 @@ const updateSeatStatus = async (scheduleId, date, seatIds, status) => {
     await schedule.save();
     return true;
   } catch (error) {
+    console.error('Error in updateSeatStatus:', error);
     return false;
   }
 };
@@ -419,6 +596,27 @@ export const reserveSeatsTemporarily = async (req, res) => {
       });
     }
 
+    // Also check if any of the requested seats are permanently booked in the Seats collection
+    try {
+      const Seat = mongoose.model('Seat');
+      const permanentlyBookedSeats = await Seat.find({
+        busId,
+        seatId: { $in: seatIds },
+        isPermanentlyBooked: true
+      });
+
+      if (permanentlyBookedSeats.length > 0) {
+        const permanentSeatIds = permanentlyBookedSeats.map(seat => seat.seatId);
+        return res.status(400).json({
+          success: false,
+          message: `The following seats are already permanently booked: ${permanentSeatIds.join(', ')}`
+        });
+      }
+    } catch (error) {
+      console.error('Error checking for permanently booked seats:', error);
+      // Continue if there's an error in the check
+    }
+
     // Generate a unique reservation ID
     const reservationId = `${busId}_${Date.now()}`;
 
@@ -444,12 +642,100 @@ export const reserveSeatsTemporarily = async (req, res) => {
       schedule: schedule._id
     };
 
+    // Store timeouts for cancellation
+    global.reservationTimers = global.reservationTimers || {};
+
     // Setup cleanup after 10 minutes
-    setTimeout(async () => {
+    global.reservationTimers[reservationId] = setTimeout(async () => {
       // Remove the reservation and update seat status
       if (global.seatReservations && global.seatReservations[reservationId]) {
+        // Skip releasing if this reservation has been paid and processed
+        if (global.seatReservations[reservationId].paidAndProcessed) {
+          console.log(`Skipping release for paid reservation: ${reservationId}`);
+          delete global.seatReservations[reservationId];
+          delete global.reservationTimers[reservationId];
+          return;
+        }
+
+        // Check if there's a ticket with these seats that has been paid for
+        try {
+          const Ticket = mongoose.model('Ticket');
+
+          // Get the seat IDs from the reservation
+          const { seatIds, busId } = global.seatReservations[reservationId];
+
+          // Check if there's a paid ticket with these seat IDs
+          const paidTicket = await Ticket.findOne({
+            'ticketInfo.busId': busId,
+            'ticketInfo.selectedSeats': { $in: seatIds },
+            paymentStatus: 'paid'
+          });
+
+          if (paidTicket) {
+            console.log(`Skipping release for seats that have a paid ticket: ${paidTicket._id}`);
+
+            // Double-check: update the Seat model to ensure seats are permanently booked
+            try {
+              const Seat = mongoose.model('Seat');
+              for (const seatId of seatIds) {
+                await Seat.updateOne(
+                  { busId, seatId },
+                  {
+                    $set: {
+                      status: 'booked',
+                      isPermanentlyBooked: true,
+                      ticketId: paidTicket._id,
+                      bookingId: paidTicket.bookingId,
+                      lastUpdated: new Date()
+                    }
+                  },
+                  { upsert: true }
+                );
+              }
+              console.log(`Reinforced booking for ${seatIds.length} seats with ticket ${paidTicket._id}`);
+            } catch (seatUpdateError) {
+              console.error('Error updating seats:', seatUpdateError);
+            }
+
+            delete global.seatReservations[reservationId];
+            delete global.reservationTimers[reservationId];
+            return;
+          }
+
+          // Also check if the seats are marked as permanently booked
+          const Seat = mongoose.model('Seat');
+          const permanentlyBookedSeats = await Seat.find({
+            busId,
+            seatId: { $in: seatIds },
+            isPermanentlyBooked: true
+          });
+
+          if (permanentlyBookedSeats.length > 0) {
+            console.log(`Skipping release for ${permanentlyBookedSeats.length} permanently booked seats`);
+
+            // Only release seats that aren't permanently booked
+            const permanentSeatIds = permanentlyBookedSeats.map(seat => seat.seatId);
+            const seatsToRelease = seatIds.filter(id => !permanentSeatIds.includes(id));
+
+            if (seatsToRelease.length > 0) {
+              await updateSeatStatus(schedule._id, date, seatsToRelease, 'available');
+              console.log(`Released ${seatsToRelease.length} non-permanent seats`);
+            }
+
+            delete global.seatReservations[reservationId];
+            delete global.reservationTimers[reservationId];
+            return;
+          }
+        } catch (error) {
+          console.error('Error checking ticket status before releasing seats:', error);
+          // Continue with seat release if there's an error in the check
+        }
+
+        // If we get here, it's safe to release the seats
         await updateSeatStatus(schedule._id, date, seatIds, 'available');
+        console.log(`Releasing seats for expired reservation: ${reservationId}`);
         delete global.seatReservations[reservationId];
+        delete global.reservationTimers[reservationId];
       }
     }, 10 * 60 * 1000);
 

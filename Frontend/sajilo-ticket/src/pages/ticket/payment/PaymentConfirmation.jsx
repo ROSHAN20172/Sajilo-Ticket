@@ -28,6 +28,9 @@ const PaymentConfirmation = () => {
         oneMinute: false
     });
 
+    // Add a new ref to track if payment has been initiated
+    const paymentInitiatedRef = useRef(false);
+
     // Extract data from location state
     const { ticketDetails, passengerInfo, reservation } = location.state || {};
 
@@ -154,8 +157,39 @@ const PaymentConfirmation = () => {
     }, [reservation, backendUrl, navigate]);
 
     useEffect(() => {
-        initiatePayment();
+        // Only initiate payment if not already done and we have the necessary data
+        if (!paymentInitiatedRef.current && backendUrl && ticketDetails && passengerInfo && reservation) {
+            initiatePayment();
+        }
     }, [backendUrl, ticketDetails, passengerInfo, reservation]);
+
+    // Check localStorage for existing payment data on component mount
+    useEffect(() => {
+        // Check if we already have a payment URL for this reservation
+        const existingReservationId = localStorage.getItem('reservationId');
+        const storedPaymentUrl = localStorage.getItem('paymentUrl');
+
+        if (reservation?.id && existingReservationId === reservation.id && storedPaymentUrl) {
+            console.log('Found existing payment URL in localStorage');
+            setPaymentUrl(storedPaymentUrl);
+
+            // Also try to get booking ID if available
+            const storedBookingId = localStorage.getItem('bookingId');
+            if (storedBookingId) {
+                setBookingId(storedBookingId);
+            }
+
+            // Try to parse payment data if available
+            try {
+                const storedPaymentData = localStorage.getItem('paymentData');
+                if (storedPaymentData) {
+                    setPaymentData(JSON.parse(storedPaymentData));
+                }
+            } catch (e) {
+                console.error('Error parsing stored payment data:', e);
+            }
+        }
+    }, [reservation]);
 
     const releaseReservation = async () => {
         try {
@@ -173,11 +207,13 @@ const PaymentConfirmation = () => {
 
     const initiatePayment = async () => {
         try {
-            // Don't attempt if we don't have required data
-            if (!ticketDetails?.totalPrice || !reservation?.id || !passengerInfo?.name || !backendUrl) {
+            // Don't attempt if we don't have required data or if payment was already initiated
+            if (paymentInitiatedRef.current || !ticketDetails?.totalPrice || !reservation?.id || !passengerInfo?.name || !backendUrl) {
                 return;
             }
 
+            // Mark as initiated to prevent multiple calls
+            paymentInitiatedRef.current = true;
             setLoading(true);
 
             // Create an object with the data needed for payment
@@ -207,6 +243,29 @@ const PaymentConfirmation = () => {
                 dropPointId: passengerInfo.dropPointId,
             };
 
+            // Check if a payment for this reservation exists in localStorage
+            const existingPaymentData = localStorage.getItem('paymentData');
+            const existingReservationId = localStorage.getItem('reservationId');
+
+            if (existingPaymentData && existingReservationId === reservation.id) {
+                console.log('Using existing payment data from localStorage');
+                try {
+                    // Try to use the existing payment data if it's for the same reservation
+                    setPaymentData(JSON.parse(existingPaymentData));
+
+                    // Check if we have a payment URL stored
+                    const storedPaymentUrl = localStorage.getItem('paymentUrl');
+                    if (storedPaymentUrl) {
+                        setPaymentUrl(storedPaymentUrl);
+                        setLoading(false);
+                        return;
+                    }
+                } catch (e) {
+                    // If parsing fails, continue with the new payment request
+                    console.error('Error parsing stored payment data:', e);
+                }
+            }
+
             // Send request to backend to initiate Khalti payment
             const response = await axios.post(`${backendUrl}/api/payment/initiate`, paymentData);
 
@@ -220,8 +279,19 @@ const PaymentConfirmation = () => {
                 localStorage.setItem('paymentInitiated', 'true');
                 localStorage.setItem('paymentData', JSON.stringify(paymentData));
                 localStorage.setItem('reservationId', reservation.id);
+                localStorage.setItem('paymentUrl', response.data.paymentUrl);
+
+                // If the response includes a message about using an existing payment session
+                if (response.data.message?.includes('existing payment session')) {
+                    toast.info('Using your existing payment session', {
+                        position: "top-right",
+                        autoClose: 3000
+                    });
+                }
             } else {
                 toast.error(response.data.message || 'Payment initiation failed. Please try again.');
+                // Reset the initiated flag if there was an error so we can try again
+                paymentInitiatedRef.current = false;
             }
         } catch (error) {
             console.error('Payment initiation error:', error);
@@ -231,16 +301,20 @@ const PaymentConfirmation = () => {
             } else {
                 toast.error('Network error. Please check your connection and try again.');
             }
+            // Reset the initiated flag if there was an error so we can try again
+            paymentInitiatedRef.current = false;
         } finally {
             setLoading(false);
         }
     };
 
     const handlePayNow = () => {
-        // Only redirect to payment URL if we have one
-        if (paymentUrl) {
+        // Only redirect to payment URL if we have one and we're not already loading
+        if (paymentUrl && !loading) {
+            // Set loading to prevent multiple clicks
+            setLoading(true);
             window.location.href = paymentUrl;
-        } else {
+        } else if (!paymentUrl) {
             toast.error('Payment gateway not available. Please try again.');
         }
     };

@@ -36,6 +36,20 @@ export const releaseReservation = async (req, res) => {
             });
         }
 
+        // Before doing anything else, check if there's a paid ticket for these seats
+        const paidTicketsForSeats = await Ticket.find({
+            'ticketInfo.selectedSeats': { $in: reservation.seatIds },
+            paymentStatus: 'paid'
+        });
+
+        if (paidTicketsForSeats.length > 0) {
+            console.log(`Found ${paidTicketsForSeats.length} paid tickets using these seats. Skipping release.`);
+            return res.status(200).json({
+                success: true,
+                message: 'Seats already booked through paid tickets'
+            });
+        }
+
         // Check if the reservation is marked as permanent
         if (reservation.isPermanent) {
             console.log(`Reservation ${reservationId} is marked as permanent, skipping seat release`);
@@ -409,239 +423,222 @@ export const checkReservationExpiry = async (req, res) => {
 export const confirmReservation = async (req, res) => {
     const { reservationId, ticketId, bookingId } = req.body;
 
-    console.log(`DEBUGGING - Request received: reservationId=${reservationId}, ticketId=${ticketId}, bookingId=${bookingId}`);
-
-    // Validate inputs
-    if (!reservationId && !ticketId) {
-        console.log(`DEBUGGING - Error: Both reservationId and ticketId are missing`);
+    if (!reservationId) {
         return res.status(400).json({
             success: false,
-            message: 'Either reservationId or ticketId is required'
+            message: 'Reservation ID is required'
         });
     }
 
     try {
+        console.log(`Confirming reservation ${reservationId} permanently with ticketId ${ticketId}`);
+
         // Get the models
-        console.log(`DEBUGGING - Getting mongoose models`);
         const Reservation = mongoose.model('Reservation');
         const Seat = mongoose.model('Seat');
         const Ticket = mongoose.model('Ticket');
+        const Bus = mongoose.model('Bus');
+
+        // Check if the reservation exists
+        let reservation = await Reservation.findById(reservationId);
 
         // Get proper BK-format booking ID from ticket if available
         let properBookingId = bookingId;
-        let ticket = null;
-
-        // Step 1: Get or find the ticket
         if (ticketId) {
-            try {
-                ticket = await Ticket.findById(ticketId);
-                console.log(`DEBUGGING - Found ticket by ID: ${ticket ? 'Yes' : 'No'}`);
-
-                if (ticket && ticket.bookingId && ticket.bookingId.startsWith('BK-')) {
-                    properBookingId = ticket.bookingId;
-                    console.log(`DEBUGGING - Using ticket's booking ID: ${properBookingId}`);
-                }
-            } catch (error) {
-                console.error(`DEBUGGING - Error finding ticket by ID: ${error.message}`);
-                // Continue execution, we'll try other methods
-            }
-        }
-
-        // If no ticket yet but we have a bookingId, try to find by bookingId
-        if (!ticket && bookingId) {
-            try {
-                ticket = await Ticket.findOne({ bookingId });
-                console.log(`DEBUGGING - Found ticket by bookingId: ${ticket ? 'Yes' : 'No'}`);
-
-                if (ticket) {
-                    ticketId = ticket._id;
-                }
-            } catch (error) {
-                console.error(`DEBUGGING - Error finding ticket by bookingId: ${error.message}`);
-            }
-        }
-
-        // Step 2: Get or create the reservation
-        let reservation = null;
-
-        if (reservationId) {
-            try {
-                // Try to find by direct ID first
-                try {
-                    reservation = await Reservation.findById(reservationId);
-                } catch (idError) {
-                    console.error(`DEBUGGING - Error finding reservation by direct ID: ${idError.message}`);
-                    // If that fails, try to find by string comparison (for non-standard IDs)
-                    try {
-                        reservation = await Reservation.findOne({
-                            $or: [
-                                { _id: reservationId },
-                                { reservationId: reservationId }
-                            ]
-                        });
-                    } catch (secondError) {
-                        console.error(`DEBUGGING - Error in fallback reservation lookup: ${secondError.message}`);
-                    }
-                }
-                console.log(`DEBUGGING - Found reservation by ID: ${reservation ? 'Yes' : 'No'}`);
-            } catch (error) {
-                console.error(`DEBUGGING - Error finding reservation: ${error.message}`);
-            }
-        }
-
-        // Step 3: Update the ticket if we found one
-        if (ticket) {
-            console.log(`DEBUGGING - Updating ticket ${ticketId}`);
-
-            // Handle ticket update
-            try {
-                // Ensure the ticket has seat IDs if needed
-                if ((!ticket.seatIds || ticket.seatIds.length === 0) &&
-                    ticket.ticketInfo && ticket.ticketInfo.selectedSeats &&
-                    ticket.ticketInfo.selectedSeats.length > 0) {
-                    ticket.seatIds = ticket.ticketInfo.selectedSeats;
-                }
-
-                ticket.status = 'confirmed';
-                ticket.paymentStatus = 'paid';
-                ticket.isPermanent = true;
-
-                // Ensure proper booking ID format
-                if (properBookingId && (!ticket.bookingId || !ticket.bookingId.startsWith('BK-'))) {
-                    ticket.bookingId = properBookingId;
-                } else if (!ticket.bookingId || !ticket.bookingId.startsWith('BK-')) {
-                    // Generate a new booking ID if needed
-                    const timestamp = Math.floor(Date.now() / 1000);
-                    ticket.bookingId = `BK-${timestamp}${Math.floor(Math.random() * 1000)}`;
-                    properBookingId = ticket.bookingId;
-                }
-
-                await ticket.save();
-                console.log(`DEBUGGING - Ticket updated successfully with bookingId: ${ticket.bookingId}`);
-
-                // Update properBookingId from ticket
+            const ticket = await Ticket.findById(ticketId);
+            if (ticket && ticket.bookingId && ticket.bookingId.startsWith('BK-')) {
                 properBookingId = ticket.bookingId;
-            } catch (error) {
-                console.error(`DEBUGGING - Error updating ticket: ${error.message}`);
+                console.log(`Using ticket's booking ID format: ${properBookingId}`);
             }
         }
 
-        // Step 4: Handle seat updates if we have a ticket or reservation
-        let seatIds = [];
-        let busId = null;
+        // If reservation isn't found but we have a ticketId, we can still proceed
+        // This handles cases where reservation might have expired or been deleted
+        if (!reservation && ticketId) {
+            console.log(`Reservation ${reservationId} not found, but ticketId ${ticketId} provided. Creating a new permanent reservation record.`);
 
-        if (reservation) {
-            seatIds = reservation.seatIds || [];
-            busId = reservation.busId;
-        } else if (ticket) {
-            seatIds = ticket.ticketInfo?.selectedSeats || ticket.seatIds || [];
-            busId = ticket.busId || ticket.ticketInfo?.busId;
+            // Find the ticket to get necessary information
+            const ticket = await Ticket.findById(ticketId);
+
+            if (!ticket) {
+                console.log(`Both reservation and ticket not found. Cannot proceed.`);
+                return res.status(404).json({
+                    success: false,
+                    message: 'Neither reservation nor ticket found'
+                });
+            }
+
+            // Create a new permanent reservation record
+            reservation = new Reservation({
+                _id: new mongoose.Types.ObjectId(),
+                seatIds: ticket.seatIds || [],
+                busId: ticket.busId,
+                userId: ticket.userId,
+                ticketId: ticket._id,
+                bookingId: properBookingId || ticket.bookingId, // Use proper booking ID if available
+                isPermanent: true,
+                createdAt: new Date()
+            });
+
+            await reservation.save();
+            console.log(`Created new permanent reservation for ticket ${ticketId}`);
+        } else if (!reservation) {
+            console.log(`Reservation ${reservationId} not found`);
+            return res.status(404).json({
+                success: false,
+                message: 'Reservation not found'
+            });
         }
 
-        console.log(`DEBUGGING - Seat update info: ${seatIds.length} seats, busId: ${busId}`);
+        // Get the seat IDs from the reservation
+        const seatIds = reservation.seatIds || [];
+        const busId = reservation.busId;
 
-        // Skip seat updates if we don't have necessary info
-        if (seatIds.length > 0 && busId) {
-            try {
-                // Sanitize seat IDs - ensure they're all valid strings
-                const sanitizedSeatIds = seatIds.map(id => {
-                    if (id && typeof id === 'object' && id.toString) {
-                        return id.toString();
-                    }
-                    return String(id);
-                }).filter(id => id && id.length > 0);
+        console.log(`Reservation found with ${seatIds.length} seats for busId ${busId}`);
 
-                console.log(`DEBUGGING - Sanitized ${sanitizedSeatIds.length} seat IDs for update`);
-
-                // First, check if these seats actually exist
-                const existingSeats = await Seat.find({
-                    $or: [
-                        { _id: { $in: sanitizedSeatIds } },
-                        { seatId: { $in: sanitizedSeatIds }, busId: busId }
-                    ]
+        // Find the associated ticket if ticketId is provided
+        let ticket = null;
+        if (ticketId) {
+            ticket = await Ticket.findById(ticketId);
+            if (!ticket) {
+                console.log(`Ticket ${ticketId} not found`);
+                return res.status(404).json({
+                    success: false,
+                    message: 'Ticket not found'
                 });
+            }
+            console.log(`Ticket ${ticketId} found, updating status to confirmed`);
 
-                console.log(`DEBUGGING - Found ${existingSeats.length} existing seats`);
+            // Ensure the ticket has the seat IDs if they're missing
+            if (!ticket.seatIds || ticket.seatIds.length === 0) {
+                ticket.seatIds = seatIds;
+            }
+        }
 
-                if (existingSeats.length > 0) {
-                    // Update only seats that actually exist
-                    const existingSeatIds = existingSeats.map(seat => seat._id.toString());
+        // Update the ticket status to confirmed if it exists
+        if (ticket) {
+            ticket.status = 'confirmed';
+            ticket.paymentStatus = 'paid';
+            ticket.isPermanent = true; // Add this flag to the ticket as well
 
-                    await Seat.updateMany(
-                        { _id: { $in: existingSeatIds } },
+            // Ensure bookingId is set on the ticket and has the proper format
+            if (properBookingId && (!ticket.bookingId || !ticket.bookingId.startsWith('BK-'))) {
+                ticket.bookingId = properBookingId;
+            } else if (ticket.bookingId && !ticket.bookingId.startsWith('BK-') && ticket._id) {
+                // Generate a booking ID in the BK-XXXXXXXXXX format if needed
+                const timestamp = Math.floor(Date.now() / 1000);
+                ticket.bookingId = `BK-${timestamp}${Math.floor(Math.random() * 1000)}`;
+                console.log(`Generated new booking ID: ${ticket.bookingId}`);
+            }
+
+            await ticket.save();
+            console.log(`Ticket ${ticketId} updated to confirmed status with bookingId ${ticket.bookingId}`);
+
+            // Update properBookingId to use the ticket's booking ID
+            properBookingId = ticket.bookingId;
+        }
+
+        // Update the seats to be permanently booked
+        if (seatIds && seatIds.length > 0) {
+            console.log(`Permanently booking ${seatIds.length} seats for reservation ${reservationId}`);
+
+            // Find the bus to double-check it exists
+            const bus = await Bus.findById(busId);
+            if (!bus) {
+                console.log(`Bus ${busId} not found. This could cause issues with seat permanence.`);
+            }
+
+            // First check if seats exist
+            const seatsExist = await Seat.find({ _id: { $in: seatIds } });
+            console.log(`Found ${seatsExist.length} seats out of ${seatIds.length} requested`);
+
+            // Update each seat individually to ensure all are updated
+            let updatedCount = 0;
+            for (const seatId of seatIds) {
+                try {
+                    const updateResult = await Seat.updateOne(
+                        { _id: seatId },
                         {
                             $set: {
                                 status: 'booked',
                                 isPermanentlyBooked: true,
                                 ticketId: ticketId || null,
-                                bookingId: properBookingId || null
+                                bookingId: properBookingId || null, // Use proper booking ID
+                                busId: busId
                             }
                         }
                     );
-                    console.log(`DEBUGGING - Updated ${existingSeatIds.length} seats to permanently booked`);
-                } else {
-                    console.log(`DEBUGGING - No existing seats found to update`);
+
+                    if (updateResult.modifiedCount > 0) {
+                        updatedCount++;
+                    }
+                } catch (seatError) {
+                    console.error(`Error updating seat ${seatId}:`, seatError);
                 }
-            } catch (error) {
-                console.error(`DEBUGGING - Error updating seats: ${error.message}`);
-                // Continue execution even if seat update fails
             }
+
+            console.log(`Successfully updated ${updatedCount} out of ${seatIds.length} seats to permanent status`);
+
+            // Double-check that seats are properly marked by querying them again
+            const verifySeats = await Seat.find({
+                _id: { $in: seatIds },
+                isPermanentlyBooked: true
+            });
+
+            console.log(`Verification: Found ${verifySeats.length} permanently booked seats out of ${seatIds.length}`);
         }
 
-        // Step 5: Update the reservation if it exists
-        if (reservation) {
-            try {
-                reservation.isPermanent = true;
-                reservation.expiry = null;
+        // Update the reservation to mark it as permanent
+        reservation.isPermanent = true;
+        reservation.expiry = null; // Remove expiry
+        reservation.ticketId = ticketId || null;
 
-                if (ticketId) {
-                    reservation.ticketId = ticketId;
-                }
-
-                if (properBookingId && (!reservation.bookingId || !reservation.bookingId.startsWith('BK-'))) {
-                    reservation.bookingId = properBookingId;
-                }
-
-                await reservation.save();
-                console.log(`DEBUGGING - Reservation updated successfully`);
-            } catch (error) {
-                console.error(`DEBUGGING - Error updating reservation: ${error.message}`);
-                // Continue execution even if reservation update fails
-            }
+        // Ensure bookingId is set on the reservation with the proper format
+        if (properBookingId && (!reservation.bookingId || !reservation.bookingId.startsWith('BK-'))) {
+            reservation.bookingId = properBookingId;
         }
 
-        // Return success with the proper booking ID
-        console.log(`DEBUGGING - Returning success response with bookingId: ${properBookingId}`);
+        await reservation.save();
+        console.log(`Reservation ${reservationId} marked as permanent with bookingId ${reservation.bookingId}`);
+
         return res.status(200).json({
             success: true,
-            message: ticket ? 'Ticket confirmed successfully' : (reservation ? 'Reservation confirmed permanently' : 'Confirmation partially successful'),
-            bookingId: properBookingId || (ticket ? ticket.bookingId : (reservation ? reservation.bookingId : bookingId))
+            message: 'Reservation confirmed permanently',
+            bookingId: properBookingId
         });
-
     } catch (error) {
-        console.error('DEBUGGING - Critical error in confirmReservation:', error);
-        console.error('DEBUGGING - Error stack:', error.stack);
-        console.error('DEBUGGING - Request params:', { reservationId, ticketId, bookingId });
-
-        // Try to get booking ID from ticket if available
-        let finalBookingId = bookingId;
-        try {
-            if (ticketId) {
-                const Ticket = mongoose.model('Ticket');
-                const ticket = await Ticket.findById(ticketId);
-                if (ticket && ticket.bookingId) {
-                    finalBookingId = ticket.bookingId;
-                }
-            }
-        } catch (lookupError) {
-            console.error('Error looking up booking ID:', lookupError);
-        }
-
+        console.error('Error confirming reservation:', error);
         return res.status(500).json({
             success: false,
             message: 'Failed to confirm reservation',
-            error: error.message,
-            bookingId: finalBookingId
+            error: error.message
         });
+    }
+};
+
+const updateSeatStatus = async (busId, seatIds, status) => {
+    try {
+        const Seat = mongoose.model('Seat');
+        // Add isPermanentlyBooked flag when seats are booked
+        if (status === 'booked') {
+            await Seat.updateMany(
+                { busId, seatId: { $in: seatIds } },
+                {
+                    $set: {
+                        status,
+                        isPermanentlyBooked: true  // Mark seats as permanently booked
+                    }
+                }
+            );
+        } else {
+            await Seat.updateMany(
+                { busId, seatId: { $in: seatIds } },
+                { $set: { status } }
+            );
+        }
+        return true;
+    } catch (error) {
+        console.error('Error updating seat status:', error);
+        return false;
     }
 }; 

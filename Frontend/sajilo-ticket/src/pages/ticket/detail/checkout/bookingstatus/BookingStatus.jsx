@@ -26,6 +26,7 @@ const BookingStatus = () => {
     const [seatDisplayData, setSeatDisplayData] = useState([]);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
     const navigate = useNavigate();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { busId, selectedSeats, date, totalPrice, route, reservation } = bookingData || {};
 
@@ -161,6 +162,11 @@ const BookingStatus = () => {
     const handleProceedToPayment = (e) => {
         e.preventDefault();
 
+        // Prevent multiple clicks
+        if (isSubmitting) {
+            return;
+        }
+
         // Validate required fields
         if (!checkoutData.passengerName || checkoutData.passengerName.trim() === '') {
             toast.error('Please enter your full name');
@@ -191,6 +197,9 @@ const BookingStatus = () => {
             toast.error('Please select a payment method');
             return;
         }
+
+        // Set submitting state to true to prevent multiple clicks
+        setIsSubmitting(true);
 
         // Clear any existing payment state from localStorage
         localStorage.removeItem('paymentInitiated');
@@ -242,6 +251,13 @@ const BookingStatus = () => {
 
         return () => {
             window.removeEventListener('paymentMethodSelected', handlePaymentMethodChange);
+        };
+    }, []);
+
+    // Reset submission state if component unmounts before navigation completes
+    useEffect(() => {
+        return () => {
+            setIsSubmitting(false);
         };
     }, []);
 
@@ -403,9 +419,10 @@ const BookingStatus = () => {
             <div className="w-full px-1.5">
                 <button
                     onClick={handleProceedToPayment}
-                    className='w-full bg-primary hover:bg-primary/90 text-sm text-neutral-50 font-normal py-2.5 flex items-center justify-center uppercase rounded-lg transition'>
-                    Proceed to Pay
-                    <FaArrowRightLong className="ml-2" />
+                    disabled={isSubmitting}
+                    className='w-full bg-primary hover:bg-primary/90 text-sm text-neutral-50 font-normal py-2.5 flex items-center justify-center uppercase rounded-lg transition disabled:bg-primary/60 disabled:cursor-not-allowed'>
+                    {isSubmitting ? 'Processing...' : 'Proceed to Pay'}
+                    {!isSubmitting && <FaArrowRightLong className="ml-2" />}
                 </button>
             </div>
         </div>
