@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { FaCircleCheck, FaPhone } from "react-icons/fa6";
 import { IoCloseCircle } from "react-icons/io5";
 import { QRCodeSVG } from 'qrcode.react';
@@ -7,6 +7,16 @@ import BusImg from "../../../../assets/bus.png"
 import QrImg from "../../../../assets/QrImg.jpg"
 
 const PassengerInvoice = ({ data }) => {
+    // Add debugging to check what contact info we're receiving
+    useEffect(() => {
+        console.log('PassengerInvoice data received:', {
+            busId: data?.busId,
+            primaryContactNumber: data?.primaryContactNumber,
+            secondaryContactNumber: data?.secondaryContactNumber,
+            contactPhone: data?.contactPhone
+        });
+    }, [data]);
+
     // Format date to display in a readable format
     const formatDate = (dateString) => {
         if (!dateString) return '';
@@ -33,6 +43,25 @@ const PassengerInvoice = ({ data }) => {
     const formatSeats = (seats) => {
         if (!seats || !Array.isArray(seats)) return '';
         return seats.join(', ');
+    };
+
+    // Helper function to render the contact information
+    const renderContactInfo = () => {
+        // Log what we have to work with
+        console.log('Contact info available:', {
+            primaryContact: data?.primaryContactNumber,
+            secondaryContact: data?.secondaryContactNumber,
+            contactPhone: data?.contactPhone,
+            busNumber: data?.busNumber
+        });
+
+        // use contactPhone if it exists and is not just the bus number
+        if (data?.contactPhone && data?.contactPhone !== data?.busNumber) {
+            return data.contactPhone;
+        }
+
+        // Final fallback: no contact information available
+        return "Contact information not available";
     };
 
     return (
@@ -65,7 +94,7 @@ const PassengerInvoice = ({ data }) => {
                             Bill No.: {data?.bookingId || data?.ticketId || data?.invoiceNumber || 'N/A'}
                         </p>
                         <p className="text-base text-neutral-500 font-normal">
-                            NPR {data?.pricePerSeat || 0} <span className='text-xs'>/seat</span>
+                            NPR {data?.pricePerSeat > 0 ? data?.pricePerSeat : (data?.totalPrice / (data?.selectedSeats?.length || 1))} <span className='text-xs'>/seat</span>
                         </p>
                         <p className="text-base text-neutral-500 font-normal">
                             Date: {formatDate(data?.journeyDate) || 'N/A'}
@@ -157,7 +186,7 @@ const PassengerInvoice = ({ data }) => {
                 <div className="flex items-center gap-x-2">
                     <FaPhone className='w-3 h-3 text-neutral-100' />
                     <p className="text-sm text-neutral-100 font-light">
-                        {data?.contactPhone || '+977-9800000000, +9770123456789'}
+                    Operator Contact: {renderContactInfo().replace("Operator Contact: ", "")}
                     </p>
                 </div>
             </div>

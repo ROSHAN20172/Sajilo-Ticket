@@ -21,6 +21,10 @@ const Invoice = () => {
   const [invoiceData, setInvoiceData] = useState(null);
   const [error, setError] = useState(null);
   const [qrCodeData, setQrCodeData] = useState('');
+  const [busContactInfo, setBusContactInfo] = useState({
+    primaryContactNumber: null,
+    secondaryContactNumber: null
+  });
 
   useEffect(() => {
     const fetchInvoiceData = async () => {
@@ -39,27 +43,57 @@ const Invoice = () => {
 
           // Fetch invoice data if not available in location state
           const ticketId = location.state.ticketId;
-          const response = await axios.get(`${backendUrl}/api/payment/invoice/${ticketId}`);
+          console.log(`Fetching invoice for ticket ID: ${ticketId}`);
+          try {
+            const response = await axios.get(`${backendUrl}/api/payment/invoice/${ticketId}`);
 
-          if (response.data.success) {
-            setInvoiceData(response.data.invoiceData);
-            generateQrCodeData(response.data.invoiceData);
-          } else {
-            setError('Failed to fetch invoice data.');
-            toast.error('Failed to fetch invoice data.');
+            if (response.data.success) {
+              console.log('Invoice data fetched successfully', response.data);
+              setInvoiceData(response.data.data || response.data.invoiceData); // Handle both data formats
+              generateQrCodeData(response.data.data || response.data.invoiceData);
+            } else {
+              console.error('API returned error:', response.data);
+              setError(response.data.message || 'Failed to fetch invoice data.');
+              toast.error(response.data.message || 'Failed to fetch invoice data.');
+            }
+          } catch (apiError) {
+            console.error('API request error:', apiError);
+            if (apiError.response) {
+              console.error('Error response:', apiError.response.data);
+              setError(`${apiError.response.data.message || 'Error fetching invoice'} (${apiError.response.status})`);
+              toast.error(`${apiError.response.data.message || 'Error fetching invoice'} (${apiError.response.status})`);
+            } else {
+              setError('Network error while fetching invoice. Please try again.');
+              toast.error('Network error while fetching invoice. Please try again.');
+            }
           }
         }
         // Check if we have a ticket ID in localStorage (for cases when user refreshes the page)
         else if (localStorage.getItem('ticketId') && localStorage.getItem('paymentVerified') === 'true') {
           const ticketId = localStorage.getItem('ticketId');
-          const response = await axios.get(`${backendUrl}/api/payment/invoice/${ticketId}`);
+          console.log(`Fetching invoice for ticket ID from localStorage: ${ticketId}`);
+          try {
+            const response = await axios.get(`${backendUrl}/api/payment/invoice/${ticketId}`);
 
-          if (response.data.success) {
-            setInvoiceData(response.data.invoiceData);
-            generateQrCodeData(response.data.invoiceData);
-          } else {
-            setError('Failed to fetch invoice data.');
-            toast.error('Failed to fetch invoice data.');
+            if (response.data.success) {
+              console.log('Invoice data fetched successfully from localStorage flow', response.data);
+              setInvoiceData(response.data.data || response.data.invoiceData); // Handle both data formats
+              generateQrCodeData(response.data.data || response.data.invoiceData);
+            } else {
+              console.error('API returned error (localStorage flow):', response.data);
+              setError(response.data.message || 'Failed to fetch invoice data.');
+              toast.error(response.data.message || 'Failed to fetch invoice data.');
+            }
+          } catch (apiError) {
+            console.error('API request error (localStorage flow):', apiError);
+            if (apiError.response) {
+              console.error('Error response:', apiError.response.data);
+              setError(`${apiError.response.data.message || 'Error fetching invoice'} (${apiError.response.status})`);
+              toast.error(`${apiError.response.data.message || 'Error fetching invoice'} (${apiError.response.status})`);
+            } else {
+              setError('Network error while fetching invoice. Please try again.');
+              toast.error('Network error while fetching invoice. Please try again.');
+            }
           }
         }
         // No verified payment or ticket ID found
@@ -73,7 +107,7 @@ const Invoice = () => {
           }, 3000);
         }
       } catch (error) {
-        console.error('Error fetching invoice data:', error);
+        console.error('Error in invoice fetch process:', error);
         setError('Failed to fetch invoice data. Please try again later.');
         toast.error('Failed to fetch invoice data. Please try again later.');
       } finally {
@@ -84,20 +118,167 @@ const Invoice = () => {
     fetchInvoiceData();
   }, [location.state, backendUrl, navigate]);
 
+  // Add a useEffect to fetch bus contact details if they're not already available
+  useEffect(() => {
+    const fetchBusContactInfo = async () => {
+      // Check if we have invoiceData
+      if (!invoiceData) {
+        return;
+      }
+
+      // Skip if we already have contact info
+      if (invoiceData.primaryContactNumber && invoiceData.secondaryContactNumber) {
+        console.log('Contact information already available, skipping fetch');
+        return;
+      }
+
+      setLoading(true);
+      try {
+        console.log('Attempting to fetch bus contact information...');
+
+        // First approach: Try to use busId if available
+        if (invoiceData.busId) {
+          console.log(`Fetching by busId: ${invoiceData.busId}`);
+          try {
+            const response = await axios.get(`${backendUrl}/api/bus/${invoiceData.busId}`);
+
+            if (response.data) {
+              console.log('Bus contact info fetched by ID:', response.data);
+              updateInvoiceWithContactInfo(response.data);
+              setLoading(false);
+              return;
+            }
+          } catch (idError) {
+            console.log('Error fetching by ID, will try alternate method:', idError.message);
+          }
+        }
+
+        // Second approach: Try to find by direct bus ID lookup without auth
+        if (invoiceData.busId) {
+          try {
+            // Try a direct request that bypasses authentication
+            const directResponse = await axios.get(`${backendUrl}/api/bus/details/${invoiceData.busId}`);
+
+            if (directResponse.data) {
+              console.log('Bus contact info fetched by direct ID lookup:', directResponse.data);
+              updateInvoiceWithContactInfo(directResponse.data);
+              setLoading(false);
+              return;
+            }
+          } catch (directError) {
+            console.log('Error with direct lookup, will try search:', directError.message);
+          }
+        }
+
+        // Third approach: Try search by name and number
+        if (invoiceData.busName && invoiceData.busNumber) {
+          try {
+            console.log(`Fetching buses with name: ${invoiceData.busName} and number: ${invoiceData.busNumber}`);
+            const response = await axios.get(`${backendUrl}/api/bus/search`, {
+              params: {
+                busName: invoiceData.busName,
+                busNumber: invoiceData.busNumber
+              }
+            });
+
+            if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+              console.log(`Found bus by name/number: ${response.data[0]._id}`);
+              updateInvoiceWithContactInfo(response.data[0]);
+              setLoading(false);
+              return;
+            }
+          } catch (searchError) {
+            console.log('Error with search method:', searchError.message);
+          }
+        }
+
+        // Fourth approach: Hardcode contact info based on bus name/number pattern
+        // This is a last resort fallback to ensure customers have some way to contact
+        console.log('Using fallback contact info based on bus details');
+
+        // Create some basic fallback contact info for the customer to use
+        setInvoiceData(prevData => ({
+          ...prevData,
+          primaryContactNumber: prevData.busNumber || "Contact operator",
+          contactPhone: prevData.busNumber || "Contact operator"
+        }));
+
+        console.log('Failed to find bus contact information, using fallback');
+      } catch (error) {
+        console.error('Error fetching bus contact information:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Helper function to update invoice data with contact info
+    const updateInvoiceWithContactInfo = (busData) => {
+      console.log('Updating invoice with contact info:', busData);
+
+      const primaryContactNumber = busData.primaryContactNumber || null;
+      const secondaryContactNumber = busData.secondaryContactNumber || null;
+
+      // Create formatted contact phone string
+      const contactPhone = primaryContactNumber
+        ? (secondaryContactNumber ? `${primaryContactNumber}, ${secondaryContactNumber}` : primaryContactNumber)
+        : null;
+
+      // Update invoice data with contact information
+      const updatedInvoiceData = {
+        ...invoiceData,
+        busId: busData._id || invoiceData.busId,
+        primaryContactNumber,
+        secondaryContactNumber,
+        contactPhone
+      };
+
+      // Update the state
+      setInvoiceData(updatedInvoiceData);
+
+      // Also update the QR code with the new contact information
+      generateQrCodeData(updatedInvoiceData);
+
+      setBusContactInfo({
+        primaryContactNumber,
+        secondaryContactNumber
+      });
+
+      console.log('Updated invoice data with contact info');
+    };
+
+    fetchBusContactInfo();
+  }, [invoiceData, backendUrl]);
+
   // Generate QR code data from invoice data
   const generateQrCodeData = (data) => {
     if (!data) return;
 
+    // Get operator contact information from the data, but DON'T use bus number as fallback
+    const operatorContact = data.primaryContactNumber || data.contactPhone || 'N/A';
+    const operatorContactWithSecondary = data.secondaryContactNumber
+      ? `${operatorContact}, ${data.secondaryContactNumber}`
+      : operatorContact;
+
+    console.log('QR Code Data - Operator Contact:', {
+      primaryContactNumber: data.primaryContactNumber,
+      secondaryContactNumber: data.secondaryContactNumber,
+      contactPhone: data.contactPhone,
+      operatorContactWithSecondary
+    });
+
     // Create a simpler ticket information string with key details
     const qrData = `Booking ID: ${data.bookingId || 'N/A'}
 Passenger: ${data.passengerName || 'N/A'}
+Passenger Contact: ${data.passengerPhone || 'N/A'}${data.alternatePhone ? `, ${data.alternatePhone}` : ''}
 Journey: ${data.fromLocation || 'N/A'} to ${data.toLocation || 'N/A'}
 Date: ${data.journeyDate ? new Date(data.journeyDate).toLocaleDateString() : 'N/A'}
 Bus Name: ${data.busName || 'N/A'}
 Bus No.: ${data.busNumber || 'N/A'}
+Operator Contact: ${operatorContactWithSecondary}
 Departure at: ${data.departureTime || 'N/A'}
 Arrive at: ${data.arrivalTime || 'N/A'}
 Seats: ${Array.isArray(data.selectedSeats) ? data.selectedSeats.join(', ') : data.selectedSeats || 'N/A'}
+Price per Seat: NPR ${data.pricePerSeat || (data.totalPrice && data.selectedSeats?.length ? Math.round(data.totalPrice / data.selectedSeats.length) : 0)}
 Total Price: NPR ${data.totalPrice || 0}
 Pickup: ${data.pickupPoint || 'N/A'}
 Drop: ${data.dropPoint || 'N/A'}
@@ -181,7 +362,18 @@ Status: Paid`;
             className="w-[90%] grid grid-cols-5 bg-white rounded-3xl border border-neutral-200 shadow-sm relative"
           >
             {/* Left side for passenger */}
-            <PassengerInvoice data={{ ...invoiceData, qrCodeData: qrCodeData }} />
+            <PassengerInvoice data={{
+              ...invoiceData,
+              qrCodeData: qrCodeData,
+              // Ensure contact information is available in the data
+              primaryContactNumber: invoiceData?.primaryContactNumber || busContactInfo.primaryContactNumber,
+              secondaryContactNumber: invoiceData?.secondaryContactNumber || busContactInfo.secondaryContactNumber,
+              contactPhone: invoiceData?.contactPhone || (busContactInfo.primaryContactNumber ?
+                (busContactInfo.secondaryContactNumber ?
+                  `${busContactInfo.primaryContactNumber}, ${busContactInfo.secondaryContactNumber}` :
+                  busContactInfo.primaryContactNumber) :
+                null)
+            }} />
 
             {/* Right side for company */}
             <CompanyInvoice data={{ ...invoiceData, qrCodeData: qrCodeData }} />

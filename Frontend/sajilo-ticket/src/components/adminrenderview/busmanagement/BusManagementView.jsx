@@ -233,6 +233,22 @@ const BusManagementView = ({
             <h3 style={{ marginBottom: '0.5rem' }}>Description</h3>
             <p>{selectedBus?.busDescription || 'N/A'}</p>
           </div>
+
+          {/* Contact Numbers */}
+          <div style={{ marginBottom: '1rem' }}>
+            <h3 style={{ marginBottom: '0.5rem' }}>Contact Information</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div>
+                <span style={{ fontWeight: 'bold' }}>Primary Contact: </span>
+                <span>{selectedBus?.primaryContactNumber || 'N/A'}</span>
+              </div>
+              <div>
+                <span style={{ fontWeight: 'bold' }}>Secondary Contact: </span>
+                <span>{selectedBus?.secondaryContactNumber || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+
           <hr style={{ margin: '1rem 0' }} />
 
           {/* Reservation Policies */}
@@ -353,16 +369,16 @@ const BusManagementView = ({
             p: 3
           }}
         >
-            <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
-            <p>Are you sure you want to delete the bus <strong>{busToDelete?.busName}</strong>?</p>
-            <div className="mt-6 flex justify-end space-x-4">
-              <Button variant="outlined" onClick={closeDeleteModal}>
-                Cancel
-              </Button>
-              <Button variant="contained" color="error" onClick={handleDeleteBus}>
-                Delete
-              </Button>
-            </div>
+          <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
+          <p>Are you sure you want to delete the bus <strong>{busToDelete?.busName}</strong>?</p>
+          <div className="mt-6 flex justify-end space-x-4">
+            <Button variant="outlined" onClick={closeDeleteModal}>
+              Cancel
+            </Button>
+            <Button variant="contained" color="error" onClick={handleDeleteBus}>
+              Delete
+            </Button>
+          </div>
         </Box>
       </Modal>
     </div>

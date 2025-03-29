@@ -71,6 +71,12 @@ const CompanyInvoice = ({ data }) => {
                 <p className="text-sm text-neutral-600 font-normal">
                     Total Price: NPR {data?.totalPrice || 0}
                 </p>
+                {/* Only show secondary number field if the passenger's alternate phone exists */}
+                {data?.alternatePhone && (
+                    <p className="text-sm text-neutral-600 font-normal">
+                        Sec Phone No: {data.alternatePhone}
+                    </p>
+                )}
             </div>
 
             {/* Right bottom section */}
@@ -78,7 +84,7 @@ const CompanyInvoice = ({ data }) => {
                 <div className="flex items-center gap-x-2">
                     <FaPhone className='w-3 h-3 text-neutral-100' />
                     <p className="text-sm text-neutral-100 font-light">
-                        {data?.contactPhone?.split(',')[0] || '+977-9800000000'}
+                        {data?.passengerPhone || 'No contact provided'}
                     </p>
                 </div>
             </div>

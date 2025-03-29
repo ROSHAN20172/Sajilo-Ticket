@@ -39,6 +39,10 @@ const ticketSchema = new mongoose.Schema(
             dropPoint: String,
             date: Date
         },
+        operatorContact: {
+            primaryNumber: String,
+            secondaryNumber: String
+        },
         pickupPointId: String,
         dropPointId: String,
         price: {

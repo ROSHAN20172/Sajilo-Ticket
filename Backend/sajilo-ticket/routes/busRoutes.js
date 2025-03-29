@@ -8,7 +8,8 @@ import {
     checkReservationStatus,
     releaseReservedSeats,
     getCustomPrice,
-    getAvailableCustomPrices
+    getAvailableCustomPrices,
+    searchBuses
 } from '../controllers/busController.js';
 import userAuth from '../middleware/userAuth.js';
 
@@ -39,6 +40,12 @@ router.get('/reservation/:reservationId', userAuth, checkReservationStatus);
 
 // DELETE /api/bus/reservation/:reservationId - release reserved seats
 router.delete('/reservation/:reservationId', userAuth, releaseReservedSeats);
+
+// GET /api/bus/search - search buses
+router.get('/search', searchBuses);
+
+// GET /api/bus/details/:busId - fetch bus details without authentication (for invoices)
+router.get('/details/:busId', getBusDetails);
 
 // GET /api/bus/:busId - fetch bus details
 router.get('/:busId', userAuth, getBusDetails);

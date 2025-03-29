@@ -11,6 +11,8 @@ const OperatorAddBus = () => {
     // Bus Basic Details
     const [busName, setBusName] = useState('');
     const [busNumber, setBusNumber] = useState('');
+    const [primaryContactNumber, setPrimaryContactNumber] = useState('');
+    const [secondaryContactNumber, setSecondaryContactNumber] = useState('');
     const [busDescription, setBusDescription] = useState('');
 
     // Mandatory Documents
@@ -118,6 +120,10 @@ const OperatorAddBus = () => {
             toast.error("Bus Number is required.");
             return;
         }
+        if (!primaryContactNumber.trim()) {
+            toast.error("Primary Contact Number is required.");
+            return;
+        }
         if (!bluebook) {
             toast.error("Bluebook document is required.");
             return;
@@ -152,6 +158,8 @@ const OperatorAddBus = () => {
         const formData = new FormData();
         formData.append('busName', busName);
         formData.append('busNumber', busNumber);
+        formData.append('primaryContactNumber', primaryContactNumber);
+        formData.append('secondaryContactNumber', secondaryContactNumber);
         formData.append('busDescription', busDescription);
         formData.append('bluebook', bluebook);
         formData.append('roadPermit', roadPermit);
@@ -223,6 +231,24 @@ const OperatorAddBus = () => {
                                     type="text"
                                     value={busNumber}
                                     onChange={(e) => setBusNumber(e.target.value)}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Primary Contact Number</label>
+                                <input
+                                    type="text"
+                                    value={primaryContactNumber}
+                                    onChange={(e) => setPrimaryContactNumber(e.target.value)}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Contact Number</label>
+                                <input
+                                    type="text"
+                                    value={secondaryContactNumber}
+                                    onChange={(e) => setSecondaryContactNumber(e.target.value)}
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 />
                             </div>

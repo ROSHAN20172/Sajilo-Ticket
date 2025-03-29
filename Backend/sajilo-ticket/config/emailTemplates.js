@@ -955,6 +955,13 @@ export const BOOKING_CONFIRMATION_TEMPLATE = (bookingDetails) => `
             border-radius: 5px;
             margin: 15px 0;
         }
+        .contact-info {
+            background-color: #f0f7ff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #1a73e8;
+        }
         .footer {
             text-align: center;
             margin-top: 20px;
@@ -989,6 +996,19 @@ export const BOOKING_CONFIRMATION_TEMPLATE = (bookingDetails) => `
                 <p><strong>Pickup Point:</strong> ${bookingDetails.pickupPoint}</p>
                 <p><strong>Drop Point:</strong> ${bookingDetails.dropPoint}</p>
                 <p><strong>Total Amount:</strong> Rs. ${bookingDetails.totalPrice}</p>
+            </div>
+
+            <div class="contact-info">
+                <h3 style="margin-top: 0;">Operator Contact Information</h3>
+                ${bookingDetails.operatorPrimaryContact ?
+    `<p><strong>Primary Contact:</strong> ${bookingDetails.operatorPrimaryContact}</p>` :
+    '<p>No primary contact information available</p>'}
+                
+                ${bookingDetails.operatorSecondaryContact ?
+    `<p><strong>Secondary Contact:</strong> ${bookingDetails.operatorSecondaryContact}</p>` :
+    ''}
+                
+                <p><small>Please save this contact information in case you need to reach the operator.</small></p>
             </div>
 
             <p>Please arrive at the pickup point 15 minutes before the scheduled departure time.</p>

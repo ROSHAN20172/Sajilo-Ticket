@@ -70,13 +70,21 @@ const uploadFileToDrive = async (file, folderId, operatorEmail, isPublic = false
 export const addBus = async (req, res) => {
     try {
         // Extract fields from req.body
-        const { busName, busNumber, busDescription, reservationPolicies, amenities } = req.body;
+        const { busName, busNumber, primaryContactNumber, secondaryContactNumber, busDescription, reservationPolicies, amenities } = req.body;
 
         // Validate required text fields
         if (!busName || !busNumber) {
             return res.status(400).json({
                 success: false,
                 message: "Bus Name and Bus Number are required."
+            });
+        }
+
+        // Validate primary contact number
+        if (!primaryContactNumber) {
+            return res.status(400).json({
+                success: false,
+                message: "Primary Contact Number is required."
             });
         }
 
@@ -160,6 +168,8 @@ export const addBus = async (req, res) => {
         const newBus = new Bus({
             busName,
             busNumber,
+            primaryContactNumber,
+            secondaryContactNumber,
             busDescription,
             documents: {
                 bluebook: bluebookUrl,
@@ -219,9 +229,19 @@ export const updateBus = async (req, res) => {
         }
 
         // Update allowed fields
-        const { busDescription, reservationPolicies, amenities, images, documents } = req.body;
+        const { busDescription, primaryContactNumber, secondaryContactNumber, reservationPolicies, amenities, images, documents } = req.body;
 
         if (busDescription !== undefined) bus.busDescription = busDescription;
+        if (primaryContactNumber !== undefined) {
+            if (!primaryContactNumber.trim()) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Primary Contact Number is required."
+                });
+            }
+            bus.primaryContactNumber = primaryContactNumber;
+        }
+        if (secondaryContactNumber !== undefined) bus.secondaryContactNumber = secondaryContactNumber;
         if (reservationPolicies !== undefined) bus.reservationPolicies = reservationPolicies;
         if (amenities !== undefined) bus.amenities = amenities;
         if (images !== undefined) bus.images = images;

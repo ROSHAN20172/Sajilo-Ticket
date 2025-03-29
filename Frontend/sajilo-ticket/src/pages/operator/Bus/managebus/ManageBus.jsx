@@ -25,6 +25,8 @@ const ManageBus = () => {
     // formData holds existing field values (including preview URLs)
     const [formData, setFormData] = useState({
         busDescription: '',
+        primaryContactNumber: '',
+        secondaryContactNumber: '',
         reservationPolicies: [],
         amenities: [],
         images: {
@@ -94,6 +96,8 @@ const ManageBus = () => {
         setSelectedBus(bus);
         setFormData({
             busDescription: bus.busDescription || '',
+            primaryContactNumber: bus.primaryContactNumber || '',
+            secondaryContactNumber: bus.secondaryContactNumber || '',
             reservationPolicies: bus.reservationPolicies || [],
             amenities: bus.amenities || [],
             images: {
@@ -257,6 +261,20 @@ const ManageBus = () => {
     // Save changes handler: uploads any new files to drive then updates bus details.
     const handleSaveChanges = async () => {
         try {
+            // Validate required fields
+            if (formData.reservationPolicies.length === 0) {
+                toast.error('At least one reservation policy is required');
+                return;
+            }
+            if (formData.amenities.length === 0) {
+                toast.error('At least one amenity is required');
+                return;
+            }
+            if (!formData.primaryContactNumber) {
+                toast.error('Primary Contact Number is required');
+                return;
+            }
+
             // Show a loading toast for image uploads.
             const uploadToastId = toast.loading("Uploading image, please wait...");
 
@@ -320,6 +338,8 @@ const ManageBus = () => {
 
             const updatedData = {
                 busDescription: formData.busDescription,
+                primaryContactNumber: formData.primaryContactNumber,
+                secondaryContactNumber: formData.secondaryContactNumber,
                 reservationPolicies: formData.reservationPolicies.filter(policy => policy.trim() !== ''),
                 amenities: formData.amenities.filter(amenity => amenity.trim() !== ''),
                 images: updatedImages,
@@ -505,9 +525,55 @@ const ManageBus = () => {
                                             <strong>Bus Number:</strong> {selectedBus.busNumber}
                                         </p>
                                         <hr className="my-4 border-gray-200" />
-                                        <p className="mt-2">
-                                            <strong>Description:</strong> {selectedBus.busDescription || 'N/A'}
-                                        </p>
+                                        <div className="mt-4 space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Bus Description</label>
+                                                {editMode ? (
+                                                    <TextareaAutosize
+                                                        name="busDescription"
+                                                        value={formData.busDescription}
+                                                        onChange={handleInputChange}
+                                                        minRows={3}
+                                                        className="w-full p-2 border rounded-md focus:border-blue-500"
+                                                    />
+                                                ) : (
+                                                    <p className="text-gray-900">{formData.busDescription || 'No description provided'}</p>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Primary Contact Number</label>
+                                                {editMode ? (
+                                                    <TextField
+                                                        name="primaryContactNumber"
+                                                        value={formData.primaryContactNumber}
+                                                        onChange={handleInputChange}
+                                                        fullWidth
+                                                        required
+                                                        error={!formData.primaryContactNumber}
+                                                        helperText={!formData.primaryContactNumber ? "Primary contact number is required" : ""}
+                                                        className="mb-2"
+                                                    />
+                                                ) : (
+                                                    <p className="text-gray-900">{formData.primaryContactNumber || 'No primary contact provided'}</p>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Contact Number</label>
+                                                {editMode ? (
+                                                    <TextField
+                                                        name="secondaryContactNumber"
+                                                        value={formData.secondaryContactNumber}
+                                                        onChange={handleInputChange}
+                                                        fullWidth
+                                                        className="mb-2"
+                                                    />
+                                                ) : (
+                                                    <p className="text-gray-900">{formData.secondaryContactNumber || 'No secondary contact provided'}</p>
+                                                )}
+                                            </div>
+                                        </div>
                                         <hr className="my-4 border-gray-200" />
                                         <div className="mt-2">
                                             <strong>Reservation Policies:</strong>
@@ -610,6 +676,41 @@ const ManageBus = () => {
                                                 minRows={3}
                                                 style={{ width: '100%', padding: '8px' }}
                                             />
+                                        </div>
+                                        <hr className="my-4 border-gray-200" />
+
+                                        {/* Contact Numbers */}
+                                        <div className="mb-4">
+                                            <label className="block font-semibold mb-1">Contact Numbers</label>
+                                            <div className="mb-3">
+                                                <label className="block text-sm text-gray-600 mb-1">
+                                                    Primary Contact Number <span className="text-red-500">*</span>
+                                                </label>
+                                                <Input
+                                                    name="primaryContactNumber"
+                                                    value={formData.primaryContactNumber}
+                                                    onChange={handleInputChange}
+                                                    fullWidth
+                                                    required
+                                                    error={!formData.primaryContactNumber}
+                                                    placeholder="Enter primary contact number"
+                                                />
+                                                {!formData.primaryContactNumber && (
+                                                    <p className="text-red-500 text-xs mt-1">Primary contact number is required</p>
+                                                )}
+                                            </div>
+                                            <div className="mb-3">
+                                                <label className="block text-sm text-gray-600 mb-1">
+                                                    Secondary Contact Number (Optional)
+                                                </label>
+                                                <Input
+                                                    name="secondaryContactNumber"
+                                                    value={formData.secondaryContactNumber}
+                                                    onChange={handleInputChange}
+                                                    fullWidth
+                                                    placeholder="Enter secondary contact number (optional)"
+                                                />
+                                            </div>
                                         </div>
                                         <hr className="my-4 border-gray-200" />
 

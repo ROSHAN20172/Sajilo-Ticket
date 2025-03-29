@@ -9,6 +9,7 @@ dotenv.config();
 // Import models - we'll need to create these
 import Ticket from '../models/ticketModel.js';
 import Payment from '../models/paymentModel.js';
+import Bus from '../models/operator/busModel.js';
 
 // Environment variables
 const KHALTI_API_URL = process.env.NODE_ENV === 'production'
@@ -603,31 +604,41 @@ export const verifyPayment = async (req, res) => {
             console.log('Payment completed successfully. Ticket saved with permanent booking.');
         }
 
+        // Store operator contact information in the ticket
+        console.log(`Storing operator contact info for ticket ${ticket._id}, busId ${ticket.ticketInfo.busId || ticket.busId}`);
+        const contactInfo = await storeOperatorContactInfo(ticket._id, ticket.ticketInfo.busId || ticket.busId);
+
         // Generate invoice data based on ticket details
         const invoiceData = {
             ticketId: ticket._id,
             bookingId: ticket.bookingId,
-            passengerName: ticket.passengerInfo.name,
-            passengerEmail: ticket.passengerInfo.email,
-            passengerPhone: ticket.passengerInfo.phone,
-            alternatePhone: ticket.passengerInfo.alternatePhone,
-            fromLocation: ticket.ticketInfo.fromLocation,
-            toLocation: ticket.ticketInfo.toLocation,
-            departureTime: ticket.ticketInfo.departureTime,
-            arrivalTime: ticket.ticketInfo.arrivalTime,
-            journeyDate: ticket.ticketInfo.date,
+            paymentId: payment._id,
+            invoiceNumber: payment.paymentId,
             busName: ticket.ticketInfo.busName,
             busNumber: ticket.ticketInfo.busNumber,
-            selectedSeats: ticket.ticketInfo.selectedSeats,
+            busId: ticket.ticketInfo.busId || ticket.busId,
+            passengerName: ticket.passengerDetails?.name || ticket.passengerInfo?.name,
+            passengerPhone: ticket.passengerDetails?.phone || ticket.passengerInfo?.phone,
+            alternatePhone: ticket.passengerDetails?.alternatePhone || ticket.passengerInfo?.alternatePhone,
+            fromLocation: ticket.ticketInfo.fromLocation,
+            toLocation: ticket.ticketInfo.toLocation,
             pickupPoint: ticket.ticketInfo.pickupPoint,
             dropPoint: ticket.ticketInfo.dropPoint,
+            journeyDate: ticket.ticketInfo.journeyDate || ticket.ticketInfo.date,
+            departureTime: ticket.ticketInfo.departureTime,
+            arrivalTime: ticket.ticketInfo.arrivalTime,
+            selectedSeats: ticket.ticketInfo.selectedSeats,
             totalPrice: ticket.price,
-            status: ticket.status,
-            paymentStatus: ticket.paymentStatus,
-            paymentMethod: 'Khalti',
-            paymentDate: payment.paidAt,
-            amountPaid: payment.amount,
-            issueDate: ticket.createdAt
+            pricePerSeat: ticket.price / ticket.ticketInfo.selectedSeats.length,
+            paymentMethod: payment.paymentMethod,
+            paymentStatus: payment.paymentStatus,
+            paymentDate: payment.createdAt,
+            qrCodeData: `${process.env.CLIENT_URL}/verify-ticket/${ticket._id}`,
+            primaryContactNumber: contactInfo.primaryContactNumber,
+            secondaryContactNumber: contactInfo.secondaryContactNumber,
+            contactPhone: contactInfo.primaryContactNumber
+                ? (contactInfo.secondaryContactNumber ? `${contactInfo.primaryContactNumber}, ${contactInfo.secondaryContactNumber}` : contactInfo.primaryContactNumber)
+                : null
         };
 
         // Find the operator - more comprehensive approach
@@ -1012,10 +1023,63 @@ const removeReservation = async (reservationId) => {
     }
 };
 
+// Store bus contact information in ticket when creating or updating it
+const storeOperatorContactInfo = async (ticketId, busId) => {
+    try {
+        // Fetch bus details to get contact information
+        const Bus = mongoose.model('Bus');
+        const bus = await Bus.findById(busId);
+
+        if (!bus) {
+            console.log(`No bus found with ID: ${busId} for getting contact information`);
+            return { success: false, primaryContactNumber: null, secondaryContactNumber: null };
+        }
+
+        // Get the contact information
+        const primaryContactNumber = bus.primaryContactNumber || null;
+        const secondaryContactNumber = bus.secondaryContactNumber || null;
+
+        if (!primaryContactNumber && !secondaryContactNumber) {
+            console.log(`No contact information found for bus ID: ${busId}`);
+            return { success: false, primaryContactNumber: null, secondaryContactNumber: null };
+        }
+
+        // Update the ticket with operator contact information
+        const updatedTicket = await Ticket.findByIdAndUpdate(
+            ticketId,
+            {
+                operatorContact: {
+                    primaryContactNumber,
+                    secondaryContactNumber
+                }
+            },
+            { new: true }
+        );
+
+        console.log(`Updated ticket ${ticketId} with operator contact information: ${primaryContactNumber}, ${secondaryContactNumber}`);
+
+        return {
+            success: true,
+            primaryContactNumber,
+            secondaryContactNumber,
+            ticket: updatedTicket
+        };
+    } catch (error) {
+        console.error('Error storing operator contact information:', error);
+        return {
+            success: false,
+            primaryContactNumber: null,
+            secondaryContactNumber: null,
+            error: error.message
+        };
+    }
+};
+
 // Add endpoint to fetch invoice by ticketId
 export const getInvoice = async (req, res) => {
     try {
         const { ticketId } = req.params;
+        console.log(`Invoice requested for ticket ID: ${ticketId}`);
 
         if (!ticketId) {
             return res.status(400).json({
@@ -1024,64 +1088,130 @@ export const getInvoice = async (req, res) => {
             });
         }
 
-        // Find the ticket
+        // Find ticket by ID
         const ticket = await Ticket.findById(ticketId);
 
         if (!ticket) {
+            console.log(`Ticket not found with ID: ${ticketId}`);
             return res.status(404).json({
                 success: false,
                 message: 'Ticket not found'
             });
         }
 
-        // Find the payment information
+        console.log(`Ticket found: ${ticket._id}, Status: ${ticket.status}, PaymentStatus: ${ticket.paymentStatus}`);
+
+        // Find payment with ticket ID
         const payment = await Payment.findOne({ ticketId });
 
-        if (!payment || payment.status !== 'completed') {
-            return res.status(403).json({
+        if (!payment) {
+            console.log(`No payment record found for ticket: ${ticketId}`);
+            return res.status(404).json({
                 success: false,
-                message: 'No completed payment found for this ticket'
+                message: 'Payment not found'
             });
         }
 
-        // Prepare invoice data
+        console.log(`Payment found: ${payment._id}, Status: ${payment.status}, PaymentStatus: ${payment.paymentStatus || 'N/A'}`);
+
+        // Check if payment is completed or paid (accept both statuses)
+        if (payment.status !== 'completed' && payment.paymentStatus !== 'completed' &&
+            payment.status !== 'paid' && payment.paymentStatus !== 'paid') {
+            console.log(`Payment status check failed. Status: ${payment.status}, PaymentStatus: ${payment.paymentStatus}`);
+            return res.status(404).json({
+                success: false,
+                message: 'Payment incomplete or not confirmed'
+            });
+        }
+
+        console.log(`Payment validated for ticket: ${ticketId}`);
+
+        // Get contact information from ticket's operatorContact field
+        let primaryContactNumber = null;
+        let secondaryContactNumber = null;
+        let contactPhone = null;
+
+        // If ticket has stored operator contact, use it
+        if (ticket.operatorContact && ticket.operatorContact.primaryContactNumber) {
+            primaryContactNumber = ticket.operatorContact.primaryContactNumber;
+            secondaryContactNumber = ticket.operatorContact.secondaryContactNumber || null;
+
+            // Create formatted contact phone string
+            contactPhone = primaryContactNumber
+                ? (secondaryContactNumber ? `${primaryContactNumber}, ${secondaryContactNumber}` : primaryContactNumber)
+                : null;
+
+            console.log('Using operator contact from ticket:', { primaryContactNumber, secondaryContactNumber });
+        } else {
+            // Fallback: Try to get contact info from the bus
+            try {
+                const Bus = mongoose.model('Bus');
+                const bus = await Bus.findById(ticket.ticketInfo.busId || ticket.busId);
+
+                if (bus) {
+                    primaryContactNumber = bus.primaryContactNumber || null;
+                    secondaryContactNumber = bus.secondaryContactNumber || null;
+
+                    // Create formatted contact phone string
+                    contactPhone = primaryContactNumber
+                        ? (secondaryContactNumber ? `${primaryContactNumber}, ${secondaryContactNumber}` : primaryContactNumber)
+                        : null;
+
+                    console.log('Using contact from bus:', { primaryContactNumber, secondaryContactNumber });
+
+                    // Store the contact info in the ticket for future use
+                    storeOperatorContactInfo(ticketId, bus._id);
+                }
+            } catch (error) {
+                console.error('Error fetching contact information from bus:', error);
+            }
+        }
+
+        // Calculate price per seat accurately
+        const totalSeats = ticket.ticketInfo.selectedSeats.length;
+        const pricePerSeat = totalSeats > 0 ? Math.round(ticket.price / totalSeats) : 0;
+
+        // Create invoice data with all necessary information
         const invoiceData = {
             ticketId: ticket._id,
             bookingId: ticket.bookingId,
-            invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
+            paymentId: payment._id,
+            invoiceNumber: payment.paymentId,
             busName: ticket.ticketInfo.busName,
             busNumber: ticket.ticketInfo.busNumber,
+            busId: ticket.ticketInfo.busId || ticket.busId,
+            passengerName: ticket.passengerDetails?.name || ticket.passengerInfo?.name,
+            passengerPhone: ticket.passengerDetails?.phone || ticket.passengerInfo?.phone,
+            alternatePhone: ticket.passengerDetails?.alternatePhone || ticket.passengerInfo?.alternatePhone,
             fromLocation: ticket.ticketInfo.fromLocation,
             toLocation: ticket.ticketInfo.toLocation,
-            departureTime: ticket.ticketInfo.departureTime,
-            arrivalTime: ticket.ticketInfo.arrivalTime,
-            date: ticket.ticketInfo.date,
-            selectedSeats: ticket.ticketInfo.selectedSeats,
             pickupPoint: ticket.ticketInfo.pickupPoint,
             dropPoint: ticket.ticketInfo.dropPoint,
-            passengerName: ticket.passengerInfo.name,
-            passengerEmail: ticket.passengerInfo.email,
-            passengerPhone: ticket.passengerInfo.phone,
-            price: ticket.price,
-            paymentStatus: ticket.paymentStatus,
-            bookingDate: ticket.bookingDate,
-            transactionId: payment.transactionId,
-            journeyDate: ticket.ticketInfo.date,
-            pricePerSeat: ticket.price / ticket.ticketInfo.selectedSeats.length,
+            journeyDate: ticket.ticketInfo.journeyDate || ticket.ticketInfo.date,
+            departureTime: ticket.ticketInfo.departureTime,
+            arrivalTime: ticket.ticketInfo.arrivalTime,
+            selectedSeats: ticket.ticketInfo.selectedSeats,
             totalPrice: ticket.price,
-            contactPhone: '+977-9800000000, +9770123456789'
+            pricePerSeat: pricePerSeat,
+            paymentMethod: payment.paymentMethod,
+            paymentStatus: payment.paymentStatus,
+            paymentDate: payment.createdAt,
+            qrCodeData: `${process.env.CLIENT_URL}/verify-ticket/${ticket._id}`,
+            primaryContactNumber,
+            secondaryContactNumber,
+            contactPhone
         };
 
         return res.status(200).json({
             success: true,
-            invoiceData
+            message: 'Invoice generated successfully',
+            data: invoiceData
         });
-
     } catch (error) {
-        console.error('Error fetching invoice:', error);
+        console.error('Error generating invoice:', error);
         return res.status(500).json({
             success: false,
-            message: 'Failed to fetch invoice',
+            message: 'Error generating invoice',
             error: error.message
         });
     }
@@ -1609,7 +1739,34 @@ const sendBookingConfirmationEmails = async (ticket, payment, operator, user = n
 
             console.log('Preparing to send booking confirmation emails');
 
-            // Prepare booking details for the email template
+            // Get operator contact information
+            let operatorPrimaryContact = ticket.operatorContact?.primaryContactNumber || null;
+            let operatorSecondaryContact = ticket.operatorContact?.secondaryContactNumber || null;
+
+            // If contact information is not in the ticket, fetch it from the bus
+            if (!operatorPrimaryContact) {
+                try {
+                    const busId = ticket.ticketInfo.busId || ticket.busId;
+                    console.log(`Fetching bus contact info for busId: ${busId}`);
+
+                    // Use the improved storeOperatorContactInfo function
+                    const contactInfo = await storeOperatorContactInfo(ticket._id, busId);
+                    if (contactInfo.success) {
+                        operatorPrimaryContact = contactInfo.primaryContactNumber;
+                        operatorSecondaryContact = contactInfo.secondaryContactNumber;
+                        console.log('Successfully retrieved and stored contact info from bus:', {
+                            operatorPrimaryContact,
+                            operatorSecondaryContact
+                        });
+                    } else {
+                        console.log('Failed to get contact information:', contactInfo);
+                    }
+                } catch (error) {
+                    console.error('Error fetching bus contact information:', error);
+                }
+            }
+
+            // Create booking details for the email template
             const bookingDetails = {
                 passengerName: ticket.passengerInfo.name,
                 bookingId: ticket.bookingId,
@@ -1623,8 +1780,16 @@ const sendBookingConfirmationEmails = async (ticket, payment, operator, user = n
                 selectedSeats: ticket.ticketInfo.selectedSeats,
                 pickupPoint: ticket.ticketInfo.pickupPoint,
                 dropPoint: ticket.ticketInfo.dropPoint,
-                totalPrice: ticket.price
+                totalPrice: ticket.price,
+                operatorPrimaryContact: operatorPrimaryContact,
+                operatorSecondaryContact: operatorSecondaryContact
             };
+
+            console.log('Booking details for email:', {
+                busName: bookingDetails.busName,
+                operatorPrimaryContact: bookingDetails.operatorPrimaryContact,
+                operatorSecondaryContact: bookingDetails.operatorSecondaryContact
+            });
 
             // Generate HTML content for the email
             const htmlContent = BOOKING_CONFIRMATION_TEMPLATE(bookingDetails);
@@ -1656,10 +1821,17 @@ const sendBookingConfirmationEmails = async (ticket, payment, operator, user = n
                             <p><strong>Departure Time:</strong> ${ticket.ticketInfo.departureTime}</p>
                             <p><strong>Seats Booked:</strong> ${ticket.ticketInfo.selectedSeats.join(', ')}</p>
                             <p><strong>Total Amount:</strong> Rs. ${ticket.price}</p>
-                            <p><strong>Passenger Name:</strong> ${ticket.passengerInfo.name}</p>
-                            <p><strong>Passenger Contact:</strong> ${ticket.passengerInfo.phone}</p>
                             <p><strong>Pickup Point:</strong> ${ticket.ticketInfo.pickupPoint}</p>
                             <p><strong>Drop Point:</strong> ${ticket.ticketInfo.dropPoint}</p>
+                        </div>
+
+                        <div style="background-color: #f0f7ff; padding: 10px 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #1a73e8;">
+                            <h3 style="margin-top: 0;">Passenger Contact Information</h3>
+                            <p><strong>Passenger Name:</strong> ${ticket.passengerInfo.name}</p>
+                            <p><strong>Primary Contact:</strong> ${ticket.passengerInfo.phone}</p>
+                            ${ticket.passengerInfo.alternatePhone ? `<p><strong>Secondary Contact:</strong> ${ticket.passengerInfo.alternatePhone}</p>` : ''}
+                            ${ticket.passengerInfo.email ? `<p><strong>Email:</strong> ${ticket.passengerInfo.email}</p>` : ''}
+                            <p><small>Please save this contact information in case you need to reach the passenger.</small></p>
                         </div>
 
                         <p>Please ensure these seat(s) are marked as reserved in your system.</p>

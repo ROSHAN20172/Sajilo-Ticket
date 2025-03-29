@@ -418,6 +418,10 @@ const PaymentConfirmation = () => {
                                     <p className="text-sm text-gray-500">Email</p>
                                     <p className="font-medium">{passengerInfo?.email}</p>
                                 </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Secondary Phone</p>
+                                    <p className="font-medium">{passengerInfo?.alternatePhone || 'N/A'}</p>
+                                </div>
                             </div>
                         </div>
 

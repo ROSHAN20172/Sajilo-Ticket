@@ -1005,3 +1005,36 @@ export const getAvailableCustomPrices = async (req, res) => {
     });
   }
 };
+
+// Search buses by name and number
+export const searchBuses = async (req, res) => {
+  try {
+    const { busName, busNumber } = req.query;
+
+    if (!busName && !busNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide at least one search parameter'
+      });
+    }
+
+    // Build query object
+    const searchQuery = {};
+    if (busName) searchQuery.busName = busName;
+    if (busNumber) searchQuery.busNumber = busNumber;
+
+    console.log(`Searching for buses with query:`, searchQuery);
+
+    const Bus = mongoose.model('Bus');
+    const buses = await Bus.find(searchQuery);
+
+    return res.status(200).json(buses);
+  } catch (error) {
+    console.error('Error searching buses:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to search buses',
+      error: error.message
+    });
+  }
+};
