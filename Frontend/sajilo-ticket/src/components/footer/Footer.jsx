@@ -1,7 +1,7 @@
 import React from 'react'
 import RootLayout from '../../layout/RootLayout'
 import { Link } from 'react-router-dom'
-import { FaFacebook, FaInstagram, FaYoutube, FaPhone, FaTiktok } from 'react-icons/fa6'
+import { FaFacebook, FaInstagram, FaYoutube, FaPhone, FaTiktok, FaTwitter } from 'react-icons/fa6'
 import { TiLocation } from "react-icons/ti";
 import { MdEmail } from "react-icons/md";
 import KhaltiImg from "../../assets/Khalti.png"
@@ -13,37 +13,57 @@ const Footer = () => {
             <RootLayout className="space-y-10">
 
                 {/* Footer other Content */}
-                <div className="w-full grid grid-cols-5 gap-8">
-                    <div className="col-span-2 space-y-8 md:pr-10 pr-0">
+                <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-8">
+                    <div className="col-span-1 md:col-span-2 space-y-8 md:pr-10 pr-0">
                         <div className="space-y-3">
                             {/* Logo */}
-                            <Link to="/" className='text-6xl text-primary font-bold'>
+                            <Link to="/" className='text-4xl md:text-6xl text-primary font-bold'>
                                 Sajilo Ticket
                             </Link>
 
                             {/* description */}
                             <p className="text-sm text-neutral-500 font-normal">
-                                Sajilo Ticket is Nepal’s leading online bus ticket booking platform, making travel easier, faster, and more convenient. Book your tickets effortlessly, choose from various routes, and enjoy a hassle-free journey with secure payments and 24/7 support.
+                                Sajilo Ticket is Nepal's leading online bus ticket booking platform, making travel easier, faster, and more convenient. Book your tickets effortlessly, choose from various routes, and enjoy a hassle-free journey with secure payments and 24/7 support.
                             </p>
                         </div>
 
                         {/* Social Links */}
                         <div className="w-full flex items-center gap-x-5">
-                            <div className="w-11 h-11 rounded-xl bg-neutral-800/40 hover:bg-primary flex items-center justify-center cursor-pointer ease-in-out duration-500">
-                                <FaInstagram className='w-5 h-5 text-neutral-500' />
-                            </div>
+                            <a
+                                href="https://instagram.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-11 h-11 rounded-xl bg-neutral-800/40 hover:bg-primary flex items-center justify-center cursor-pointer ease-in-out duration-500"
+                            >
+                                <FaInstagram className='w-5 h-5 text-neutral-500 hover:text-white' />
+                            </a>
 
-                            <div className="w-11 h-11 rounded-xl bg-neutral-800/40 hover:bg-primary flex items-center justify-center cursor-pointer ease-in-out duration-500">
-                                <FaFacebook className='w-5 h-5 text-neutral-500' />
-                            </div>
+                            <a
+                                href="https://facebook.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-11 h-11 rounded-xl bg-neutral-800/40 hover:bg-primary flex items-center justify-center cursor-pointer ease-in-out duration-500"
+                            >
+                                <FaFacebook className='w-5 h-5 text-neutral-500 hover:text-white' />
+                            </a>
 
-                            <div className="w-11 h-11 rounded-xl bg-neutral-800/40 hover:bg-primary flex items-center justify-center cursor-pointer ease-in-out duration-500">
-                                <FaYoutube className='w-5 h-5 text-neutral-500' />
-                            </div>
+                            <a
+                                href="https://youtube.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-11 h-11 rounded-xl bg-neutral-800/40 hover:bg-primary flex items-center justify-center cursor-pointer ease-in-out duration-500"
+                            >
+                                <FaYoutube className='w-5 h-5 text-neutral-500 hover:text-white' />
+                            </a>
 
-                            <div className="w-11 h-11 rounded-xl bg-neutral-800/40 hover:bg-primary flex items-center justify-center cursor-pointer ease-in-out duration-500">
-                                <FaTiktok className='w-5 h-5 text-neutral-500' />
-                            </div>
+                            <a
+                                href="https://twitter.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-11 h-11 rounded-xl bg-neutral-800/40 hover:bg-primary flex items-center justify-center cursor-pointer ease-in-out duration-500"
+                            >
+                                <FaTwitter className='w-5 h-5 text-neutral-500 hover:text-white' />
+                            </a>
                         </div>
 
                     </div>
@@ -54,19 +74,19 @@ const Footer = () => {
                         </h1>
 
                         <div className="space-y-2">
-                            <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
+                            <Link to="/about" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
                                 About Us
                             </Link>
 
-                            <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
+                            <Link to="/bus-tickets" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
                                 Buy Ticket
                             </Link>
 
-                            <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
+                            <Link to="/operator" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
                                 Be a Operator
                             </Link>
 
-                            <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
+                            <Link to="/login" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
                                 Log in
                             </Link>
                         </div>
@@ -98,20 +118,20 @@ const Footer = () => {
                         </h1>
 
                         <div className="space-y-2">
-                            <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
+                            <Link to="/privacy-policy" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
                                 Privacy Policy
                             </Link>
 
-                            <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
+                            <Link to="/terms-conditions" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
                                 Terms & Conditions
                             </Link>
 
-                            <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
+                            <Link to="/help-support" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
                                 Help & Support
                             </Link>
 
-                            <Link to="/" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
-                                FaQs
+                            <Link to="/faqs" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
+                                FAQs
                             </Link>
                         </div>
                     </div>
@@ -122,7 +142,7 @@ const Footer = () => {
                 <div className="w-full h-px bg-neutral-800/50" />
 
                 {/* Copyright */}
-                <div className="w-full flex items-center justify-between">
+                <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4">
                     <p className="text-sm text-neutral-600 font-normal">
                         Copyright &copy; 2025. All rights reserved.
                     </p>

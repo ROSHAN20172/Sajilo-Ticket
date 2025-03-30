@@ -13,6 +13,12 @@ import Payment from "./pages/ticket/payment/Payment";
 import PaymentCallback from "./pages/ticket/payment/PaymentCallback";
 import PaymentConfirmation from "./pages/ticket/payment/PaymentConfirmation";
 
+// Policy Pages
+import PrivacyPolicy from "./pages/policy/PrivacyPolicy";
+import TermsConditions from "./pages/policy/TermsConditions";
+import HelpSupport from "./pages/policy/HelpSupport";
+import Faqs from "./pages/policy/Faqs";
+
 // User Pages
 import LogIn from "./pages/auth/login/LogIn";
 import SignUp from "./pages/auth/signup/SignUp";
@@ -56,6 +62,12 @@ const MainContent = () => {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/bus-tickets" element={<Ticket />} />
+
+        {/* Policy Routes */}
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-conditions" element={<TermsConditions />} />
+        <Route path="/help-support" element={<HelpSupport />} />
+        <Route path="/faqs" element={<Faqs />} />
 
         {/* Protected Bus Ticket User Routes */}
         <Route element={<UserProtectedRoute />}>
