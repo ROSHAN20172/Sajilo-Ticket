@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import TopLayout from '../../layout/toppage/TopLayout'
 import RootLayout from '../../layout/RootLayout'
 import { FaPhone, FaEnvelope, FaWhatsapp } from 'react-icons/fa'
+import SupportRequestForm from '../../components/support/SupportRequestForm'
+import { toast } from 'react-toastify'
 
 const HelpSupport = () => {
     const [activeTab, setActiveTab] = useState('contact')
@@ -86,7 +88,7 @@ const HelpSupport = () => {
                                         <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                                             <FaWhatsapp className="text-primary text-xl" />
                                         </div>
-                                        <h4 className="text-lg font-medium text-gray-800 mb-2">WhatsApp Chat Support</h4>
+                                        <h4 className="text-lg font-medium text-gray-800 mb-2">WhatsApp Chat</h4>
                                         <p className="text-gray-600 mb-4">Available 9 AM - 8 PM NPT</p>
                                         <a
                                             href="https://wa.me/9771234567890"
@@ -133,94 +135,9 @@ const HelpSupport = () => {
                                     Complete the form below and our support team will get back to you as soon as possible.
                                 </p>
 
-                                <form className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                                            <input
-                                                type="text"
-                                                id="name"
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                                placeholder="Enter your full name"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                                            <input
-                                                type="email"
-                                                id="email"
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                                placeholder="Enter your email address"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                            <input
-                                                type="tel"
-                                                id="phone"
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                                placeholder="Enter your phone number"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Issue Category</label>
-                                            <select
-                                                id="category"
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                            >
-                                                <option value="">Select category</option>
-                                                <option value="booking">Booking Issue</option>
-                                                <option value="payment">Payment Issue</option>
-                                                <option value="cancellation">Cancellation/Refund</option>
-                                                <option value="technical">Technical Issue</option>
-                                                <option value="other">Other</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label htmlFor="booking" className="block text-sm font-medium text-gray-700 mb-1">Booking ID (if applicable)</label>
-                                        <input
-                                            type="text"
-                                            id="booking"
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                            placeholder="Enter your booking ID"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-                                        <textarea
-                                            id="message"
-                                            rows="6"
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                            placeholder="Please describe your issue in detail"
-                                        ></textarea>
-                                    </div>
-
-                                    <div className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            id="terms"
-                                            className="mr-2 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                                        />
-                                        <label htmlFor="terms" className="text-sm text-gray-600">
-                                            I agree to the processing of my personal data as per the <a href="/privacy-policy" className="text-primary hover:underline">Privacy Policy</a>.
-                                        </label>
-                                    </div>
-
-                                    <div>
-                                        <button
-                                            type="submit"
-                                            className="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition duration-300"
-                                        >
-                                            Submit Request
-                                        </button>
-                                    </div>
-                                </form>
+                                <SupportRequestForm
+                                    onSuccess={() => toast.success("Thank you for reaching out! We'll get back to you soon.")}
+                                />
                             </div>
                         )}
                     </div>

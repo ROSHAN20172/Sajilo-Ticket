@@ -18,7 +18,8 @@ import {
   FaIdCard,
   FaThList,
   FaSearch,
-  FaPlusCircle
+  FaPlusCircle,
+  FaQuestionCircle
 } from 'react-icons/fa';
 import { FiLogOut } from 'react-icons/fi';
 import { LineChart, Line, PieChart, Pie, Tooltip } from 'recharts';
@@ -28,6 +29,7 @@ import UserManagementView from '../../../components/adminrenderview/usermanageme
 import BusManagementView from '../../../components/adminrenderview/busmanagement/BusManagementView';
 import RouteManagementView from '../../../components/adminrenderview/busroutesmanagement/BusRoutesManagementView';
 import ScheduleManagementView from '../../../components/adminrenderview/busschedulemanagement/BusScheduleManagementView';
+import SupportRequestManagementView from '../../../components/adminrenderview/supportrequests/SupportRequestManagementView';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -39,7 +41,8 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [operators, setOperators] = useState([]);
   const [buses, setBuses] = useState([]);
-  const [routes, setRoutes] = useState([]); // New state for routes
+  const [routes, setRoutes] = useState([]);
+  const [supportRequests, setSupportRequests] = useState([]);
 
   const handleLogout = async () => {
     try {
@@ -257,16 +260,49 @@ const AdminDashboard = () => {
             headers: { Authorization: `Bearer ${adminData?.token}` }
           });
           setRoutes(response.data);
+        } else if (activeView === 'support') {
+          try {
+            console.log('Fetching support requests...');
+            endpoint = `${backendUrl}/api/support/admin`;
+            const response = await axios.get(endpoint, {
+              params: { search: searchQuery, status: statusFilter !== 'all' ? statusFilter : '' },
+              headers: { Authorization: `Bearer ${adminData?.token}` }
+            });
+
+            console.log('Support requests response:', response.data);
+            if (response.data && response.data.success) {
+              if (Array.isArray(response.data.data)) {
+                console.log('Setting support requests:', response.data.data);
+                setSupportRequests(response.data.data);
+              } else {
+                console.error('Support requests data is not an array:', response.data.data);
+                toast.error('Received invalid support request data format');
+                setSupportRequests([]);
+              }
+            } else {
+              console.error('Failed to fetch support requests:', response.data?.message);
+              toast.error(response.data?.message || 'Failed to fetch support requests');
+              setSupportRequests([]);
+            }
+          } catch (error) {
+            console.error('Error fetching support requests:', error);
+            toast.error(error.response?.data?.message || 'Error fetching support requests');
+            setSupportRequests([]);
+          }
         }
       } catch (error) {
         toast.error('Error fetching data');
       }
     };
 
-    if (['users', 'buses', 'routes'].includes(activeView)) {
+    if (['users', 'buses', 'routes', 'support'].includes(activeView)) {
       fetchData();
     }
   }, [activeView, selectedTable, searchQuery, statusFilter]);
+
+  useEffect(() => {
+    console.log('Support Requests State Updated:', supportRequests);
+  }, [supportRequests]);
 
   const chartData = [
     { name: 'Mon', bookings: 4000, revenue: 2400 },
@@ -294,7 +330,8 @@ const AdminDashboard = () => {
     { name: 'Reports', icon: FaThList, view: 'reports' },
     { name: 'Analytics', icon: FaChartLine, view: 'analytics' },
     { name: 'Admin Management', icon: FaShieldAlt, view: 'admin' },
-    { name: 'Settings', icon: FaCog, view: 'settings' }
+    { name: 'Settings', icon: FaCog, view: 'settings' },
+    { name: 'Support Requests', icon: FaQuestionCircle, view: 'support' },
   ];
 
   const renderView = () => {
@@ -378,8 +415,52 @@ const AdminDashboard = () => {
             </div>
           </div>
         );
-        case 'schedules':
+      case 'schedules':
         return <ScheduleManagementView />;
+
+      case 'support':
+        return (
+          <SupportRequestManagementView
+            supportRequests={supportRequests}
+            searchQuery={searchQuery}
+            onSearchChange={(e) => setSearchQuery(e.target.value)}
+            statusFilter={statusFilter}
+            onFilterChange={(e) => setStatusFilter(e.target.value)}
+            fetchSupportRequests={() => {
+              console.log('Refreshing support requests...');
+              const fetchSupportRequests = async () => {
+                try {
+                  const response = await axios.get(`${backendUrl}/api/support/admin`, {
+                    params: { search: searchQuery, status: statusFilter !== 'all' ? statusFilter : '' },
+                    headers: { Authorization: `Bearer ${adminData?.token}` }
+                  });
+
+                  console.log('Refreshed support requests response:', response.data);
+                  if (response.data && response.data.success) {
+                    if (Array.isArray(response.data.data)) {
+                      console.log('Setting refreshed support requests:', response.data.data);
+                      setSupportRequests(response.data.data);
+                    } else {
+                      console.error('Refreshed support requests data is not an array:', response.data.data);
+                      toast.error('Received invalid support request data format');
+                      setSupportRequests([]);
+                    }
+                  } else {
+                    console.error('Failed to refresh support requests:', response.data?.message);
+                    toast.error(response.data?.message || 'Failed to refresh support requests');
+                    setSupportRequests([]);
+                  }
+                } catch (error) {
+                  console.error('Error refreshing support requests:', error);
+                  toast.error(error.response?.data?.message || 'Error refreshing support requests');
+                  setSupportRequests([]);
+                }
+              };
+
+              fetchSupportRequests();
+            }}
+          />
+        );
 
       default:
         return (
@@ -428,8 +509,8 @@ const AdminDashboard = () => {
               key={item.name}
               onClick={() => setActiveView(item.view)}
               className={`w-full flex items-center px-3 py-2 rounded-lg ${activeView === item.view
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-blue-50 text-blue-700'
+                : 'text-gray-600 hover:bg-gray-100'
                 }`}
             >
               <item.icon className="w-5 h-5 mr-3" />

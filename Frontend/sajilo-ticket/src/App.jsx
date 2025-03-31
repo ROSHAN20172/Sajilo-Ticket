@@ -18,6 +18,7 @@ import PrivacyPolicy from "./pages/policy/PrivacyPolicy";
 import TermsConditions from "./pages/policy/TermsConditions";
 import HelpSupport from "./pages/policy/HelpSupport";
 import Faqs from "./pages/policy/Faqs";
+import Contact from "./pages/contact/Contact";
 
 // User Pages
 import LogIn from "./pages/auth/login/LogIn";
@@ -67,6 +68,7 @@ const MainContent = () => {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-conditions" element={<TermsConditions />} />
         <Route path="/help-support" element={<HelpSupport />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/faqs" element={<Faqs />} />
 
         {/* Protected Bus Ticket User Routes */}

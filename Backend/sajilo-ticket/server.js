@@ -27,6 +27,9 @@ import paymentRouter from './routes/paymentRoutes.js';
 // Import reservation routes
 import reservationRouter from './routes/reservationRoutes.js';
 
+// Import support routes
+import supportRouter from './routes/supportRoutes.js';
+
 const app = express();
 const port = process.env.PORT || 4000;
 connectDB();
@@ -61,5 +64,8 @@ app.use('/api/payment', paymentRouter);
 
 // Reservation routes
 app.use('/api/reservation', reservationRouter);
+
+// Support routes
+app.use('/api/support', supportRouter);
 
 app.listen(port, () => console.log(`Server started on PORT: ${port}`));

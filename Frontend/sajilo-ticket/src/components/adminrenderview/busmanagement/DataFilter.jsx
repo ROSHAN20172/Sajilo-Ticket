@@ -1,13 +1,13 @@
 import React from 'react';
 import { FaSearch, FaFilter } from 'react-icons/fa';
 
-const DataFilter = ({ 
+const DataFilter = ({
   searchQuery,
   selectedFilter,
   onSearchChange,
   onFilterChange,
   filterOptions,
-  placeholder 
+  placeholder
 }) => {
   return (
     <div className="flex gap-4 items-center">
@@ -38,7 +38,7 @@ const DataFilter = ({
       </div>
 
       <button
-        onClick={() => {}} // Handled through useEffect in parent
+        onClick={() => { }} // Handled through useEffect in parent
         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
       >
         Search

@@ -130,6 +130,10 @@ const Footer = () => {
                                 Help & Support
                             </Link>
 
+                            <Link to="/contact" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
+                                Contact Us
+                            </Link>
+
                             <Link to="/faqs" className='block text-base text-neutral-500 hover:text-neutral-300 font-normal ease-in-out duration-300'>
                                 FAQs
                             </Link>
