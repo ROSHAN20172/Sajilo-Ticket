@@ -68,45 +68,77 @@ const Navbar = () => {
         };
     }, [scrollPosition]);
 
+    // Add overlay when navbar is open
+    useEffect(() => {
+        if (open) {
+            document.body.classList.add('overflow-hidden');
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black/30 z-40';
+            overlay.id = 'navbar-overlay';
+            document.body.appendChild(overlay);
+
+            overlay.addEventListener('click', () => {
+                handleClose();
+            });
+        } else {
+            document.body.classList.remove('overflow-hidden');
+            const overlay = document.getElementById('navbar-overlay');
+            if (overlay) {
+                document.body.removeChild(overlay);
+            }
+        }
+
+        return () => {
+            document.body.classList.remove('overflow-hidden');
+            const overlay = document.getElementById('navbar-overlay');
+            if (overlay) {
+                document.body.removeChild(overlay);
+            }
+        };
+    }, [open]);
+
     return (
         <nav className={`w-full h-[8ch] fixed top-0 left-0 lg:px-16 md:px-7 sm:px-7 px-4 backdrop-blur-lg transition-transform duration-300 z-50 
         ${isVisible ? "translate-y-0" : "-translate-y-full"} 
-        ${scrollPosition > 50 ? "bg-neutral-300" : "bg-neutral-100/10"}`}>
+        ${scrollPosition > 50 ? "bg-neutral-300/90" : "bg-neutral-100/10"}`}>
             <div className="w-fill h-full flex items-center justify-between">
                 {/* Logo Section */}
-                <Link to="/" className='text-4xl text-primary font-bold'>
+                <Link to="/" className='text-3xl md:text-4xl text-primary font-bold'>
                     Sajilo Ticket
                 </Link>
 
                 {/* Hamburger menu */}
-                <div className="w-fit md:hidden flex items-center justify-center cursor-pointer flex-col gap-1 text-neutral-700" onClick={handleOpen}>
+                <div className="w-fit md:hidden flex items-center justify-center cursor-pointer text-primary" onClick={handleOpen}>
                     {open
                         ?
-                        <FaX className='w-5 h-5' />
+                        <FaX className='w-6 h-6' />
                         :
-                        <FaBars className='w-5 h-5' />
+                        <FaBars className='w-6 h-6' />
                     }
                 </div>
 
                 {/* Nav links and button */}
                 <div className={`${open
                     ?
-                    "flex absolute top-20 left-0 w-full h-auto md:relative"
+                    "flex absolute top-[8ch] left-0 w-full h-auto md:relative z-50 animate-fadeDown"
                     :
-                    "hidden"} flex-1 md:flex flex-col md:flex-row md:gap-14 gap-8 md:items-center items-start md:p-0 sm:p-4 p-4 justify-end md:bg-transparent bg-neutral-50 border md:border-transparent border-neutral-200 md:shadow-none sm:shadow-md shadow-md rounded-xl`}>
+                    "hidden"} flex-1 md:flex flex-col md:flex-row md:gap-14 gap-0 md:items-center items-start md:p-0 py-4 px-0 justify-end md:bg-transparent bg-white border md:border-transparent border-primary/20 md:shadow-none shadow-lg rounded-b-xl`}>
 
                     {/* Nav links */}
-                    <ul className="list-none flex md:items-center items-start flex-wrap md:flex-row flex-col md:gap-8 gap-4 text-lg text-neutral-500 font-normal">
+                    <ul className="list-none flex md:items-center items-start flex-wrap md:flex-row flex-col md:gap-8 gap-0 w-full md:w-auto text-lg text-neutral-600 font-medium">
                         {navItems.map((item, ind) => (
-                            <li key={ind}>
-                                <Link to={item.link} className='hover:text-primary ease-in-out duration-300'>
+                            <li key={ind} onClick={handleClose} className="w-full md:w-auto">
+                                <Link
+                                    to={item.link}
+                                    className='md:hover:text-primary md:ease-in-out md:duration-300 w-full block py-4 px-4 md:p-0 border-b md:border-b-0 border-primary/20 md:hover:bg-transparent hover:bg-primary/5 transition-colors'
+                                >
                                     {item.label}
                                 </Link>
                             </li>
                         ))}
                     </ul>
                     {userData ?
-                        <div className='w-8 h-8 flex justify-center items-center rounded-full bg-primary text-white relative group'>
+                        <div onClick={handleClose} className='w-10 h-10 flex justify-center items-center rounded-full bg-primary text-white relative group mx-4 md:mx-0 mt-4 md:mt-0'>
                             {userData.name[0].toUpperCase()}
                             <div className='absolute hidden group-hover:block top-0 right-0 z-10 text-black rounded pt-10 w-32'>
                                 <ul className='list-none m-0 p-2 bg-gray-100 text-sm shadow-lg rounded'>
@@ -117,9 +149,12 @@ const Navbar = () => {
                         </div>
 
                         // Button
-                        : <div className="flex items-center justify-center">
-                            <button onClick={() => navigate('/login')}
-                                className='flex items-center gap-2 md:w-fit w-full md:px-4 px-6 md:py-1 py-2.5 hover:bg-transparent bg-primary border border-primary hover:border-primary md:rounded-full rounded-xl text-base font-normal text-neutral-50 hover:text-primary ease-in-out duration-300'>
+                        : <div className="flex items-center justify-center w-full md:w-auto px-4 md:px-0 mt-4 md:mt-0 pb-4 md:pb-0">
+                            <button onClick={() => {
+                                navigate('/login');
+                                handleClose();
+                            }}
+                                className='flex items-center justify-center gap-2 md:w-fit w-full md:px-4 px-6 md:py-1 py-3 hover:bg-transparent bg-primary border border-primary hover:border-primary md:rounded-full rounded-xl text-base font-medium text-neutral-50 hover:text-primary ease-in-out duration-300'>
                                 Log In
                                 <FaArrowRight />
                             </button>

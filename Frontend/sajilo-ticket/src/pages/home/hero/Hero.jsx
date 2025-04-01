@@ -24,7 +24,7 @@ const Hero = () => {
 
   return (
     <motion.div
-      className='w-full flex-1 h-screen relative'
+      className='w-full relative min-h-[100vh] md:h-screen overflow-x-hidden'
       initial="hidden"
       animate="visible"
       exit="hidden"
@@ -43,14 +43,14 @@ const Hero = () => {
         </div>
       </div>
 
-      <RootLayout className="absolute top-6 left-0 w-full h-full py-[9ch] bg-gradient-to-b from-neutral-50/70 via-neutral-50/15 to-neutral-50/5 flex items-center justify-start text-center flex-col gap-9">
-        <div className="space-y-2">
+      <RootLayout className="absolute top-0 left-0 w-full h-full pt-16 md:py-[9ch] bg-gradient-to-b from-neutral-50/70 via-neutral-50/15 to-neutral-50/5 flex items-start md:items-center justify-start text-center flex-col gap-6 md:gap-9 px-4 md:px-0">
+        <div className="space-y-2 md:space-y-3 mt-6 md:mt-0">
           <motion.p
             initial={{ opacity: 0, y: -800 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -800 }}
             transition={{ duration: 2, ease: "easeOut" }}
-            className="text-lg text-neutral-500 font-medium"
+            className="text-base md:text-lg text-neutral-500 font-medium"
           >
             Sajilo Ticket – Easy Online Bus Ticket Booking
           </motion.p>
@@ -59,7 +59,7 @@ const Hero = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -800 }}
             transition={{ duration: 1.85, ease: "easeOut" }}
-            className="text-5xl text-neutral-800 font-bold capitalize"
+            className="text-3xl md:text-5xl text-neutral-800 font-bold capitalize px-2"
           >
             Book Your Next Journey With Us
           </motion.h1>
