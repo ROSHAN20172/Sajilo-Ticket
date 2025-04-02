@@ -76,33 +76,33 @@ const Signup = () => {
 
                 <form onSubmit={onSubmitHandler} noValidate>
                     <div className='mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]'>
-                        <FaUser />
+                        <FaUser className="w-5 h-5 min-w-5 min-h-5 text-indigo-300" />
                         <input
                             onChange={e => setName(e.target.value)}
                             value={name}
-                            className='bg-transparent outline-none'
+                            className='bg-transparent outline-none w-full'
                             type="text"
                             placeholder='Full Name'
                             required
                         />
                     </div>
                     <div className='mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]'>
-                        <MdEmail />
+                        <MdEmail className="w-5 h-5 min-w-5 min-h-5 text-indigo-300" />
                         <input
                             onChange={e => setEmail(e.target.value)}
                             value={email}
-                            className='bg-transparent outline-none'
+                            className='bg-transparent outline-none w-full'
                             type="email"
                             placeholder='Email Id'
                             required
                         />
                     </div>
                     <div className='mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]'>
-                        <FaLock />
+                        <FaLock className="w-5 h-5 min-w-5 min-h-5 text-indigo-300" />
                         <input
                             onChange={e => setPassword(e.target.value)}
                             value={password}
-                            className='bg-transparent outline-none'
+                            className='bg-transparent outline-none w-full'
                             type="password"
                             placeholder='Password'
                             required

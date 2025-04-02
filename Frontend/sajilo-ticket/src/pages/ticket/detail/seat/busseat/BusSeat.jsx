@@ -529,21 +529,21 @@ const BusSeat = ({ busId, date }) => {
   }
 
   return (
-    <div className='w-full space-y-5'>
+    <div className='w-full space-y-4 md:space-y-5'>
       {/* Pickup and Drop Points Selection Box */}
-      <div className="w-full bg-neutral-50 rounded-xl py-4 px-6 border border-neutral-200 shadow-sm">
-        <h1 className="text-lg text-neutral-600 font-medium mb-4">
+      <div className="w-full bg-neutral-50 rounded-xl py-3 md:py-4 px-4 md:px-6 border border-neutral-200 shadow-sm">
+        <h1 className="text-base md:text-lg text-neutral-600 font-medium mb-2 md:mb-4">
           Select Pickup & Drop Points
         </h1>
 
-        <p className="text-sm text-neutral-500 italic mb-4">
+        <p className="text-xs md:text-sm text-neutral-500 italic mb-3 md:mb-4">
           Price may vary based on pickup and drop point selection
         </p>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
           {/* Pickup Point Selection */}
-          <div className="w-full space-y-2">
-            <label className='text-sm text-neutral-500 font-medium'>Pickup Point</label>
+          <div className="w-full space-y-1 md:space-y-2">
+            <label className='text-xs md:text-sm text-neutral-500 font-medium'>Pickup Point</label>
             <select
               value={selectedPickupPoint}
               onChange={handlePickupChange}
@@ -557,7 +557,7 @@ const BusSeat = ({ busId, date }) => {
                 backgroundSize: '25px',
                 paddingRight: '40px',
               }}
-              className="w-full h-10 px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-base text-neutral-600 font-normal placeholder:text-neutral-400"
+              className="w-full h-9 md:h-10 px-3 md:px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-sm md:text-base text-neutral-600 font-normal placeholder:text-neutral-400"
             >
               <option value="" disabled>
                 Choose your Nearest Pickup Point
@@ -575,8 +575,8 @@ const BusSeat = ({ busId, date }) => {
           </div>
 
           {/* Drop Point Selection */}
-          <div className="w-full space-y-2">
-            <label className='text-sm text-neutral-500 font-medium'>Drop Point</label>
+          <div className="w-full space-y-1 md:space-y-2">
+            <label className='text-xs md:text-sm text-neutral-500 font-medium'>Drop Point</label>
             <select
               value={selectedDropPoint}
               onChange={handleDropChange}
@@ -590,7 +590,7 @@ const BusSeat = ({ busId, date }) => {
                 backgroundSize: '25px',
                 paddingRight: '40px',
               }}
-              className="w-full h-10 px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-base text-neutral-600 font-normal placeholder:text-neutral-400"
+              className="w-full h-9 md:h-10 px-3 md:px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-sm md:text-base text-neutral-600 font-normal placeholder:text-neutral-400"
             >
               <option value="" disabled>
                 Choose your Nearest Drop Point
@@ -610,85 +610,379 @@ const BusSeat = ({ busId, date }) => {
       </div>
 
       {/* Main Content */}
-      <div className='w-full grid grid-cols-5 gap-10'>
+      <div className='w-full grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-10'>
         {/* Seat Layout */}
-        <div className="col-span-3 w-full flex items-center justify-center shadow-sm rounded-xl p-4 border border-neutral-200">
-          <div className="w-full space-y-7">
-            <p className="text-base text-neutral-600 font-medium text-center">
+        <div className="col-span-1 lg:col-span-3 w-full flex items-center justify-center shadow-sm rounded-xl p-3 md:p-4 border border-neutral-200">
+          <div className="w-full space-y-5 md:space-y-7">
+            <p className="text-sm md:text-base text-neutral-600 font-medium text-center">
               Click on the available seats to reserve them.
             </p>
 
-            {/* Seat Layout */}
-            <div className="w-full flex items-stretch gap-x-1.5">
-              <div className="w-10 h-fit">
+            {/* Seat Layout - Horizontal on lg screens, Vertical on smaller screens */}
+            <div className="w-full lg:flex lg:items-stretch lg:gap-x-1.5">
+              {/* Mobile Steering Icon */}
+              <div className="lg:hidden w-full flex flex-col items-center mb-3">
+                <div className="w-full flex justify-end pe-[15%]">
+                  <GiSteeringWheel className='text-3xl md:text-4xl text-primary' />
+                </div>
+                <div className="w-full flex justify-center mt-4">
+                  <div className="w-[85%] border-b-2 border-dashed border-neutral-300"></div>
+                </div>
+              </div>
+
+              {/* Desktop Steering Icon */}
+              <div className="hidden lg:block w-10 h-fit">
                 <GiSteeringWheel className='text-3xl mt-7 text-primary -rotate-90' />
               </div>
 
               {/* Seat rows */}
-              <div className="flex flex-col items-center border-l-2 border-dashed border-neutral-300 pl-7">
-                <div className="flex-1 space-y-5">
+              <div className="w-full flex flex-col items-center lg:border-l-2 lg:border-dashed lg:border-neutral-300 lg:pl-7">
+                {/* Mobile-only layout - 9 rows x 5 columns as per the image */}
+                <div className="lg:hidden w-full space-y-3 mt-2">
+                  {/* Row 1: A2, A1, B2, B1 */}
+                  <div className="w-full grid grid-cols-5 gap-x-1 md:gap-x-2 gap-y-3">
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A2')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A2</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A2') ? getSeatName(busSeatData.find(seat => seat.id === 'A2')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A1')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A1</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A1') ? getSeatName(busSeatData.find(seat => seat.id === 'A1')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center"></div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B2')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B2</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B2') ? getSeatName(busSeatData.find(seat => seat.id === 'B2')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B1')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B1</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B1') ? getSeatName(busSeatData.find(seat => seat.id === 'B1')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 2: A4, A3, B4, B3 */}
+                  <div className="w-full grid grid-cols-5 gap-x-1 md:gap-x-2 gap-y-3">
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A4')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A4</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A4') ? getSeatName(busSeatData.find(seat => seat.id === 'A4')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A3')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A3</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A3') ? getSeatName(busSeatData.find(seat => seat.id === 'A3')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center"></div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B4')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B4</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B4') ? getSeatName(busSeatData.find(seat => seat.id === 'B4')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B3')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B3</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B3') ? getSeatName(busSeatData.find(seat => seat.id === 'B3')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 3: A6, A5, B6, B5 */}
+                  <div className="w-full grid grid-cols-5 gap-x-1 md:gap-x-2 gap-y-3">
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A6')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A6</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A6') ? getSeatName(busSeatData.find(seat => seat.id === 'A6')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A5')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A5</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A5') ? getSeatName(busSeatData.find(seat => seat.id === 'A5')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center"></div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B6')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B6</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B6') ? getSeatName(busSeatData.find(seat => seat.id === 'B6')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B5')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B5</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B5') ? getSeatName(busSeatData.find(seat => seat.id === 'B5')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 4: A8, A7, B8, B7 */}
+                  <div className="w-full grid grid-cols-5 gap-x-1 md:gap-x-2 gap-y-3">
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A8')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A8</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A8') ? getSeatName(busSeatData.find(seat => seat.id === 'A8')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A7')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A7</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A7') ? getSeatName(busSeatData.find(seat => seat.id === 'A7')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center"></div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B8')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B8</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B8') ? getSeatName(busSeatData.find(seat => seat.id === 'B8')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B7')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B7</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B7') ? getSeatName(busSeatData.find(seat => seat.id === 'B7')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 5: A10, A9, B10, B9 */}
+                  <div className="w-full grid grid-cols-5 gap-x-1 md:gap-x-2 gap-y-3">
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A10')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A10</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A10') ? getSeatName(busSeatData.find(seat => seat.id === 'A10')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A9')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A9</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A9') ? getSeatName(busSeatData.find(seat => seat.id === 'A9')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center"></div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B10')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B10</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B10') ? getSeatName(busSeatData.find(seat => seat.id === 'B10')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B9')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B9</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B9') ? getSeatName(busSeatData.find(seat => seat.id === 'B9')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 6: A12, A11, B12, B11 */}
+                  <div className="w-full grid grid-cols-5 gap-x-1 md:gap-x-2 gap-y-3">
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A12')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A12</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A12') ? getSeatName(busSeatData.find(seat => seat.id === 'A12')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A11')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A11</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A11') ? getSeatName(busSeatData.find(seat => seat.id === 'A11')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center"></div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B12')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B12</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B12') ? getSeatName(busSeatData.find(seat => seat.id === 'B12')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B11')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B11</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B11') ? getSeatName(busSeatData.find(seat => seat.id === 'B11')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 7: A14, A13, B14, B13 */}
+                  <div className="w-full grid grid-cols-5 gap-x-1 md:gap-x-2 gap-y-3">
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A14')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A14</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A14') ? getSeatName(busSeatData.find(seat => seat.id === 'A14')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A13')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A13</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A13') ? getSeatName(busSeatData.find(seat => seat.id === 'A13')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center"></div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B14')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B14</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B14') ? getSeatName(busSeatData.find(seat => seat.id === 'B14')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B13')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B13</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B13') ? getSeatName(busSeatData.find(seat => seat.id === 'B13')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 8: A16, A15, B16, B15 */}
+                  <div className="w-full grid grid-cols-5 gap-x-1 md:gap-x-2 gap-y-3">
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A16')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A16</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A16') ? getSeatName(busSeatData.find(seat => seat.id === 'A16')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A15')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A15</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A15') ? getSeatName(busSeatData.find(seat => seat.id === 'A15')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center"></div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B16')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B16</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B16') ? getSeatName(busSeatData.find(seat => seat.id === 'B16')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B15')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B15</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B15') ? getSeatName(busSeatData.find(seat => seat.id === 'B15')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 9: A18, A17, 19, B18, B17 */}
+                  <div className="w-full grid grid-cols-5 gap-x-1 md:gap-x-2 gap-y-3">
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A18')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A18</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A18') ? getSeatName(busSeatData.find(seat => seat.id === 'A18')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('A17')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">A17</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'A17') ? getSeatName(busSeatData.find(seat => seat.id === 'A17')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('19')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">19</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === '19') ? getSeatName(busSeatData.find(seat => seat.id === '19')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B18')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B18</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B18') ? getSeatName(busSeatData.find(seat => seat.id === 'B18')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="flex flex-col items-center" onClick={() => handleSeatClick('B17')}>
+                        <h6 className="text-xs text-neutral-600 font-bold">B17</h6>
+                        <MdOutlineChair className={`text-xl md:text-2xl lg:-rotate-90 ${busSeatData.find(seat => seat.id === 'B17') ? getSeatName(busSeatData.find(seat => seat.id === 'B17')) : 'text-neutral-500'}`} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Desktop layout - Hide on mobile */}
+                <div className="hidden lg:block flex-1 space-y-3 md:space-y-5 w-full">
                   {/* First row */}
-                  <div className="w-full h-auto grid grid-cols-9 gap-x-5 justify-end">
+                  <div className="w-full h-auto grid grid-cols-5 sm:grid-cols-9 gap-2 sm:gap-x-5 justify-center lg:justify-end">
                     {busSeatData.slice(0, 9).map((seat) => (
                       <div
                         key={seat.id}
                         className='flex items-center gap-x-0'
                         onClick={() => handleSeatClick(seat.id)}>
-                        <h6 className="text-base to-neutral-600 font-bold">{seat.id}</h6>
-                        <MdOutlineChair className={`text-3xl -rotate-90 ${getSeatName(seat)}`} />
+                        <h6 className="text-sm md:text-base to-neutral-600 font-bold">{seat.id}</h6>
+                        <MdOutlineChair className={`text-2xl md:text-3xl -rotate-90 ${getSeatName(seat)}`} />
                       </div>
                     ))}
                   </div>
 
                   {/* Second row */}
-                  <div className="w-full h-auto grid grid-cols-9 gap-x-5 justify-end">
+                  <div className="w-full h-auto grid grid-cols-5 sm:grid-cols-9 gap-2 sm:gap-x-5 justify-center lg:justify-end">
                     {busSeatData.slice(9, 18).map((seat) => (
                       <div
                         key={seat.id}
                         className='flex items-center gap-x-0'
                         onClick={() => handleSeatClick(seat.id)}>
-                        <h6 className="text-base to-neutral-600 font-bold">{seat.id}</h6>
-                        <MdOutlineChair className={`text-3xl -rotate-90 ${getSeatName(seat)}`} />
+                        <h6 className="text-sm md:text-base to-neutral-600 font-bold">{seat.id}</h6>
+                        <MdOutlineChair className={`text-2xl md:text-3xl -rotate-90 ${getSeatName(seat)}`} />
                       </div>
                     ))}
                   </div>
 
-                  {/* Third row */}
-                  <div className="w-full h-auto grid grid-cols-10 gap-x-5 justify-end">
+                  {/* Third row - Hidden on mobile to improve layout */}
+                  <div className="w-full h-auto hidden sm:grid grid-cols-10 gap-x-5 justify-end">
                     <div className="col-span-9"></div>
                     {busSeatData.slice(18, 19).map((seat) => (
                       <div
                         key={seat.id}
                         className='flex items-center gap-x-0'
                         onClick={() => handleSeatClick(seat.id)}>
-                        <h6 className="text-base to-neutral-600 font-bold">{seat.id}</h6>
-                        <MdOutlineChair className={`text-3xl -rotate-90 ${getSeatName(seat)}`} />
+                        <h6 className="text-sm md:text-base to-neutral-600 font-bold">{seat.id}</h6>
+                        <MdOutlineChair className={`text-2xl md:text-3xl -rotate-90 ${getSeatName(seat)}`} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Special mobile-only row for seat 19 - Remove this since we have a new mobile layout */}
+                  <div className="w-full h-auto sm:hidden grid grid-cols-1 justify-center hidden">
+                    {busSeatData.slice(18, 19).map((seat) => (
+                      <div
+                        key={seat.id}
+                        className='flex items-center gap-x-0 justify-center'
+                        onClick={() => handleSeatClick(seat.id)}>
+                        <h6 className="text-sm md:text-base to-neutral-600 font-bold">{seat.id}</h6>
+                        <MdOutlineChair className={`text-2xl md:text-3xl -rotate-90 ${getSeatName(seat)}`} />
                       </div>
                     ))}
                   </div>
 
                   {/* Fourth row */}
-                  <div className="w-full h-auto grid grid-cols-9 gap-x-5 justify-end">
+                  <div className="w-full h-auto grid grid-cols-5 sm:grid-cols-9 gap-2 sm:gap-x-5 justify-center lg:justify-end">
                     {busSeatData.slice(19, 28).map((seat) => (
                       <div
                         key={seat.id}
                         className='flex items-center gap-x-0'
                         onClick={() => handleSeatClick(seat.id)}>
-                        <h6 className="text-base to-neutral-600 font-bold">{seat.id}</h6>
-                        <MdOutlineChair className={`text-3xl -rotate-90 ${getSeatName(seat)}`} />
+                        <h6 className="text-sm md:text-base to-neutral-600 font-bold">{seat.id}</h6>
+                        <MdOutlineChair className={`text-2xl md:text-3xl -rotate-90 ${getSeatName(seat)}`} />
                       </div>
                     ))}
                   </div>
 
                   {/* Fifth row */}
-                  <div className="w-full h-auto grid grid-cols-9 gap-x-5 justify-end">
+                  <div className="w-full h-auto grid grid-cols-5 sm:grid-cols-9 gap-2 sm:gap-x-5 justify-center lg:justify-end">
                     {busSeatData.slice(28, 37).map((seat) => (
                       <div
                         key={seat.id}
                         className='flex items-center gap-x-0'
                         onClick={() => handleSeatClick(seat.id)}>
-                        <h6 className="text-base to-neutral-600 font-bold">{seat.id}</h6>
-                        <MdOutlineChair className={`text-3xl -rotate-90 ${getSeatName(seat)}`} />
+                        <h6 className="text-sm md:text-base to-neutral-600 font-bold">{seat.id}</h6>
+                        <MdOutlineChair className={`text-2xl md:text-3xl -rotate-90 ${getSeatName(seat)}`} />
                       </div>
                     ))}
                   </div>
@@ -697,36 +991,36 @@ const BusSeat = ({ busId, date }) => {
             </div>
 
             {/* reservation info */}
-            <div className="w-full flex items-center justify-center gap-6 border-t border-neutral-200 pt-5">
+            <div className="w-full flex flex-wrap items-center justify-center gap-4 md:gap-6 border-t border-neutral-200 pt-3 md:pt-5">
               <div className="flex items-center gap-x-2">
-                <MdOutlineChair className='text-xl text-neutral-500 -rotate-90' />
-                <p className="text-sm text-neutral-500 font-medium">Available</p>
+                <MdOutlineChair className='text-lg md:text-xl lg:-rotate-90 text-neutral-500' />
+                <p className="text-xs md:text-sm text-neutral-500 font-medium">Available</p>
               </div>
 
               <div className="flex items-center gap-x-2">
-                <MdOutlineChair className='text-xl text-primary -rotate-90' />
-                <p className="text-sm text-neutral-500 font-medium">Booked</p>
+                <MdOutlineChair className='text-lg md:text-xl lg:-rotate-90 text-primary' />
+                <p className="text-xs md:text-sm text-neutral-500 font-medium">Booked</p>
               </div>
 
               <div className="flex items-center gap-x-2">
-                <MdOutlineChair className='text-xl text-yellow-600 -rotate-90' />
-                <p className="text-sm text-neutral-500 font-medium">Selected</p>
+                <MdOutlineChair className='text-lg md:text-xl lg:-rotate-90 text-yellow-600' />
+                <p className="text-xs md:text-sm text-neutral-500 font-medium">Selected</p>
               </div>
 
               {isLoadingPrice ? (
                 <div className="flex items-center gap-x-2">
-                  <RiMoneyRupeeCircleLine className='text-xl text-neutral-500' />
-                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <RiMoneyRupeeCircleLine className='text-lg md:text-xl text-neutral-500' />
+                  <div className="w-3 h-3 md:w-4 md:h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                 </div>
               ) : customPrice !== null ? (
                 <div className="flex items-center gap-x-2">
-                  <RiMoneyRupeeCircleLine className='text-xl text-neutral-500' />
-                  <p className="text-sm text-neutral-500 font-medium">NPR. {customPrice}</p>
+                  <RiMoneyRupeeCircleLine className='text-lg md:text-xl text-neutral-500' />
+                  <p className="text-xs md:text-sm text-neutral-500 font-medium">NPR. {customPrice}</p>
                 </div>
               ) : (
                 <div className="flex items-center gap-x-2">
-                  <RiMoneyRupeeCircleLine className='text-xl text-neutral-500' />
-                  <p className="text-sm text-neutral-500 font-medium">NPR. {routeInfo.basePrice}</p>
+                  <RiMoneyRupeeCircleLine className='text-lg md:text-xl text-neutral-500' />
+                  <p className="text-xs md:text-sm text-neutral-500 font-medium">NPR. {routeInfo.basePrice}</p>
                 </div>
               )}
             </div>
@@ -734,52 +1028,52 @@ const BusSeat = ({ busId, date }) => {
         </div>
 
         {/* Seat Selection action */}
-        <div className="col-span-2 w-full space-y-5">
+        <div className="col-span-1 lg:col-span-2 w-full space-y-4 md:space-y-5">
           {/* Main Box */}
-          <div className="w-full space-y-2 bg-neutral-50 rounded-xl py-4 px-6 border border-neutral-200 shadow-sm">
+          <div className="w-full space-y-2 bg-neutral-50 rounded-xl py-3 md:py-4 px-4 md:px-6 border border-neutral-200 shadow-sm">
             <div className="w-full flex items-center justify-between">
-              <h1 className="text-lg to-neutral-600 font-medium">
+              <h1 className="text-base md:text-lg to-neutral-600 font-medium">
                 Your Destination
               </h1>
-              <Link to={"/bus-tickets"} className="text-sm text-primary font-normal">
+              <Link to={"/bus-tickets"} className="text-xs md:text-sm text-primary font-normal">
                 Change Route
               </Link>
             </div>
 
             <div className="space-y-0.5 w-full">
               <div className="w-full flex items-center justify-between gap-x-5">
-                <p className="text-sm text-neutral-400 font-normal">
+                <p className="text-xs md:text-sm text-neutral-400 font-normal">
                   From
                 </p>
-                <p className="text-sm text-neutral-400 font-normal">
+                <p className="text-xs md:text-sm text-neutral-400 font-normal">
                   To
                 </p>
               </div>
 
               <div className="w-full flex items-center justify-between gap-x-4">
-                <h1 className="text-sm text-neutral-600 font-normal">
+                <h1 className="text-xs md:text-sm text-neutral-600 font-normal">
                   {routeInfo.from} <span className='font-medium'>({formatTime(routeInfo.departureTime)})</span>
                 </h1>
 
                 <div className="flex-1 border-dashed border border-neutral-300" />
 
-                <h1 className="text-sm text-neutral-600 font-normal">
+                <h1 className="text-xs md:text-sm text-neutral-600 font-normal">
                   {routeInfo.to} <span className='font-medium'>({formatTime(routeInfo.arrivalTime)})</span>
                 </h1>
               </div>
 
               {/* Pickup and Drop Point Section */}
               <div className="w-full flex items-center justify-between gap-x-5 mt-3">
-                <p className="text-sm text-neutral-400 font-normal">
+                <p className="text-xs md:text-sm text-neutral-400 font-normal">
                   Pickup Point
                 </p>
-                <p className="text-sm text-neutral-400 font-normal">
+                <p className="text-xs md:text-sm text-neutral-400 font-normal">
                   Drop Point
                 </p>
               </div>
 
               <div className="w-full flex items-center justify-between gap-x-4">
-                <h1 className="text-sm text-neutral-600 font-normal">
+                <h1 className="text-xs md:text-sm text-neutral-600 font-normal">
                   {selectedPickupDetails.name !== "Not Selected" ? (
                     <>
                       {selectedPickupDetails.name}
@@ -794,7 +1088,7 @@ const BusSeat = ({ busId, date }) => {
 
                 <div className="flex-1 border-dashed border border-neutral-300" />
 
-                <h1 className="text-sm text-neutral-600 font-normal">
+                <h1 className="text-xs md:text-sm text-neutral-600 font-normal">
                   {selectedDropDetails.name !== "Not Selected" ? (
                     <>
                       {selectedDropDetails.name}
@@ -811,8 +1105,8 @@ const BusSeat = ({ busId, date }) => {
 
             <div className="w-full space-y-2">
               <div className="w-full flex items-center justify-between">
-                <h3 className="text-sm text-neutral-500 font-medium">Date:</h3>
-                <p className="text-sm text-neutral-600 font-medium">
+                <h3 className="text-xs md:text-sm text-neutral-500 font-medium">Date:</h3>
+                <p className="text-xs md:text-sm text-neutral-600 font-medium">
                   {date ? new Date(date).toLocaleDateString('en-US', {
                     weekday: 'long',
                     year: 'numeric',
@@ -824,9 +1118,9 @@ const BusSeat = ({ busId, date }) => {
             </div>
 
             {/* Selected Seats Section */}
-            <div className="w-full space-y-2 mt-4">
+            <div className="w-full space-y-2 mt-3 md:mt-4">
               <div className="w-full flex items-center justify-between">
-                <h1 className="text-lg text-neutral-600 font-medium">
+                <h1 className="text-base md:text-lg text-neutral-600 font-medium">
                   Selected Seats
                 </h1>
 
@@ -841,7 +1135,7 @@ const BusSeat = ({ busId, date }) => {
                   <div className='w-full flex items-center gap-x-3 flex-wrap'>
                     {selectedSeats.map((seatId) => {
                       return (
-                        <div key={seatId} className='w-9 h-9 bg-neutral-200/80 rounded-lg flex items-center justify-center text-base to-neutral-700 font-semibold'>
+                        <div key={seatId} className='w-7 h-7 md:w-9 md:h-9 bg-neutral-200/80 rounded-lg flex items-center justify-center text-sm md:text-base to-neutral-700 font-semibold'>
                           {seatId}
                         </div>
                       )
@@ -849,22 +1143,22 @@ const BusSeat = ({ busId, date }) => {
                   </div>
                   :
                   <div className='w-full flex items-center gap-x-3'>
-                    <p className="text-sm to-neutral-500 font-normal">No Seat Selected</p>
+                    <p className="text-xs md:text-sm to-neutral-500 font-normal">No Seat Selected</p>
                   </div>
               }
             </div>
 
             {/* Fare Details Section */}
-            <div className="w-full space-y-2 mt-4">
-              <h1 className="text-lg text-neutral-600 font-medium">
+            <div className="w-full space-y-2 mt-3 md:mt-4">
+              <h1 className="text-base md:text-lg text-neutral-600 font-medium">
                 Fare Details
               </h1>
 
               <div className="w-full flex items-center justify-between border-dashed border-l-[1.5px] border-neutral-400 pl-2">
-                <h3 className="text-sm text-neutral-500 font-medium">
+                <h3 className="text-xs md:text-sm text-neutral-500 font-medium">
                   Regular Fare:
                 </h3>
-                <div className="text-sm font-medium flex items-center">
+                <div className="text-xs md:text-sm font-medium flex items-center">
                   <span className={customPrice !== null ? "text-neutral-400 line-through" : "text-neutral-600"}>
                     NPR. {routeInfo.basePrice}
                   </span>
@@ -873,10 +1167,10 @@ const BusSeat = ({ busId, date }) => {
 
               {customPrice !== null && (
                 <div className="w-full flex items-center justify-between border-dashed border-l-[1.5px] border-neutral-400 pl-2">
-                  <h3 className="text-sm text-neutral-500 font-medium">Custom Fare:</h3>
-                  <div className="text-sm font-medium flex items-center">
+                  <h3 className="text-xs md:text-sm text-neutral-500 font-medium">Custom Fare:</h3>
+                  <div className="text-xs md:text-sm font-medium flex items-center">
                     {isLoadingPrice ? (
-                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
+                      <div className="w-3 h-3 md:w-4 md:h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
                     ) : (
                       <span className="text-green-600">NPR. {customPrice}</span>
                     )}
@@ -886,13 +1180,13 @@ const BusSeat = ({ busId, date }) => {
 
               <div className="flex items-center justify-between gap-x-4">
                 <div className="flex gap-y-0.5 flex-col">
-                  <h3 className="text-base text-neutral-500 font-medium">Total Price:</h3>
+                  <h3 className="text-sm md:text-base text-neutral-500 font-medium">Total Price:</h3>
                   <span className='text-xs to-neutral-500 font-normal'>
                     (Including all taxes)
                   </span>
                 </div>
 
-                <p className="text-base text-neutral-600 font-semibold">
+                <p className="text-sm md:text-base text-neutral-600 font-semibold">
                   NPR {" "}
                   {calculateTotalPrice()}
                 </p>
@@ -903,7 +1197,7 @@ const BusSeat = ({ busId, date }) => {
           <div className="w-full flex items-center justify-center">
             <button
               onClick={handleProceedToCheckout}
-              className='w-full bg-primary hover:bg-primary/90 text-sm text-neutral-50 font-normal py-2.5 flex items-center justify-center uppercase rounded-lg transition'>
+              className='w-full bg-primary hover:bg-primary/90 text-xs md:text-sm text-neutral-50 font-normal py-2 md:py-2.5 flex items-center justify-center uppercase rounded-lg transition'>
               Proceed to Checkout
             </button>
           </div>

@@ -119,23 +119,23 @@ const Filter = ({ className, buses, filteredBuses, loading, onFilterChange }) =>
 
     return (
         <div className={`w-full ${className}`}>
-            <h1 className="text-xl text-neutral-700 font-semibold">
+            <h1 className="text-lg md:text-xl text-neutral-700 font-semibold mb-4">
                 Apply Filters
             </h1>
 
             {/* Price Sorting Options */}
-            <div className="w-full border border-neutral-300 rounded-xl p-4 space-y-3">
-                <h1 className="text-lg text-neutral-600 font-medium">
+            <div className="w-full border border-neutral-300 rounded-xl p-3 md:p-4 space-y-3">
+                <h1 className="text-base md:text-lg text-neutral-600 font-medium">
                     Sort by Price
                 </h1>
 
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                     <button
                         onClick={() => handleSortChange('asc')}
                         className={`w-full flex items-center justify-between p-2 rounded-lg ${sortOption === 'asc' ? 'bg-primary/10 text-primary' : 'bg-neutral-100 text-neutral-600'}`}
                     >
                         <span className="text-sm font-medium">Price: Low to High</span>
-                        <FaArrowUpLong className="w-4 h-4" />
+                        <FaArrowUpLong className="w-3 h-3 md:w-4 md:h-4" />
                     </button>
 
                     <button
@@ -143,18 +143,18 @@ const Filter = ({ className, buses, filteredBuses, loading, onFilterChange }) =>
                         className={`w-full flex items-center justify-between p-2 rounded-lg ${sortOption === 'desc' ? 'bg-primary/10 text-primary' : 'bg-neutral-100 text-neutral-600'}`}
                     >
                         <span className="text-sm font-medium">Price: High to Low</span>
-                        <FaArrowDownLong className="w-4 h-4" />
+                        <FaArrowDownLong className="w-3 h-3 md:w-4 md:h-4" />
                     </button>
                 </div>
             </div>
 
             {/* Amenities Filter */}
-            <div className="w-full border border-neutral-300 rounded-xl p-4 space-y-3">
-                <h1 className="text-lg text-neutral-600 font-medium">
+            <div className="w-full border border-neutral-300 rounded-xl p-3 md:p-4 space-y-3">
+                <h1 className="text-base md:text-lg text-neutral-600 font-medium">
                     Amenities
                 </h1>
 
-                <div className="space-y-2.5">
+                <div className="space-y-2 md:space-y-2.5">
                     {fixedAmenities.map((amenity, index) => {
                         const totalCount = getTotalAmenityCount(amenity);
                         // Always use the current filtered count, regardless of selection state
@@ -178,11 +178,11 @@ const Filter = ({ className, buses, filteredBuses, loading, onFilterChange }) =>
                                 />
                                 <label
                                     htmlFor={`amenity-${index}`}
-                                    className={`text-sm font-normal cursor-pointer flex items-center justify-between w-full ${!hasMatchingBuses ? 'text-neutral-400' : isSelected ? 'text-primary' : 'text-neutral-600'
+                                    className={`text-xs md:text-sm font-normal cursor-pointer flex items-center justify-between w-full ${!hasMatchingBuses ? 'text-neutral-400' : isSelected ? 'text-primary' : 'text-neutral-600'
                                         }`}
                                 >
-                                    <span>{amenity}</span>
-                                    <span className={`text-xs flex items-center bg-neutral-100 px-2 py-0.5 rounded-full ${isSelected ? 'bg-primary/10' : ''
+                                    <span className="truncate mr-1">{amenity}</span>
+                                    <span className={`text-xs flex-shrink-0 flex items-center bg-neutral-100 px-2 py-0.5 rounded-full ${isSelected ? 'bg-primary/10' : ''
                                         }`}>
                                         {/* Always display the filtered count / total count format */}
                                         <span className={isSelected ? "text-primary font-medium" : "text-neutral-600"}>

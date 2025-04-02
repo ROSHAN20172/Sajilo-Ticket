@@ -111,15 +111,15 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className='flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-200 to-purple-400'>
+    <div className='flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-200 to-purple-400 px-4 md:px-0'>
 
       {!isEmailSent && (
-        <form onSubmit={onSubmitEmail} noValidate className='bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm '>
-          <h1 className='text-white text-2xl font-semibold text-center mb-4'>Reset Password</h1>
+        <form onSubmit={onSubmitEmail} noValidate className='bg-slate-900 p-6 md:p-8 rounded-lg shadow-lg w-full max-w-sm md:w-96 text-sm'>
+          <h1 className='text-white text-xl md:text-2xl font-semibold text-center mb-4'>Reset Password</h1>
           <p className='text-center mb-6 text-indigo-300'>Enter your Registered Email Address</p>
           <div className='mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]'>
-            <MdEmail className='text-indigo-300' />
-            <input type="email" placeholder='Email Id' className='bg-transparent outline-none text-white'
+            <MdEmail className='text-indigo-300 w-5 h-5 min-w-5 min-h-5' />
+            <input type="email" placeholder='Email Id' className='bg-transparent outline-none text-white w-full'
               value={email} onChange={e => setEmail(e.target.value)} required />
           </div>
           <button className='w-full py-2.5 bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-full font-medium text-neutral-50 hover:text-primary ease-in-out duration-300'>Submit</button>
@@ -132,13 +132,13 @@ const ResetPassword = () => {
       )}
 
       {!isOtpSubmitted && isEmailSent && (
-        <form onSubmit={onSubmitOtp} noValidate className='bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm '>
-          <h1 className='text-white text-2xl font-semibold text-center mb-4'>Reset Password OTP</h1>
+        <form onSubmit={onSubmitOtp} noValidate className='bg-slate-900 p-6 md:p-8 rounded-lg shadow-lg w-full max-w-sm md:w-96 text-sm'>
+          <h1 className='text-white text-xl md:text-2xl font-semibold text-center mb-4'>Reset Password OTP</h1>
           <p className='text-center mb-6 text-indigo-300'>Enter the 6-digit Code Sent to your Email</p>
-          <div className='flex justify-between mb-4' onPaste={handlePaste}>
+          <div className='flex justify-between mb-4 gap-1 md:gap-2' onPaste={handlePaste}>
             {Array(6).fill(0).map((_, index) => (
               <input type="text" maxLength='1' key={index} required
-                className='w-12 h-12 bg-[#333A5C] text-white text-center text-xl rounded-md'
+                className='w-10 h-10 md:w-12 md:h-12 bg-[#333A5C] text-white text-center text-lg md:text-xl rounded-md'
                 ref={e => inputRefs.current[index] = e}
                 onInput={(e) => handleInput(e, index)}
                 onKeyDown={(e) => handleKeyDown(e, index)} />
@@ -148,7 +148,7 @@ const ResetPassword = () => {
           {/* Resend OTP button */}
           <button
             type="button"
-            className={`text-blue-400 underline ${resendTimer > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`text-blue-400 underline text-sm md:text-base ${resendTimer > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={onResendOtp}
             disabled={resendTimer > 0}
           >
@@ -165,12 +165,12 @@ const ResetPassword = () => {
       )}
 
       {isOtpSubmitted && isEmailSent && (
-        <form onSubmit={onSubmitNewPassword} noValidate className='bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm '>
-          <h1 className='text-white text-2xl font-semibold text-center mb-4'>New Password</h1>
+        <form onSubmit={onSubmitNewPassword} noValidate className='bg-slate-900 p-6 md:p-8 rounded-lg shadow-lg w-full max-w-sm md:w-96 text-sm'>
+          <h1 className='text-white text-xl md:text-2xl font-semibold text-center mb-4'>New Password</h1>
           <p className='text-center mb-6 text-indigo-300'>Enter New Password</p>
           <div className='mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]'>
-            <FaLock className='text-indigo-300' />
-            <input type="password" placeholder='Password' className='bg-transparent outline-none text-white'
+            <FaLock className='text-indigo-300 w-5 h-5 min-w-5 min-h-5' />
+            <input type="password" placeholder='Password' className='bg-transparent outline-none text-white w-full'
               value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
           </div>
           <button className='w-full py-2.5 bg-primary rounded-full font-medium text-neutral-50'>Submit</button>

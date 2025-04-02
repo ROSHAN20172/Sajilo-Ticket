@@ -39,11 +39,23 @@ const Navbar = () => {
     //Handle click open
     const handleOpen = () => {
         setOpen(!open)
+        // Reset any open dropdowns when toggling navbar
+        const dropdowns = document.querySelectorAll(".profile-dropdown");
+        dropdowns.forEach(dropdown => {
+            dropdown.classList.add('hidden');
+            dropdown.classList.remove('block');
+        });
     }
 
     //Handle click open
     const handleClose = () => {
         setOpen(false);
+        // Reset any open dropdowns when closing navbar
+        const dropdowns = document.querySelectorAll(".profile-dropdown");
+        dropdowns.forEach(dropdown => {
+            dropdown.classList.add('hidden');
+            dropdown.classList.remove('block');
+        });
     }
 
     //To make the navbar sticky and the hide when scrolling up and showing when scrolling down
@@ -138,12 +150,26 @@ const Navbar = () => {
                         ))}
                     </ul>
                     {userData ?
-                        <div onClick={handleClose} className='w-10 h-10 flex justify-center items-center rounded-full bg-primary text-white relative group mx-4 md:mx-0 mt-4 md:mt-0'>
+                        <div onClick={(e) => {
+                            e.stopPropagation();
+                            // For mobile, toggle a class to show/hide dropdown
+                            const dropdown = e.currentTarget.querySelector(".profile-dropdown");
+                            if (dropdown) {
+                                dropdown.classList.toggle("hidden");
+                                dropdown.classList.toggle("block");
+                            }
+                        }} className='w-10 h-10 flex justify-center items-center rounded-full bg-primary text-white relative group mx-4 md:mx-0 mt-4 md:mt-0'>
                             {userData.name[0].toUpperCase()}
-                            <div className='absolute hidden group-hover:block top-0 right-0 z-10 text-black rounded pt-10 w-32'>
+                            <div className='profile-dropdown absolute hidden md:group-hover:block md:top-0 md:right-0 top-full left-0 md:left-auto z-20 text-black rounded md:pt-10 pt-2 w-32'>
                                 <ul className='list-none m-0 p-2 bg-gray-100 text-sm shadow-lg rounded'>
-                                    <li onClick={() => navigate('/bookings')} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap'>My Bookings</li>
-                                    <li onClick={logout} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap'>Log Out</li>
+                                    <li onClick={() => {
+                                        navigate('/bookings');
+                                        handleClose();
+                                    }} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap'>My Bookings</li>
+                                    <li onClick={() => {
+                                        logout();
+                                        handleClose();
+                                    }} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap'>Log Out</li>
                                 </ul>
                             </div>
                         </div>

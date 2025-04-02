@@ -304,60 +304,60 @@ const PaymentCallback = () => {
                 title={"Payment Verification"}
             />
 
-            <RootLayout className="space-y-8 w-full pb-16 min-h-[50vh] flex items-center justify-center">
-                <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-md text-center space-y-6">
+            <RootLayout className="space-y-6 md:space-y-8 w-full pb-8 md:pb-16 min-h-[50vh] flex items-center justify-center">
+                <div className="w-full max-w-md mx-4 p-5 md:p-8 bg-white rounded-xl md:rounded-2xl shadow-md text-center space-y-4 md:space-y-6">
                     {loading ? (
                         <>
                             <LoadingSpinner size="large" />
-                            <h2 className="text-xl font-semibold text-neutral-700">Verifying Payment</h2>
-                            <p className="text-neutral-500">Please wait while we verify your payment...</p>
+                            <h2 className="text-lg md:text-xl font-semibold text-neutral-700">Verifying Payment</h2>
+                            <p className="text-sm md:text-base text-neutral-500">Please wait while we verify your payment...</p>
                         </>
                     ) : status === 'success' ? (
                         <>
-                            <div className="text-green-500 text-6xl">
+                            <div className="text-green-500 text-5xl md:text-6xl">
                                 <i className="fas fa-check-circle"></i>
                             </div>
-                            <h2 className="text-2xl font-bold text-green-600">Payment Successful!</h2>
-                            <p className="text-lg text-neutral-600">
+                            <h2 className="text-xl md:text-2xl font-bold text-green-600">Payment Successful!</h2>
+                            <p className="text-base md:text-lg text-neutral-600">
                                 Your ticket has been booked successfully.
                             </p>
-                            <p className="text-neutral-500">Ticket ID: {ticketId}</p>
-                            <p className="text-neutral-500">You will be redirected to your ticket shortly...</p>
+                            <p className="text-sm md:text-base text-neutral-500">Ticket ID: {ticketId}</p>
+                            <p className="text-sm md:text-base text-neutral-500">You will be redirected to your ticket shortly...</p>
                         </>
                     ) : status === 'failed' ? (
                         <>
-                            <div className="text-red-500 text-6xl">
+                            <div className="text-red-500 text-5xl md:text-6xl">
                                 <i className="fas fa-times-circle"></i>
                             </div>
-                            <h2 className="text-2xl font-bold text-red-600">Payment Failed</h2>
-                            <p className="text-lg text-neutral-600">
+                            <h2 className="text-xl md:text-2xl font-bold text-red-600">Payment Failed</h2>
+                            <p className="text-base md:text-lg text-neutral-600">
                                 {location.search.includes('status=User+canceled') ?
                                     'You canceled the payment process.' :
                                     'Your payment could not be processed.'}
                             </p>
                             {bookingId && (
-                                <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                                    <p className="text-neutral-700">Reference ID: <span className="font-semibold">{bookingId}</span></p>
+                                <div className="mt-2 p-2 md:p-3 bg-gray-50 rounded-lg">
+                                    <p className="text-sm md:text-base text-neutral-700">Reference ID: <span className="font-semibold">{bookingId}</span></p>
                                     <p className="text-xs text-neutral-500 mt-1">Please use this ID when contacting support</p>
                                 </div>
                             )}
-                            <div className="mt-2 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                                <p className="text-neutral-700">
+                            <div className="mt-2 p-3 md:p-4 bg-blue-50 rounded-lg border border-blue-100">
+                                <p className="text-sm md:text-base text-neutral-700">
                                     {location.search.includes('status=User+canceled') ?
                                         'If you would like to try again, you will need to start a new booking as your reservation has expired.' :
                                         'Your reservation has expired. Please make a new booking to try again.'}
                                 </p>
-                                <p className="mt-2 text-blue-600 font-medium">
+                                <p className="mt-2 text-sm md:text-base text-blue-600 font-medium">
                                     <i className="fas fa-phone-alt mr-2"></i> +977 9800000000
                                 </p>
-                                <p className="text-blue-600 font-medium">
+                                <p className="text-sm md:text-base text-blue-600 font-medium">
                                     <i className="fas fa-envelope mr-2"></i> support@sajiloticket.com
                                 </p>
                             </div>
                             <div className="flex gap-3 w-full mt-2">
                                 <button
                                     onClick={() => navigate('/bus-tickets')}
-                                    className="w-full h-12 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+                                    className="w-full h-10 md:h-12 text-sm md:text-base bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
                                 >
                                     Book New Ticket
                                 </button>

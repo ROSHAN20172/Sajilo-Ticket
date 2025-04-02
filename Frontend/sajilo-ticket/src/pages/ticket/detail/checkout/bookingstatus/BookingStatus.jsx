@@ -262,70 +262,70 @@ const BookingStatus = () => {
     }, []);
 
     return (
-        <div className='w-full col-span-3 sticky top-20 space-y-7'>
-            <div className="w-full bg-neutral-50 rounded-xl py-4 px-6 border border-neutral-200 shadow-sm space-y-5">
-                <h1 className="text-lg text-neutral-700 font-bold text-center border-b border-neutral-200 pb-4">
+        <div className='w-full col-span-1 md:col-span-3 static md:sticky md:top-20 space-y-5 md:space-y-7 mt-4 md:mt-0'>
+            <div className="w-full bg-neutral-50 rounded-xl py-3 md:py-4 px-4 md:px-6 border border-neutral-200 shadow-sm space-y-4 md:space-y-5">
+                <h1 className="text-base md:text-lg text-neutral-700 font-bold text-center border-b border-neutral-200 pb-3 md:pb-4">
                     Your Ticket Report Status
                 </h1>
 
-                <div className="space-y-5">
-                    <div className="space-y-2 w-full">
-                        <h1 className="text-base text-neutral-700 font-medium">
+                <div className="space-y-4 md:space-y-5">
+                    <div className="space-y-1.5 md:space-y-2 w-full">
+                        <h1 className="text-sm md:text-base text-neutral-700 font-medium">
                             Bus Information
                         </h1>
 
-                        <div className="w-full space-y-2 border-b border-dashed border-neutral-200 pb-3">
+                        <div className="w-full space-y-1.5 md:space-y-2 border-b border-dashed border-neutral-200 pb-2 md:pb-3">
                             <div className="w-full flex items-center justify-between">
-                                <h3 className="text-sm text-neutral-500 font-medium">Bus Name:</h3>
-                                <p className="text-sm text-neutral-600 font-semibold">{ticketDetails.busName}</p>
+                                <h3 className="text-xs md:text-sm text-neutral-500 font-medium">Bus Name:</h3>
+                                <p className="text-xs md:text-sm text-neutral-600 font-semibold">{ticketDetails.busName}</p>
                             </div>
                             <div className="w-full flex items-center justify-between">
-                                <h3 className="text-sm text-neutral-500 font-medium">Bus Number:</h3>
-                                <p className="text-sm text-neutral-600 font-semibold">{ticketDetails.busNumber}</p>
+                                <h3 className="text-xs md:text-sm text-neutral-500 font-medium">Bus Number:</h3>
+                                <p className="text-xs md:text-sm text-neutral-600 font-semibold">{ticketDetails.busNumber}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="w-full space-y-2 border-b border-dashed border-neutral-200 pb-3">
-                        <div className="space-y-2 w-full">
-                            <h1 className="text-base text-neutral-700 font-medium">
+                    <div className="w-full space-y-1.5 md:space-y-2 border-b border-dashed border-neutral-200 pb-2 md:pb-3">
+                        <div className="space-y-1.5 md:space-y-2 w-full">
+                            <h1 className="text-sm md:text-base text-neutral-700 font-medium">
                                 Your Destination
                             </h1>
 
                             <div className="space-y-0.5 w-full">
-                                <div className="w-full flex items-center justify-between gap-x-5">
-                                    <p className="text-sm text-neutral-400 font-normal">
+                                <div className="w-full flex items-center justify-between gap-x-3 md:gap-x-5">
+                                    <p className="text-xs md:text-sm text-neutral-400 font-normal">
                                         From
                                     </p>
-                                    <p className="text-sm text-neutral-400 font-normal">
+                                    <p className="text-xs md:text-sm text-neutral-400 font-normal">
                                         To
                                     </p>
                                 </div>
 
-                                <div className="w-full flex items-center justify-between gap-x-4">
-                                    <h1 className="text-sm text-neutral-600 font-normal">
+                                <div className="w-full flex items-center justify-between gap-x-2 md:gap-x-4">
+                                    <h1 className="text-xs md:text-sm text-neutral-600 font-normal">
                                         {ticketDetails.fromLocation} <span className='font-medium'>({formatTime(ticketDetails.departureTime)})</span>
                                     </h1>
 
                                     <div className="flex-1 border-dashed border border-neutral-300" />
 
-                                    <h1 className="text-sm text-neutral-600 font-normal">
+                                    <h1 className="text-xs md:text-sm text-neutral-600 font-normal">
                                         {ticketDetails.toLocation} <span className='font-medium'>({formatTime(ticketDetails.arrivalTime)})</span>
                                     </h1>
                                 </div>
 
                                 {/* Pickup and Drop Point Section */}
-                                <div className="w-full flex items-center justify-between gap-x-5 mt-3">
-                                    <p className="text-sm text-neutral-400 font-normal">
+                                <div className="w-full flex items-center justify-between gap-x-3 md:gap-x-5 mt-2 md:mt-3">
+                                    <p className="text-xs md:text-sm text-neutral-400 font-normal">
                                         Pickup Point
                                     </p>
-                                    <p className="text-sm text-neutral-400 font-normal">
+                                    <p className="text-xs md:text-sm text-neutral-400 font-normal">
                                         Drop Point
                                     </p>
                                 </div>
 
-                                <div className="w-full flex items-center justify-between gap-x-4">
-                                    <h1 className="text-sm text-neutral-600 font-normal">
+                                <div className="w-full flex items-center justify-between gap-x-2 md:gap-x-4">
+                                    <h1 className="text-xs md:text-sm text-neutral-600 font-normal">
                                         {ticketDetails.pickupPoint ? (
                                             <>
                                                 {ticketDetails.pickupPoint}
@@ -340,7 +340,7 @@ const BookingStatus = () => {
 
                                     <div className="flex-1 border-dashed border border-neutral-300" />
 
-                                    <h1 className="text-sm text-neutral-600 font-normal">
+                                    <h1 className="text-xs md:text-sm text-neutral-600 font-normal">
                                         {ticketDetails.dropPoint ? (
                                             <>
                                                 {ticketDetails.dropPoint}
@@ -354,11 +354,11 @@ const BookingStatus = () => {
                                     </h1>
                                 </div>
 
-                                <div className="w-full flex items-center justify-between gap-x-4 !mt-3">
-                                    <h1 className="text-sm text-neutral-600 font-normal">
+                                <div className="w-full flex items-center justify-between gap-x-2 md:gap-x-4 !mt-2 md:!mt-3">
+                                    <h1 className="text-xs md:text-sm text-neutral-600 font-normal">
                                         Date:
                                     </h1>
-                                    <p className="text-sm text-neutral-600 font-medium">
+                                    <p className="text-xs md:text-sm text-neutral-600 font-medium">
                                         {date ? new Date(date).toLocaleDateString('en-US', {
                                             weekday: 'short',
                                             year: 'numeric',
@@ -371,43 +371,43 @@ const BookingStatus = () => {
                         </div>
                     </div>
 
-                    <div className="w-full space-y-2 border-b border-dashed border-neutral-200 pb-3">
-                        <div className="space-y-2 w-full">
-                            <h1 className="text-base text-neutral-700 font-medium">
+                    <div className="w-full space-y-1.5 md:space-y-2 border-b border-dashed border-neutral-200 pb-2 md:pb-3">
+                        <div className="space-y-1.5 md:space-y-2 w-full">
+                            <h1 className="text-sm md:text-base text-neutral-700 font-medium">
                                 Your Seats
                             </h1>
 
-                            <div className='w-full flex items-center gap-x-3 flex-wrap'>
+                            <div className='w-full flex items-center gap-x-2 md:gap-x-3 flex-wrap'>
                                 {selectedSeats && selectedSeats.length > 0 ? (
                                     selectedSeats.map((seat, index) => (
                                         <div
                                             key={index}
-                                            className='w-9 h-9 bg-neutral-200/80 rounded-lg flex items-center justify-center text-base to-neutral-700 font-semibold'>
+                                            className='w-7 h-7 md:w-9 md:h-9 bg-neutral-200/80 rounded-lg flex items-center justify-center text-sm md:text-base to-neutral-700 font-semibold'>
                                             {seat}
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-sm text-neutral-500">No seats selected</p>
+                                    <p className="text-xs md:text-sm text-neutral-500">No seats selected</p>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    <div className="space-y-2 w-full">
-                        <h1 className="text-base text-neutral-700 font-medium">
+                    <div className="space-y-1.5 md:space-y-2 w-full">
+                        <h1 className="text-sm md:text-base text-neutral-700 font-medium">
                             Total Fare Amount
                         </h1>
 
-                        <div className="flex items-center justify-between gap-x-4">
+                        <div className="flex items-center justify-between gap-x-2 md:gap-x-4">
                             <div className="flex gap-y-0.5 flex-col">
-                                <h3 className="text-base text-neutral-500 font-medium">Total Price :</h3>
+                                <h3 className="text-sm md:text-base text-neutral-500 font-medium">Total Price :</h3>
                                 <span className='text-xs to-neutral-500 font-normal'>
                                     (Including all taxes)
                                 </span>
                             </div>
 
                             {/* Calculate the total price  */}
-                            <p className="text-base text-neutral-600 font-semibold">
+                            <p className="text-sm md:text-base text-neutral-600 font-semibold">
                                 NPR {ticketDetails.totalPrice || 0}
                             </p>
 
@@ -420,7 +420,7 @@ const BookingStatus = () => {
                 <button
                     onClick={handleProceedToPayment}
                     disabled={isSubmitting}
-                    className='w-full bg-primary hover:bg-primary/90 text-sm text-neutral-50 font-normal py-2.5 flex items-center justify-center uppercase rounded-lg transition disabled:bg-primary/60 disabled:cursor-not-allowed'>
+                    className='w-full bg-primary hover:bg-primary/90 text-xs md:text-sm text-neutral-50 font-normal py-2 md:py-2.5 flex items-center justify-center uppercase rounded-lg transition disabled:bg-primary/60 disabled:cursor-not-allowed'>
                     {isSubmitting ? 'Processing...' : 'Proceed to Pay'}
                     {!isSubmitting && <FaArrowRightLong className="ml-2" />}
                 </button>

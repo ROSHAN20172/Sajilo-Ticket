@@ -31,56 +31,56 @@ const CompanyInvoice = ({ data }) => {
     };
 
     return (
-        <div className='w-full col-span-1 border-dashed border-l-2 border-neutral-400 relative'>
-            <div className="w-full bg-primary px-4 py-5 rounded-tr-3xl">
-                <h1 className="text-2xl text-neutral-50 font-bold text-center">
+        <div className='w-full sm:border-t md:border-t-0 md:border-l md:col-span-1 border-dashed border-neutral-400 relative pt-4 md:pt-0 mt-4 md:mt-0'>
+            <div className="w-full bg-primary px-4 py-3 md:py-5 rounded-b-xl md:rounded-tr-3xl md:rounded-bl-none">
+                <h1 className="text-xl md:text-2xl text-neutral-50 font-bold text-center">
                     Bus Ticket
                 </h1>
             </div>
 
-            <div className="w-full px-4 py-7 space-y-1">
-                <p className="text-sm text-neutral-600 font-normal">
+            <div className="w-full px-4 py-5 md:py-7 space-y-1">
+                <p className="text-xs md:text-sm text-neutral-600 font-normal">
                     Bill No.: {data?.bookingId || data?.ticketId || data?.invoiceNumber || 'N/A'}
                 </p>
-                <p className="text-sm text-neutral-600 font-normal">
+                <p className="text-xs md:text-sm text-neutral-600 font-normal">
                     Bus No.: {data?.busNumber || 'N/A'}
                 </p>
-                <p className="text-sm text-neutral-600 font-normal">
+                <p className="text-xs md:text-sm text-neutral-600 font-normal">
                     Date: {formatDate(data?.journeyDate) || 'N/A'}
                 </p>
-                <p className="text-sm text-neutral-600 font-normal">
+                <p className="text-xs md:text-sm text-neutral-600 font-normal">
                     Name: {data?.passengerName || 'N/A'}
                 </p>
-                <p className="text-sm text-neutral-600 font-normal">
+                <p className="text-xs md:text-sm text-neutral-600 font-normal">
                     From: {data?.fromLocation || 'N/A'}
-                    {data?.pickupPoint && <span className="text-xs"> ({data.pickupPoint})</span>}
+                    {data?.pickupPoint && <span className="text-[10px] md:text-xs"> ({data.pickupPoint})</span>}
                 </p>
-                <p className="text-sm text-neutral-600 font-normal">
+                <p className="text-xs md:text-sm text-neutral-600 font-normal">
                     To: {data?.toLocation || 'N/A'}
-                    {data?.dropPoint && <span className="text-xs"> ({data.dropPoint})</span>}
+                    {data?.dropPoint && <span className="text-[10px] md:text-xs"> ({data.dropPoint})</span>}
                 </p>
-                <p className="text-sm text-neutral-600 font-normal">
+                <p className="text-xs md:text-sm text-neutral-600 font-normal">
                     Dept. Time: {formatTime(data?.departureTime) || 'N/A'}
                 </p>
-                <p className="text-sm text-neutral-600 font-normal">
+                <p className="text-xs md:text-sm text-neutral-600 font-normal">
                     Seat No.: {formatSeats(data?.selectedSeats) || 'N/A'}
                 </p>
-                <p className="text-sm text-neutral-600 font-normal">
+                <p className="text-xs md:text-sm text-neutral-600 font-normal">
                     Total Passenger: {data?.selectedSeats?.length || 0}
                 </p>
-                <p className="text-sm text-neutral-600 font-normal">
+                <p className="text-xs md:text-sm text-neutral-600 font-normal">
                     Total Price: NPR {data?.totalPrice || 0}
                 </p>
                 {/* Only show secondary number field if the passenger's alternate phone exists */}
                 {data?.alternatePhone && (
-                    <p className="text-sm text-neutral-600 font-normal">
+                    <p className="text-xs md:text-sm text-neutral-600 font-normal">
                         Sec Phone No: {data.alternatePhone}
                     </p>
                 )}
             </div>
 
-            {/* Right bottom section */}
-            <div className="w-full bg-primary absolute bottom-0 right-0 rounded-br-3xl flex items-center justify-center px-5 py-1.5">
+            {/* Right bottom section - visible on desktop, hidden on mobile */}
+            <div className="hidden md:flex w-full bg-primary absolute bottom-0 right-0 rounded-br-3xl items-center justify-center px-5 py-1.5">
                 <div className="flex items-center gap-x-2">
                     <FaPhone className='w-3 h-3 text-neutral-100' />
                     <p className="text-sm text-neutral-100 font-light">
@@ -89,6 +89,15 @@ const CompanyInvoice = ({ data }) => {
                 </div>
             </div>
 
+            {/* Bottom contact section - visible on mobile only */}
+            <div className="md:hidden w-full bg-primary flex items-center justify-center px-3 py-1 rounded-b-xl mt-4">
+                <div className="flex items-center gap-x-1">
+                    <FaPhone className='w-2 h-2 text-neutral-100' />
+                    <p className="text-xs text-neutral-100 font-light">
+                        {data?.passengerPhone || 'No contact provided'}
+                    </p>
+                </div>
+            </div>
         </div>
     )
 }

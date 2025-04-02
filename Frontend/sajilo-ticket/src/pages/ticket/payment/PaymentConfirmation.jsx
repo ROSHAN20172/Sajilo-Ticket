@@ -327,118 +327,120 @@ const PaymentConfirmation = () => {
             />
 
             <RootLayout className="space-y-8 w-full pb-16">
-                <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-md p-8">
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between border-b pb-4">
-                            <h2 className="text-2xl font-bold text-neutral-800">Booking Confirmation</h2>
-                            <div className="text-right">
-                                <p className="text-sm text-gray-500">Booking ID</p>
+                <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-md p-4 md:p-6 lg:p-8">
+                    <div className="space-y-4 md:space-y-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b pb-3 md:pb-4 gap-2">
+                            <h2 className="text-xl md:text-2xl font-bold text-neutral-800">Booking Confirmation</h2>
+                            <div className="text-left sm:text-right">
+                                <p className="text-xs md:text-sm text-gray-500">Booking ID</p>
                                 <p className="font-medium text-primary">{bookingId}</p>
                             </div>
                         </div>
 
-                        {/* Timer */}
-                        <div className="bg-neutral-100 rounded-lg p-4 flex items-center justify-between">
-                            <div className="flex items-center">
-                                <IoTimeOutline className="text-xl mr-2" />
-                                <p className="font-medium text-neutral-700">Reservation expires in:</p>
+                        {/* Timer - Sticky on mobile only */}
+                        <div className="sticky top-0 left-0 right-0 z-20 bg-white pt-2 pb-3 -mx-4 px-4 md:static md:pt-0 md:pb-0 md:mx-0 md:px-0 md:bg-transparent">
+                            <div className="bg-neutral-100 rounded-lg p-3 md:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div className="flex items-center">
+                                    <IoTimeOutline className="text-lg md:text-xl mr-2" />
+                                    <p className="font-medium text-sm md:text-base text-neutral-700">Reservation expires in:</p>
+                                </div>
+                                <p id="reservation-timer" className={`font-bold text-lg md:text-xl ${getTimerColorClass()}`}>{countdown}</p>
                             </div>
-                            <p id="reservation-timer" className={`font-bold text-xl ${getTimerColorClass()}`}>{countdown}</p>
-                        </div>
-                        <div className="bg-amber-100 border-l-4 border-amber-500 p-3 rounded mt-2">
-                            <p className="text-amber-800 font-semibold flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                                Please complete your payment before the reservation expires
-                            </p>
+                            <div className="bg-amber-100 border-l-4 border-amber-500 p-2 md:p-3 rounded mt-2">
+                                <p className="text-amber-800 text-sm md:text-base font-semibold flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                    Please complete your payment before the reservation expires
+                                </p>
+                            </div>
                         </div>
 
                         {/* Journey Details */}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-neutral-700">Journey Details</h3>
-                            <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-3 md:space-y-4">
+                            <h3 className="text-base md:text-lg font-semibold text-neutral-700">Journey Details</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                                 <div>
-                                    <p className="text-sm text-gray-500">From</p>
-                                    <p className="font-medium">{ticketDetails?.fromLocation}</p>
+                                    <p className="text-xs md:text-sm text-gray-500">From</p>
+                                    <p className="text-sm md:text-base font-medium">{ticketDetails?.fromLocation}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">To</p>
-                                    <p className="font-medium">{ticketDetails?.toLocation}</p>
+                                    <p className="text-xs md:text-sm text-gray-500">To</p>
+                                    <p className="text-sm md:text-base font-medium">{ticketDetails?.toLocation}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Date</p>
-                                    <p className="font-medium">{new Date(ticketDetails?.date).toLocaleDateString()}</p>
+                                    <p className="text-xs md:text-sm text-gray-500">Date</p>
+                                    <p className="text-sm md:text-base font-medium">{new Date(ticketDetails?.date).toLocaleDateString()}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Time</p>
-                                    <p className="font-medium">{ticketDetails?.departureTime}</p>
+                                    <p className="text-xs md:text-sm text-gray-500">Time</p>
+                                    <p className="text-sm md:text-base font-medium">{ticketDetails?.departureTime}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Bus</p>
-                                    <p className="font-medium">{ticketDetails?.busName} ({ticketDetails?.busNumber})</p>
+                                    <p className="text-xs md:text-sm text-gray-500">Bus</p>
+                                    <p className="text-sm md:text-base font-medium">{ticketDetails?.busName} ({ticketDetails?.busNumber})</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Seats</p>
-                                    <p className="font-medium">{Array.isArray(ticketDetails?.selectedSeats) ? ticketDetails.selectedSeats.join(', ') : ticketDetails?.selectedSeats}</p>
+                                    <p className="text-xs md:text-sm text-gray-500">Seats</p>
+                                    <p className="text-sm md:text-base font-medium">{Array.isArray(ticketDetails?.selectedSeats) ? ticketDetails.selectedSeats.join(', ') : ticketDetails?.selectedSeats}</p>
                                 </div>
                             </div>
                         </div>
-                        <hr className="my-4 border-gray-300" />
+                        <hr className="my-3 md:my-4 border-gray-300" />
 
                         {/* Pickup/Drop Details */}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-neutral-700">Pickup & Drop Details</h3>
-                            <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-3 md:space-y-4">
+                            <h3 className="text-base md:text-lg font-semibold text-neutral-700">Pickup & Drop Details</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                                 <div>
-                                    <p className="text-sm text-gray-500">Pickup Point</p>
-                                    <p className="font-medium">{ticketDetails?.pickupPoint}</p>
+                                    <p className="text-xs md:text-sm text-gray-500">Pickup Point</p>
+                                    <p className="text-sm md:text-base font-medium">{ticketDetails?.pickupPoint}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Drop Point</p>
-                                    <p className="font-medium">{ticketDetails?.dropPoint}</p>
+                                    <p className="text-xs md:text-sm text-gray-500">Drop Point</p>
+                                    <p className="text-sm md:text-base font-medium">{ticketDetails?.dropPoint}</p>
                                 </div>
                             </div>
                         </div>
-                        <hr className="my-4 border-gray-300" />
+                        <hr className="my-3 md:my-4 border-gray-300" />
 
                         {/* Passenger Details */}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-neutral-700">Passenger Details</h3>
-                            <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-3 md:space-y-4">
+                            <h3 className="text-base md:text-lg font-semibold text-neutral-700">Passenger Details</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                                 <div>
-                                    <p className="text-sm text-gray-500">Name</p>
-                                    <p className="font-medium">{passengerInfo?.name}</p>
+                                    <p className="text-xs md:text-sm text-gray-500">Name</p>
+                                    <p className="text-sm md:text-base font-medium">{passengerInfo?.name}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Phone</p>
-                                    <p className="font-medium">{passengerInfo?.phone}</p>
+                                    <p className="text-xs md:text-sm text-gray-500">Phone</p>
+                                    <p className="text-sm md:text-base font-medium">{passengerInfo?.phone}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Email</p>
-                                    <p className="font-medium">{passengerInfo?.email}</p>
+                                    <p className="text-xs md:text-sm text-gray-500">Email</p>
+                                    <p className="text-sm md:text-base font-medium">{passengerInfo?.email}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Secondary Phone</p>
-                                    <p className="font-medium">{passengerInfo?.alternatePhone || 'N/A'}</p>
+                                    <p className="text-xs md:text-sm text-gray-500">Secondary Phone</p>
+                                    <p className="text-sm md:text-base font-medium">{passengerInfo?.alternatePhone || 'N/A'}</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Price Summary */}
-                        <div className="bg-neutral-50 p-4 rounded-lg border-t border-b border-neutral-200">
+                        <div className="bg-neutral-50 p-3 md:p-4 rounded-lg border-t border-b border-neutral-200">
                             <div className="flex items-center justify-between font-bold">
-                                <p className="text-lg">Total Amount</p>
-                                <p className="text-xl text-primary">NPR {ticketDetails?.totalPrice}</p>
+                                <p className="text-base md:text-lg">Total Amount</p>
+                                <p className="text-lg md:text-xl text-primary">NPR {ticketDetails?.totalPrice}</p>
                             </div>
                         </div>
 
                         {/* Pay Now Button */}
-                        <div className="flex justify-center pt-4">
+                        <div className="flex justify-center pt-3 md:pt-4">
                             <button
                                 onClick={handlePayNow}
                                 disabled={loading || !paymentUrl}
-                                className="w-full max-w-md h-14 bg-primary hover:bg-primary/90 text-white font-bold text-lg rounded-lg flex items-center justify-center gap-x-2 disabled:bg-gray-400"
+                                className="w-full max-w-md h-11 md:h-14 bg-primary hover:bg-primary/90 text-white font-bold text-base md:text-lg rounded-lg flex items-center justify-center gap-x-2 disabled:bg-gray-400"
                             >
                                 {loading ? 'Preparing Payment...' : 'Pay Now'}
                             </button>

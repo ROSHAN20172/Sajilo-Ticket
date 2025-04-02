@@ -41,12 +41,12 @@ const PassengerData = () => {
   }
 
   return (
-    <div className='w-full col-span-4 py-4 space-y-6'>
+    <div className='w-full col-span-1 md:col-span-4 py-4 space-y-6'>
       <h1 className="text-xl text-neutral-700 font-semibold">
         Passenger Information
       </h1>
 
-      <div className="space-y-7">
+      <div className="space-y-5 md:space-y-7">
         <div className="w-full space-y-2">
           <label htmlFor="fullname" className='text-sm text-neutral-500 font-medium'>Full Name</label>
           <input
@@ -54,7 +54,7 @@ const PassengerData = () => {
             value={checkoutData.passengerName}
             onChange={(e) => handleInputChange('passengerName', e.target.value)}
             placeholder="eg. Roshan Shah"
-            className="w-full h-14 px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-base text-neutral-600 font-normal placeholder:text-neutral-400"
+            className="w-full h-11 md:h-14 px-3 md:px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-sm md:text-base text-neutral-600 font-normal placeholder:text-neutral-400"
             onInput={(e) => e.target.value = e.target.value.replace(/[0-9]/g, '')}
           />
         </div>
@@ -66,7 +66,7 @@ const PassengerData = () => {
             value={checkoutData.passengerEmail}
             onChange={(e) => handleInputChange('passengerEmail', e.target.value)}
             placeholder='eg. roshan@gmail.com'
-            className="w-full h-14 px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-base text-neutral-600 font-normal placeholder:text-neutral-400"
+            className="w-full h-11 md:h-14 px-3 md:px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-sm md:text-base text-neutral-600 font-normal placeholder:text-neutral-400"
           />
         </div>
 
@@ -77,7 +77,7 @@ const PassengerData = () => {
             value={checkoutData.passengerPhone}
             onChange={(e) => handleInputChange('passengerPhone', e.target.value)}
             placeholder='eg. +977-9800000000'
-            className="no-spinner w-full h-14 px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-base text-neutral-600 font-normal placeholder:text-neutral-400"
+            className="no-spinner w-full h-11 md:h-14 px-3 md:px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-sm md:text-base text-neutral-600 font-normal placeholder:text-neutral-400"
           />
         </div>
 
@@ -88,7 +88,7 @@ const PassengerData = () => {
             value={checkoutData.alternatePhone}
             onChange={(e) => handleInputChange('alternatePhone', e.target.value)}
             placeholder='eg. +977-9800000000'
-            className="no-spinner w-full h-14 px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-base text-neutral-600 font-normal placeholder:text-neutral-400"
+            className="no-spinner w-full h-11 md:h-14 px-3 md:px-4 bg-neutral-100/40 focus:bg-neutral-100/70 border border-neutral-400/50 rounded-xl focus:outline-none focus:border-neutral-400 text-sm md:text-base text-neutral-600 font-normal placeholder:text-neutral-400"
           />
         </div>
       </div>

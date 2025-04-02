@@ -180,8 +180,8 @@ const SearchResult = forwardRef((props, ref) => {
   };
 
   return (
-    <div className="w-full col-span-3 space-y-10 pt-11">
-      <div className="space-y-6">
+    <div className="w-full space-y-6 sm:space-y-10 pt-4 sm:pt-11">
+      <div className="space-y-4 sm:space-y-6">
         {dataToShow && dataToShow.length > 0 ? (
           dataToShow.map((ticket, index) => (
             <TicketCard

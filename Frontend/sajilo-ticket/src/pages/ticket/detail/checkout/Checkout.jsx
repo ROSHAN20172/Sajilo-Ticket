@@ -103,15 +103,29 @@ const Checkout = () => {
             <>
               {/* Reservation Timer */}
               {bookingData.reservation && (
-                <div className="w-full max-w-3xl mx-auto">
-                  <ReservationTimer
-                    reservationId={bookingData.reservation.id}
-                    expirationTime={bookingData.reservation.expirationTime}
-                    backendUrl={backendUrl}
-                  />
-                </div>
+                <>
+                  {/* Mobile Reservation Timer with Box */}
+                  <div className="block md:hidden w-full sticky top-0 z-10 bg-white py-2 shadow-sm left-0 right-0">
+                    <div className="w-full max-w-full px-4">
+                      <ReservationTimer
+                        reservationId={bookingData.reservation.id}
+                        expirationTime={bookingData.reservation.expirationTime}
+                        backendUrl={backendUrl}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Desktop Reservation Timer (No Box) */}
+                  <div className="hidden md:block w-full max-w-3xl mx-auto">
+                    <ReservationTimer
+                      reservationId={bookingData.reservation.id}
+                      expirationTime={bookingData.reservation.expirationTime}
+                      backendUrl={backendUrl}
+                    />
+                  </div>
+                </>
               )}
-              <div className="w-full grid grid-cols-7 items-start gap-44 relative">
+              <div className="w-full grid grid-cols-1 md:grid-cols-7 items-start gap-6 md:gap-10 lg:gap-20 xl:gap-44 relative">
                 {/* Passenger Detail */}
                 <PassengerData />
 

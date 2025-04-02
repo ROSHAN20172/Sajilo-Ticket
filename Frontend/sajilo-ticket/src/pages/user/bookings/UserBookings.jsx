@@ -315,52 +315,56 @@ const UserBookings = () => {
                     ) : (
                         <>
                             {/* Search and Filter Section */}
-                            <div className="mb-6 bg-white p-4 rounded-lg shadow-sm">
+                            <div className="mb-6 bg-red-50 p-3 md:p-4 rounded-lg shadow-sm border border-red-100">
                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
                                     <h3 className="text-lg font-semibold text-gray-700 mb-3 md:mb-0 flex items-center">
-                                        <FaSearch className="mr-2" />
+                                        <FaSearch className="mr-2 text-primary" />
                                         Search Bookings
                                     </h3>
-                                    <div className="flex items-center">
-                                        <label className="text-gray-600 mr-2 flex items-center">
-                                            <FaFilter className="mr-1" />
-                                            Status:
-                                        </label>
-                                        <select
-                                            value={statusFilter}
-                                            onChange={handleStatusFilterChange}
-                                            className="form-select border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
-                                        >
-                                            <option value="all">All</option>
-                                            <option value="success">Success</option>
-                                            <option value="failed">Failed</option>
-                                        </select>
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center w-full md:w-auto space-y-2 sm:space-y-0">
+                                        <div className="flex items-center w-full sm:w-auto">
+                                            <label className="text-gray-600 mr-2 flex items-center text-sm md:text-base">
+                                                <FaFilter className="mr-1 text-primary" />
+                                                Status:
+                                            </label>
+                                            <select
+                                                value={statusFilter}
+                                                onChange={handleStatusFilterChange}
+                                                className="form-select border border-gray-300 rounded-md px-2 py-1 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary w-full sm:w-auto"
+                                            >
+                                                <option value="all">All</option>
+                                                <option value="success">Success</option>
+                                                <option value="failed">Failed</option>
+                                            </select>
+                                        </div>
 
-                                        <label className="text-gray-600 ml-4 mr-2 flex items-center">
-                                            <FaFilter className="mr-1" />
-                                            Date Range:
-                                        </label>
-                                        <select
-                                            value={dateRangeFilter}
-                                            onChange={handleDateRangeFilterChange}
-                                            className="form-select border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
-                                        >
-                                            <option value="all">All Time</option>
-                                            <option value="today">Today</option>
-                                            <option value="week">This Week</option>
-                                            <option value="month">This Month</option>
-                                            <option value="year">This Year</option>
-                                        </select>
+                                        <div className="flex items-center w-full sm:w-auto sm:ml-4">
+                                            <label className="text-gray-600 mr-2 flex items-center text-sm md:text-base">
+                                                <FaFilter className="mr-1 text-primary" />
+                                                Date:
+                                            </label>
+                                            <select
+                                                value={dateRangeFilter}
+                                                onChange={handleDateRangeFilterChange}
+                                                className="form-select border border-gray-300 rounded-md px-2 py-1 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary w-full sm:w-auto"
+                                            >
+                                                <option value="all">All Time</option>
+                                                <option value="today">Today</option>
+                                                <option value="week">This Week</option>
+                                                <option value="month">This Month</option>
+                                                <option value="year">This Year</option>
+                                            </select>
+                                        </div>
 
                                         <button
                                             onClick={resetFilters}
-                                            className="ml-4 px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                                            className="ml-0 sm:ml-4 px-3 py-1 text-sm bg-primary text-white rounded-md hover:bg-primary/90 w-full sm:w-auto mt-2 sm:mt-0"
                                         >
                                             Reset
                                         </button>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Booking ID</label>
                                         <input
@@ -369,7 +373,7 @@ const UserBookings = () => {
                                             value={searchQuery.bookingId}
                                             onChange={handleSearchChange}
                                             placeholder="Search by ID"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                                         />
                                     </div>
                                     <div>
@@ -380,7 +384,7 @@ const UserBookings = () => {
                                             value={searchQuery.route}
                                             onChange={handleSearchChange}
                                             placeholder="From - To"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                                         />
                                     </div>
                                     <div>
@@ -391,7 +395,7 @@ const UserBookings = () => {
                                             value={searchQuery.date}
                                             onChange={handleSearchChange}
                                             placeholder="Date"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                                         />
                                     </div>
                                     <div>
@@ -402,7 +406,7 @@ const UserBookings = () => {
                                             value={searchQuery.seats}
                                             onChange={handleSearchChange}
                                             placeholder="Seat numbers"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                                         />
                                     </div>
                                     <div>
@@ -413,20 +417,77 @@ const UserBookings = () => {
                                             value={searchQuery.amount}
                                             onChange={handleSearchChange}
                                             placeholder="Price"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                                         />
                                     </div>
                                 </div>
                             </div>
 
                             {/* Results count */}
-                            <div className="mb-2 text-sm text-gray-600">
+                            <div className="mb-2 text-sm text-gray-600 px-1">
                                 Showing {filteredBookings.length} of {bookings.length} bookings
                             </div>
 
                             {/* Bookings Table */}
                             <div className="overflow-x-auto bg-white rounded-lg shadow-sm">
-                                <table className="min-w-full divide-y divide-gray-200">
+                                {/* Mobile view - Cards */}
+                                <div className="md:hidden space-y-4 p-3">
+                                    {filteredBookings.length === 0 ? (
+                                        <div className="text-center py-4 text-sm text-gray-500">
+                                            No bookings match your search criteria
+                                        </div>
+                                    ) : (
+                                        filteredBookings.map((booking) => {
+                                            // Get data from potentially nested objects
+                                            const bookingId = booking.bookingId || booking._id || 'N/A';
+                                            const fromLocation = getNestedProperty(booking, 'ticketInfo.fromLocation') || booking.fromLocation || 'N/A';
+                                            const toLocation = getNestedProperty(booking, 'ticketInfo.toLocation') || booking.toLocation || 'N/A';
+                                            const journeyDate = getNestedProperty(booking, 'ticketInfo.date') || booking.journeyDate || booking.date || 'N/A';
+                                            const seats = getNestedProperty(booking, 'ticketInfo.selectedSeats') || booking.selectedSeats || [];
+                                            const price = booking.price || getNestedProperty(booking, 'ticketInfo.totalPrice') || booking.totalPrice || 0;
+                                            const status = booking.paymentStatus || booking.status || 'pending';
+
+                                            return (
+                                                <div key={booking._id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div className="text-xs font-medium text-gray-500">
+                                                            ID: {bookingId}
+                                                        </div>
+                                                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(status)}`}>
+                                                            {formatStatus(status)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-sm font-medium text-gray-900 mb-1">
+                                                        {fromLocation} to {toLocation}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500 mb-1">
+                                                        Date: {formatDate(journeyDate)}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500 mb-1">
+                                                        Seats: {Array.isArray(seats) ? seats.join(', ') : seats || 'N/A'}
+                                                    </div>
+                                                    <div className="flex justify-between items-center mt-3">
+                                                        <div className="text-sm font-medium text-gray-900">
+                                                            NPR {price}
+                                                        </div>
+                                                        {(status === 'confirmed' || status === 'paid') && (
+                                                            <button
+                                                                onClick={() => handleViewInvoice(booking._id)}
+                                                                className="flex items-center text-sm text-primary hover:text-primary/80"
+                                                            >
+                                                                <FaEye className="h-4 w-4 mr-1" />
+                                                                View Ticket
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+
+                                {/* Desktop view - Table */}
+                                <table className="hidden md:table min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -497,10 +558,11 @@ const UserBookings = () => {
                                                                 {(status === 'confirmed' || status === 'paid') && (
                                                                     <button
                                                                         onClick={() => handleViewInvoice(booking._id)}
-                                                                        className="text-blue-600 hover:text-blue-900"
+                                                                        className="text-primary hover:text-primary/80 flex items-center"
                                                                         title="View Ticket"
                                                                     >
-                                                                        <FaEye className="h-5 w-5" />
+                                                                        <FaEye className="h-5 w-5 mr-1" />
+                                                                        <span>View Ticket</span>
                                                                     </button>
                                                                 )}
                                                             </div>
