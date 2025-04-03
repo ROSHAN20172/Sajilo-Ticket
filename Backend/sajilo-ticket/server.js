@@ -20,6 +20,7 @@ import operatorRouter from './routes/operator/operatorRoutes.js';
 import operatorBusRouter from './routes/operator/operatorBusRoutes.js';
 import operatorBusRouteRouter from './routes/operator/operatorBusRouteRoutes.js';
 import operatorBusScheduleRouter from './routes/operator/operatorBusScheduleRoutes.js';
+import operatorBookingRouter from './routes/operator/operatorBookingRoutes.js';
 
 // Import payment routes
 import paymentRouter from './routes/paymentRoutes.js';
@@ -58,6 +59,7 @@ app.use('/api/operator', operatorRouter);
 app.use('/api/operator/bus', operatorBusRouter);
 app.use('/api/operator/routes', operatorBusRouteRouter);
 app.use('/api/operator/schedules', operatorBusScheduleRouter);
+app.use('/api/operator/bookings', operatorBookingRouter);
 
 // Payment routes
 app.use('/api/payment', paymentRouter);

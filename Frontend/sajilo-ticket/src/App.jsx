@@ -44,6 +44,7 @@ import OperatorAddBus from "./pages/operator/Bus/addbus/AddBus";
 import OperatorManageBus from "./pages/operator/Bus/managebus/ManageBus";
 import OperatorManageBusRoutes from "./pages/operator/Bus/manageroutes/ManageRoutes";
 import OperatorManageBusSchedules from "./pages/operator/Bus/manageschedules/ManageSchedules";
+import ManageBookings from "./pages/operator/Bus/managebookings/ManageBookings";
 
 const MainContent = () => {
   const location = useLocation();
@@ -111,6 +112,7 @@ const MainContent = () => {
           <Route path="/operator/buses" element={<OperatorManageBus />} />
           <Route path="/operator/bus-routes" element={<OperatorManageBusRoutes />} />
           <Route path="/operator/bus-schedules" element={<OperatorManageBusSchedules />} />
+          <Route path="/operator/bookings" element={<ManageBookings />} />
         </Route>
       </Routes>
 
