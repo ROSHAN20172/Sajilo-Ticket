@@ -22,7 +22,15 @@ const PaymentMethod = () => {
       detail: { paymentMethod: selectedPaymentMethod }
     });
     window.dispatchEvent(event);
-  }, []);
+
+    // Make sure to also dispatch on unmount with empty value to prevent stale state
+    return () => {
+      const cleanupEvent = new CustomEvent('paymentMethodSelected', {
+        detail: { paymentMethod: '' }
+      });
+      window.dispatchEvent(cleanupEvent);
+    };
+  }, [selectedPaymentMethod]);
 
   return (
     <div className='w-full space-y-3'>

@@ -242,7 +242,8 @@ const BookingStatus = () => {
     // Subscribe to changes in payment method
     useEffect(() => {
         const handlePaymentMethodChange = (event) => {
-            if (event.detail && event.detail.paymentMethod) {
+            // Make sure to update the state even when the payment method is empty
+            if (event.detail && event.detail.hasOwnProperty('paymentMethod')) {
                 setSelectedPaymentMethod(event.detail.paymentMethod);
             }
         };
