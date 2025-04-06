@@ -14,6 +14,7 @@ import adminAuthRouter from './routes/admin/adminAuthRoutes.js';
 import adminRouter from './routes/admin/adminRoutes.js';
 import adminBusRouteRouter from './routes/admin/adminBusRouteRoutes.js';
 import adminscheduleRouter from './routes/admin/scheduleRoutes.js';
+import adminBookingRouter from './routes/admin/bookingRoutes.js';
 
 import operatorAuthRouter from './routes/operator/operatorAuthRoutes.js';
 import operatorRouter from './routes/operator/operatorRoutes.js';
@@ -53,6 +54,7 @@ app.use('/api/admin/auth', adminAuthRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/admin/routes', adminBusRouteRouter);
 app.use('/api/admin/schedules', adminscheduleRouter);
+app.use('/api/admin/bookings', adminBookingRouter);
 
 app.use('/api/operator/auth', operatorAuthRouter);
 app.use('/api/operator', operatorRouter);
