@@ -8,28 +8,24 @@ import {
   FaChartBar,
   FaUsers,
   FaTicketAlt,
-  FaCog,
   FaUserPlus,
-  FaChartLine,
-  FaShieldAlt,
   FaMap,
   FaClock,
-  FaDollarSign,
-  FaIdCard,
-  FaThList,
-  FaSearch,
-  FaPlusCircle,
-  FaQuestionCircle
+  FaQuestionCircle,
+  FaCalendarAlt,
+  FaMoneyBillWave,
+  FaArrowRight
 } from 'react-icons/fa';
 import { FiLogOut } from 'react-icons/fi';
-import { LineChart, Line, PieChart, Pie, Tooltip } from 'recharts';
+import { LineChart, Line, PieChart, Pie, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { DataGrid } from '@mui/x-data-grid';
-import { Select, MenuItem } from '@mui/material';
+import { Select, MenuItem, Card, CardContent, Typography } from '@mui/material';
 import UserManagementView from '../../../components/adminrenderview/usermanagement/UserManagementView';
 import BusManagementView from '../../../components/adminrenderview/busmanagement/BusManagementView';
 import RouteManagementView from '../../../components/adminrenderview/busroutesmanagement/BusRoutesManagementView';
 import ScheduleManagementView from '../../../components/adminrenderview/busschedulemanagement/BusScheduleManagementView';
 import SupportRequestManagementView from '../../../components/adminrenderview/supportrequests/SupportRequestManagementView';
+import BookingManagementView from '../../../components/adminrenderview/bookingmanagement/BookingManagementView';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -38,11 +34,41 @@ const AdminDashboard = () => {
   const [selectedTable, setSelectedTable] = useState('users');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // Main data states
   const [users, setUsers] = useState([]);
   const [operators, setOperators] = useState([]);
   const [buses, setBuses] = useState([]);
   const [routes, setRoutes] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [supportRequests, setSupportRequests] = useState([]);
+
+  // Dashboard statistics
+  const [dashboardStats, setDashboardStats] = useState({
+    totalUsers: 0,
+    totalOperators: 0,
+    totalOperatorVerified: 0,
+    totalOperatorUnverified: 0,
+    totalBuses: 0,
+    totalBusesVerified: 0,
+    totalBusesUnverified: 0,
+    totalRoutes: 0,
+    totalBookings: 0,
+    totalBookingsSuccess: 0,
+    totalBookingsFailed: 0,
+    totalRevenue: 0,
+    recentBookings: [],
+    bookingsByStatus: { success: 0, failed: 0 },
+    totalSupportRequests: 0,
+    openSupportRequests: 0,
+    recentSupportRequests: [],
+    weeklyRevenue: [],
+    monthlyRevenue: [],
+    yearlyRevenue: []
+  });
+
+  // Time period for revenue chart
+  const [revenuePeriod, setRevenuePeriod] = useState('weekly');
 
   const handleLogout = async () => {
     try {
@@ -222,6 +248,14 @@ const AdminDashboard = () => {
     }
   };
 
+  // Fetch dashboard statistics when the dashboard view is active
+  useEffect(() => {
+    if (activeView === 'dashboard') {
+      fetchDashboardData();
+    }
+  }, [activeView]);
+
+  // Fetch data based on active view
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -262,30 +296,24 @@ const AdminDashboard = () => {
           setRoutes(response.data);
         } else if (activeView === 'support') {
           try {
-            console.log('Fetching support requests...');
             endpoint = `${backendUrl}/api/support/admin`;
             const response = await axios.get(endpoint, {
               params: { search: searchQuery, status: statusFilter !== 'all' ? statusFilter : '' },
               headers: { Authorization: `Bearer ${adminData?.token}` }
             });
 
-            console.log('Support requests response:', response.data);
             if (response.data && response.data.success) {
               if (Array.isArray(response.data.data)) {
-                console.log('Setting support requests:', response.data.data);
                 setSupportRequests(response.data.data);
               } else {
-                console.error('Support requests data is not an array:', response.data.data);
                 toast.error('Received invalid support request data format');
                 setSupportRequests([]);
               }
             } else {
-              console.error('Failed to fetch support requests:', response.data?.message);
               toast.error(response.data?.message || 'Failed to fetch support requests');
               setSupportRequests([]);
             }
           } catch (error) {
-            console.error('Error fetching support requests:', error);
             toast.error(error.response?.data?.message || 'Error fetching support requests');
             setSupportRequests([]);
           }
@@ -300,39 +328,256 @@ const AdminDashboard = () => {
     }
   }, [activeView, selectedTable, searchQuery, statusFilter]);
 
-  useEffect(() => {
-    console.log('Support Requests State Updated:', supportRequests);
-  }, [supportRequests]);
+  // Fetch all data for dashboard
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch users count
+      const usersRes = await axios.get(`${backendUrl}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${adminData?.token}` }
+      });
 
-  const chartData = [
-    { name: 'Mon', bookings: 4000, revenue: 2400 },
-    { name: 'Tue', bookings: 3000, revenue: 1398 },
-    // ... more data
+      // Fetch operators count
+      const operatorsRes = await axios.get(`${backendUrl}/api/admin/operators`, {
+        headers: { Authorization: `Bearer ${adminData?.token}` }
+      });
+
+      // Fetch buses count
+      const busesRes = await axios.get(`${backendUrl}/api/admin/buses`, {
+        headers: { Authorization: `Bearer ${adminData?.token}` }
+      });
+
+      // Fetch routes count
+      const routesRes = await axios.get(`${backendUrl}/api/admin/routes`, {
+        headers: { Authorization: `Bearer ${adminData?.token}` }
+      });
+
+      // Fetch bookings with status
+      const bookingsRes = await axios.get(`${backendUrl}/api/admin/bookings`, {
+        headers: { Authorization: `Bearer ${adminData?.token}` }
+      });
+
+      // Fetch support requests
+      const supportRes = await axios.get(`${backendUrl}/api/support/admin`, {
+        headers: { Authorization: `Bearer ${adminData?.token}` }
+      });
+
+      let totalBookings = 0;
+      let totalBookingsSuccess = 0;
+      let totalBookingsFailed = 0;
+      let totalRevenue = 0;
+      let bookingsByStatus = { success: 0, failed: 0 };
+      let recentBookings = [];
+      let weeklyRevenue = [];
+      let monthlyRevenue = [];
+      let yearlyRevenue = [];
+
+      // Process operators data
+      const operators = operatorsRes.data || [];
+      const totalOperatorVerified = operators.filter(op => op.isAccountVerified).length;
+      const totalOperatorUnverified = operators.length - totalOperatorVerified;
+
+      // Process buses data
+      const buses = busesRes.data || [];
+      const totalBusesVerified = buses.filter(bus => bus.verified === true || bus.isVerified === true).length;
+      const totalBusesUnverified = buses.length - totalBusesVerified;
+
+      // Process support requests
+      const supportRequests = supportRes.data?.data || [];
+      const openSupportRequests = supportRequests.filter(req => req.status === 'pending' || req.status === 'open').length;
+
+      // Get 5 most recent support requests
+      const recentSupportRequests = [...supportRequests]
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5);
+
+      if (bookingsRes.data && bookingsRes.data.bookings) {
+        const allBookings = bookingsRes.data.bookings;
+        totalBookings = allBookings.length;
+
+        // Calculate success and failed bookings (treating pending as failed)
+        const successfulBookings = allBookings.filter(booking =>
+          booking.status === 'confirmed' || booking.paymentStatus === 'paid'
+        );
+
+        totalBookingsSuccess = successfulBookings.length;
+        totalBookingsFailed = totalBookings - totalBookingsSuccess;
+
+        totalRevenue = successfulBookings.reduce((sum, booking) => sum + (booking.price || 0), 0);
+
+        // Count bookings by status - simplify to just success and failed
+        bookingsByStatus = {
+          success: successfulBookings.length,
+          failed: totalBookings - successfulBookings.length // All non-success are considered failed
+        };
+
+        // Get recent bookings
+        recentBookings = [...allBookings]
+          .sort((a, b) => new Date(b.createdAt || b.bookingDate) - new Date(a.createdAt || a.bookingDate))
+          .slice(0, 5);
+
+        // Calculate weekly revenue
+        const today = new Date();
+
+        // Weekly revenue data (last 7 days)
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+          const day = new Date();
+          day.setDate(today.getDate() - i);
+          return day;
+        }).reverse();
+
+        weeklyRevenue = last7Days.map(day => {
+          const dayStr = day.toLocaleDateString('en-US', { weekday: 'short' });
+          const startOfDay = new Date(day);
+          startOfDay.setHours(0, 0, 0, 0);
+
+          const endOfDay = new Date(day);
+          endOfDay.setHours(23, 59, 59, 999);
+
+          // Filter bookings for this day
+          const dayBookings = successfulBookings.filter(booking => {
+            const bookingDate = new Date(booking.createdAt || booking.bookingDate);
+            return bookingDate >= startOfDay && bookingDate <= endOfDay;
+          });
+
+          // Calculate total amount for the day
+          const amount = dayBookings.reduce((sum, booking) => sum + (booking.price || 0), 0);
+
+          return { name: dayStr, amount };
+        });
+
+        // Monthly revenue data (last 6 months)
+        const last6Months = Array.from({ length: 6 }, (_, i) => {
+          const date = new Date();
+          date.setMonth(today.getMonth() - i);
+          return date;
+        }).reverse();
+
+        monthlyRevenue = last6Months.map(date => {
+          const monthStr = date.toLocaleDateString('en-US', { month: 'short' });
+          const year = date.getFullYear();
+          const month = date.getMonth();
+
+          const startOfMonth = new Date(year, month, 1);
+          const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+          // Filter bookings for this month
+          const monthBookings = successfulBookings.filter(booking => {
+            const bookingDate = new Date(booking.createdAt || booking.bookingDate);
+            return bookingDate >= startOfMonth && bookingDate <= endOfMonth;
+          });
+
+          // Calculate total amount for the month
+          const amount = monthBookings.reduce((sum, booking) => sum + (booking.price || 0), 0);
+
+          return { name: monthStr, amount };
+        });
+
+        // Yearly revenue data (last 3 years)
+        const last3Years = Array.from({ length: 3 }, (_, i) => {
+          const date = new Date();
+          date.setFullYear(today.getFullYear() - i);
+          return date;
+        }).reverse();
+
+        yearlyRevenue = last3Years.map(date => {
+          const year = date.getFullYear();
+
+          const startOfYear = new Date(year, 0, 1);
+          const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+
+          // Filter bookings for this year
+          const yearBookings = successfulBookings.filter(booking => {
+            const bookingDate = new Date(booking.createdAt || booking.bookingDate);
+            return bookingDate >= startOfYear && bookingDate <= endOfYear;
+          });
+
+          // Calculate total amount for the year
+          const amount = yearBookings.reduce((sum, booking) => sum + (booking.price || 0), 0);
+
+          return { name: year.toString(), amount };
+        });
+      }
+
+      setDashboardStats({
+        totalUsers: usersRes.data.length || 0,
+        totalOperators: operators.length || 0,
+        totalOperatorVerified,
+        totalOperatorUnverified,
+        totalBuses: buses.length || 0,
+        totalBusesVerified,
+        totalBusesUnverified,
+        totalRoutes: routesRes.data.length || 0,
+        totalBookings,
+        totalBookingsSuccess,
+        totalBookingsFailed,
+        totalRevenue,
+        recentBookings,
+        bookingsByStatus,
+        totalSupportRequests: supportRequests.length || 0,
+        openSupportRequests,
+        recentSupportRequests,
+        weeklyRevenue,
+        monthlyRevenue,
+        yearlyRevenue
+      });
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Failed to load dashboard data');
+    }
+  };
+
+  // Generate chart data based on bookings by status - only success and failed now
+  const bookingStatusData = [
+    { name: 'Success', value: dashboardStats.bookingsByStatus.success, fill: '#4ade80' },
+    { name: 'Failed', value: dashboardStats.bookingsByStatus.failed, fill: '#f87171' }
   ];
 
-  const bookingsColumns = [
-    { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'passenger', headerName: 'Passenger', width: 150 },
-    { field: 'route', headerName: 'Route', width: 200 },
-    { field: 'status', headerName: 'Status', width: 120 },
-    { field: 'actions', headerName: 'Actions', width: 150 }
-  ];
+  // Get appropriate revenue data based on selected period
+  const getRevenueData = () => {
+    switch (revenuePeriod) {
+      case 'monthly':
+        return dashboardStats.monthlyRevenue.length > 0
+          ? dashboardStats.monthlyRevenue
+          : Array.from({ length: 6 }, (_, i) => ({ name: `Month ${i + 1}`, amount: 0 }));
+      case 'yearly':
+        return dashboardStats.yearlyRevenue.length > 0
+          ? dashboardStats.yearlyRevenue
+          : Array.from({ length: 3 }, (_, i) => ({ name: `Year ${new Date().getFullYear() - 2 + i}`, amount: 0 }));
+      case 'weekly':
+      default:
+        return dashboardStats.weeklyRevenue.length > 0
+          ? dashboardStats.weeklyRevenue
+          : Array.from({ length: 7 }, (_, i) => ({ name: 'Day', amount: 0 }));
+    }
+  };
 
+  // Format date for recent bookings
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // Reduced navigation items (removed unnecessary pages)
   const navigationItems = [
     { name: 'Dashboard', icon: FaChartBar, view: 'dashboard' },
-    { name: 'User Management', icon: FaUsers, view: 'users' },
-    { name: 'Bus Management', icon: IoBus, view: 'buses' },
+    { name: 'Users', icon: FaUsers, view: 'users' },
+    { name: 'Buses', icon: IoBus, view: 'buses' },
     { name: 'Bookings', icon: FaTicketAlt, view: 'bookings' },
     { name: 'Routes', icon: FaMap, view: 'routes' },
     { name: 'Schedules', icon: FaClock, view: 'schedules' },
-    { name: 'Passengers', icon: FaIdCard, view: 'passengers' },
-    { name: 'Finance', icon: FaDollarSign, view: 'finance' },
-    { name: 'Reports', icon: FaThList, view: 'reports' },
-    { name: 'Analytics', icon: FaChartLine, view: 'analytics' },
-    { name: 'Admin Management', icon: FaShieldAlt, view: 'admin' },
-    { name: 'Settings', icon: FaCog, view: 'settings' },
-    { name: 'Support Requests', icon: FaQuestionCircle, view: 'support' },
+    { name: 'Support', icon: FaQuestionCircle, view: 'support' },
   ];
+
+  // View ticket handler
+  const handleViewTicket = (bookingId) => {
+    navigate(`/bus-tickets/invoice?bookingId=${bookingId}`);
+  };
 
   const renderView = () => {
     switch (activeView) {
@@ -376,45 +621,8 @@ const AdminDashboard = () => {
         );
 
       case 'bookings':
-        return (
-          <div className="p-6 bg-white rounded-lg shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Booking Management</h2>
-              <button className="btn-primary">
-                <FaPlusCircle className="w-5 h-5 mr-2" />
-                New Booking
-              </button>
-            </div>
-            <DataGrid
-              rows={[]}
-              columns={bookingsColumns}
-              pageSize={5}
-              rowsPerPageOptions={[5]}
-              checkboxSelection
-              className="h-96"
-            />
-          </div>
-        );
+        return <BookingManagementView />;
 
-      case 'finance':
-        return (
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="p-6 bg-white rounded-lg shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold">Revenue Trend</h3>
-              <LineChart width={500} height={300} data={chartData}>
-                <Line type="monotone" dataKey="revenue" stroke="#2563eb" />
-                <Tooltip />
-              </LineChart>
-            </div>
-            <div className="p-6 bg-white rounded-lg shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold">Payment Methods</h3>
-              <PieChart width={500} height={300}>
-                <Pie data={[]} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} />
-                <Tooltip />
-              </PieChart>
-            </div>
-          </div>
-        );
       case 'schedules':
         return <ScheduleManagementView />;
 
@@ -426,69 +634,455 @@ const AdminDashboard = () => {
             onSearchChange={(e) => setSearchQuery(e.target.value)}
             statusFilter={statusFilter}
             onFilterChange={(e) => setStatusFilter(e.target.value)}
-            fetchSupportRequests={() => {
-              console.log('Refreshing support requests...');
-              const fetchSupportRequests = async () => {
-                try {
-                  const response = await axios.get(`${backendUrl}/api/support/admin`, {
-                    params: { search: searchQuery, status: statusFilter !== 'all' ? statusFilter : '' },
-                    headers: { Authorization: `Bearer ${adminData?.token}` }
-                  });
-
-                  console.log('Refreshed support requests response:', response.data);
-                  if (response.data && response.data.success) {
-                    if (Array.isArray(response.data.data)) {
-                      console.log('Setting refreshed support requests:', response.data.data);
-                      setSupportRequests(response.data.data);
-                    } else {
-                      console.error('Refreshed support requests data is not an array:', response.data.data);
-                      toast.error('Received invalid support request data format');
-                      setSupportRequests([]);
-                    }
-                  } else {
-                    console.error('Failed to refresh support requests:', response.data?.message);
-                    toast.error(response.data?.message || 'Failed to refresh support requests');
-                    setSupportRequests([]);
-                  }
-                } catch (error) {
-                  console.error('Error refreshing support requests:', error);
-                  toast.error(error.response?.data?.message || 'Error refreshing support requests');
-                  setSupportRequests([]);
-                }
-              };
-
-              fetchSupportRequests();
-            }}
+            fetchSupportRequests={fetchDashboardData}
           />
         );
 
-      default:
+      default: // Dashboard view
         return (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div className="p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-500">Active Buses</h3>
-                  <p className="mt-2 text-3xl font-bold">42</p>
-                </div>
-                <IoBus className="w-12 h-12 p-2 text-blue-100 bg-blue-600 rounded-lg" />
-              </div>
-              <div className="mt-4 flex items-center text-sm">
-                <span className="text-green-600">▲ 3%</span>
-                <span className="ml-2 text-gray-500">vs last month</span>
-              </div>
+          <div className="space-y-8">
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <Card className="bg-white rounded-lg shadow-sm hover:shadow transition-shadow">
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Typography variant="subtitle2" color="textSecondary">Total Users</Typography>
+                      <Typography variant="h5" component="div" className="font-bold mt-1">
+                        {dashboardStats.totalUsers}
+                      </Typography>
+                    </div>
+                    <FaUsers className="text-blue-500 text-3xl p-2 bg-blue-50 rounded-full" />
+                  </div>
+                  <div className="mt-3">
+                    <button
+                      className="text-primary text-xs hover:underline flex items-center"
+                      onClick={() => setActiveView('users')}
+                    >
+                      View all users <FaArrowRight className="ml-1 text-xs" />
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white rounded-lg shadow-sm hover:shadow transition-shadow">
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Typography variant="subtitle2" color="textSecondary">Total Operators</Typography>
+                      <Typography variant="h5" component="div" className="font-bold mt-1">
+                        {dashboardStats.totalOperators}
+                      </Typography>
+                    </div>
+                    <FaUsers className="text-purple-500 text-3xl p-2 bg-purple-50 rounded-full" />
+                  </div>
+                  <div className="mt-2 flex justify-between text-xs">
+                    <span className="text-green-600">Verified: {dashboardStats.totalOperatorVerified}</span>
+                    <span className="text-red-600">Unverified: {dashboardStats.totalOperatorUnverified}</span>
+                  </div>
+                  <div className="mt-1">
+                    <button
+                      className="text-primary text-xs hover:underline flex items-center"
+                      onClick={() => {
+                        setActiveView('users');
+                        setSelectedTable('operators');
+                      }}
+                    >
+                      View all operators <FaArrowRight className="ml-1 text-xs" />
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white rounded-lg shadow-sm hover:shadow transition-shadow">
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Typography variant="subtitle2" color="textSecondary">Total Buses</Typography>
+                      <Typography variant="h5" component="div" className="font-bold mt-1">
+                        {dashboardStats.totalBuses}
+                      </Typography>
+                    </div>
+                    <IoBus className="text-green-500 text-3xl p-2 bg-green-50 rounded-full" />
+                  </div>
+                  <div className="mt-2 flex justify-between text-xs">
+                    <span className="text-green-600">Verified: {dashboardStats.totalBusesVerified}</span>
+                    <span className="text-red-600">Unverified: {dashboardStats.totalBusesUnverified}</span>
+                  </div>
+                  <div className="mt-1">
+                    <button
+                      className="text-primary text-xs hover:underline flex items-center"
+                      onClick={() => setActiveView('buses')}
+                    >
+                      View all buses <FaArrowRight className="ml-1 text-xs" />
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white rounded-lg shadow-sm hover:shadow transition-shadow">
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Typography variant="subtitle2" color="textSecondary">Total Revenue</Typography>
+                      <Typography variant="h5" component="div" className="font-bold mt-1">
+                        NPR {dashboardStats.totalRevenue.toLocaleString()}
+                      </Typography>
+                    </div>
+                    <FaMoneyBillWave className="text-emerald-500 text-3xl p-2 bg-emerald-50 rounded-full" />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            <div className="p-6 bg-white rounded-lg shadow-sm">
-              <h3 className="text-lg font-medium text-gray-500">Live Updates</h3>
-              <div className="mt-4 space-y-3">
-                <div className="flex items-center text-sm">
-                  <div className="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="ml-2">Bus #234 arrived at Station A</span>
-                  <span className="ml-auto text-gray-500">2 min ago</span>
-                </div>
-              </div>
+            {/* Second row of stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card className="bg-white rounded-lg shadow-sm hover:shadow transition-shadow">
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Typography variant="subtitle2" color="textSecondary">Total Routes</Typography>
+                      <Typography variant="h5" component="div" className="font-bold mt-1">
+                        {dashboardStats.totalRoutes}
+                      </Typography>
+                    </div>
+                    <FaMap className="text-indigo-500 text-3xl p-2 bg-indigo-50 rounded-full" />
+                  </div>
+                  <div className="mt-3">
+                    <button
+                      className="text-primary text-xs hover:underline flex items-center"
+                      onClick={() => setActiveView('routes')}
+                    >
+                      View all routes <FaArrowRight className="ml-1 text-xs" />
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white rounded-lg shadow-sm hover:shadow transition-shadow">
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Typography variant="subtitle2" color="textSecondary">Support Requests</Typography>
+                      <Typography variant="h5" component="div" className="font-bold mt-1">
+                        {dashboardStats.totalSupportRequests}
+                      </Typography>
+                    </div>
+                    <FaQuestionCircle className="text-amber-500 text-3xl p-2 bg-amber-50 rounded-full" />
+                  </div>
+                  <div className="mt-2 flex text-xs">
+                    <span className="text-amber-600">Open requests: {dashboardStats.openSupportRequests}</span>
+                  </div>
+                  <div className="mt-1">
+                    <button
+                      className="text-primary text-xs hover:underline flex items-center"
+                      onClick={() => setActiveView('support')}
+                    >
+                      View all requests <FaArrowRight className="ml-1 text-xs" />
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white rounded-lg shadow-sm hover:shadow transition-shadow">
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Typography variant="subtitle2" color="textSecondary">Total Bookings</Typography>
+                      <Typography variant="h5" component="div" className="font-bold mt-1">
+                        {dashboardStats.totalBookings}
+                      </Typography>
+                    </div>
+                    <FaTicketAlt className="text-pink-500 text-3xl p-2 bg-pink-50 rounded-full" />
+                  </div>
+                  <div className="mt-2 flex justify-between text-xs">
+                    <span className="text-green-600">Success: {dashboardStats.totalBookingsSuccess}</span>
+                    <span className="text-red-600">Failed: {dashboardStats.totalBookingsFailed}</span>
+                  </div>
+                  <div className="mt-1">
+                    <button
+                      className="text-primary text-xs hover:underline flex items-center"
+                      onClick={() => setActiveView('bookings')}
+                    >
+                      View all bookings <FaArrowRight className="ml-1 text-xs" />
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+
+            {/* Charts & Recent Bookings */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Booking Status Chart */}
+              <Card className="bg-white rounded-lg shadow-sm lg:col-span-1">
+                <CardContent>
+                  <Typography variant="h6" component="div" className="mb-4">
+                    Booking Status
+                  </Typography>
+                  <div className="h-64 flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={bookingStatusData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        />
+                        <Tooltip formatter={(value) => [`${value} bookings`, 'Count']} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex justify-center space-x-4 mt-4">
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>
+                      <span className="text-xs">Success</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 rounded-full bg-red-400 mr-1"></div>
+                      <span className="text-xs">Failed</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Weekly Revenue Chart */}
+              <Card className="bg-white rounded-lg shadow-sm lg:col-span-2">
+                <CardContent>
+                  <div className="flex justify-between items-center mb-4">
+                    <Typography variant="h6" component="div">
+                      Revenue
+                    </Typography>
+                    <div className="flex rounded-md bg-gray-100 p-1">
+                      <button
+                        onClick={() => setRevenuePeriod('weekly')}
+                        className={`px-3 py-1 text-xs rounded-md transition ${revenuePeriod === 'weekly'
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-600 hover:bg-gray-200'}`}
+                      >
+                        Weekly
+                      </button>
+                      <button
+                        onClick={() => setRevenuePeriod('monthly')}
+                        className={`px-3 py-1 text-xs rounded-md transition ${revenuePeriod === 'monthly'
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-600 hover:bg-gray-200'}`}
+                      >
+                        Monthly
+                      </button>
+                      <button
+                        onClick={() => setRevenuePeriod('yearly')}
+                        className={`px-3 py-1 text-xs rounded-md transition ${revenuePeriod === 'yearly'
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-600 hover:bg-gray-200'}`}
+                      >
+                        Yearly
+                      </button>
+                    </div>
+                  </div>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={getRevenueData()}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`NPR ${value}`, 'Revenue']} />
+                        <Bar dataKey="amount" fill="#8884d8" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recent Bookings */}
+            <Card className="bg-white rounded-lg shadow-sm">
+              <CardContent>
+                <Typography variant="h6" component="div" className="mb-4">
+                  Recent Bookings
+                </Typography>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Booking ID
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Passenger
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Route
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Amount
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {dashboardStats.recentBookings.length > 0 ? (
+                        dashboardStats.recentBookings.map((booking) => (
+                          <tr key={booking._id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{booking.bookingId}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{booking.passengerInfo?.name || 'N/A'}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">
+                                {booking.ticketInfo ? `${booking.ticketInfo.fromLocation} → ${booking.ticketInfo.toLocation}` : 'N/A'}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{formatDate(booking.ticketInfo?.date)}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                ${booking.status === 'confirmed' || booking.paymentStatus === 'paid'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'}`}>
+                                {booking.status === 'confirmed' || booking.paymentStatus === 'paid'
+                                  ? 'Success'
+                                  : 'Failed'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">NPR {booking.price || 0}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {(booking.status === 'confirmed' || booking.paymentStatus === 'paid') && (
+                                <button
+                                  onClick={() => handleViewTicket(booking.bookingId || booking._id)}
+                                  className="text-red-600 hover:text-red-900"
+                                  title="View Ticket"
+                                >
+                                  <div className="flex items-center">
+                                    <FaTicketAlt className="mr-1" /> View Ticket
+                                  </div>
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500">
+                            No recent bookings found
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <button
+                    className="text-primary text-sm hover:underline flex items-center"
+                    onClick={() => setActiveView('bookings')}
+                  >
+                    View all bookings <FaArrowRight className="ml-1 text-xs" />
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Support Requests */}
+            <Card className="bg-white rounded-lg shadow-sm">
+              <CardContent>
+                <Typography variant="h6" component="div" className="mb-4">
+                  Recent Support Requests
+                </Typography>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Name
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Email
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Phone
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Category
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Submitted On
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {dashboardStats.recentSupportRequests.length > 0 ? (
+                        dashboardStats.recentSupportRequests.map((request) => (
+                          <tr key={request._id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{request.name || 'N/A'}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{request.email || 'N/A'}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{request.phone || 'N/A'}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{request.type || 'General'}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{formatDate(request.createdAt)}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                ${request.status === 'closed' || request.status === 'complete'
+                                  ? 'bg-green-100 text-green-800'
+                                  : request.status === 'pending'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-blue-100 text-blue-800'}`}
+                              >
+                                {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
+                            No recent support requests found
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <button
+                    className="text-primary text-sm hover:underline flex items-center"
+                    onClick={() => setActiveView('support')}
+                  >
+                    View all requests <FaArrowRight className="ml-1 text-xs" />
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         );
     }
