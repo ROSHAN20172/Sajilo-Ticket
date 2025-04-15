@@ -5,6 +5,8 @@ import { OperatorAppContext } from '../../../../context/OperatorAppContext';
 import { FaEye, FaTrash, FaEdit, FaTimes, FaPlusCircle, FaImage, FaSearch } from 'react-icons/fa';
 import { Modal, Box, Button, IconButton, Input, TextareaAutosize, TextField, InputAdornment } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
+import OperatorLayout from '../../../../layout/operator/OperatorLayout';
+import LoadingSpinner from '../../../../components/loading/LoadingSpinner';
 
 const ManageBus = () => {
     const { backendUrl, operatorData } = useContext(OperatorAppContext);
@@ -385,10 +387,18 @@ const ManageBus = () => {
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: 600,
+        width: {
+            xs: '90%',
+            sm: '500px',
+            md: '600px'
+        },
+        maxWidth: '95vw',
         bgcolor: 'background.paper',
         boxShadow: 24,
-        p: 4,
+        p: {
+            xs: 2,
+            sm: 4
+        },
         maxHeight: '90vh',
         overflowY: 'auto',
         borderRadius: '4px'
@@ -401,31 +411,28 @@ const ManageBus = () => {
     };
 
     return (
-        <div className="p-6">
-            {/* Header */}
-            <div className="max-w-8xl mx-auto p-8">
-                <div className="bg-white rounded-2xl shadow-lg p-8">
-                    <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold">Manage Your Buses</h1>
-                        <div className="flex items-center space-x-4">
-                            <Link to="/operator/add-bus">
-                                <Button variant="contained" color="primary" startIcon={<FaPlusCircle />}>
+        <OperatorLayout>
+            <div className="px-4 py-6">
+                <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-8">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                        <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-0">Manage Your Buses</h1>
+                        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                            <Link to="/operator/add-bus" className="w-full sm:w-auto">
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    startIcon={<FaPlusCircle />}
+                                    fullWidth
+                                    className="whitespace-nowrap"
+                                >
                                     Add New Bus
                                 </Button>
                             </Link>
-                            <button
-                                onClick={handleClose}
-                                className="p-2 text-red-600 hover:bg-gray-100 rounded-full transition-colors"
-                                aria-label="Close"
-                            >
-                                <FaTimes className="w-6 h-6" />
-                            </button>
                         </div>
                     </div>
-                    <hr className="my-14 border-gray-300" />
 
-                    {/* Search Input with Icon and Button */}
-                    <div className="mb-8 flex gap-2">
+                    {/* Search Input */}
+                    <div className="mb-6">
                         <TextField
                             label="Search by Bus Name or Bus Number"
                             variant="outlined"
@@ -440,22 +447,22 @@ const ManageBus = () => {
                                 )
                             }}
                         />
-                        <Button variant="contained" color="primary" onClick={() => { /* Optionally trigger additional search actions */ }}>
-                            Search
-                        </Button>
                     </div>
-                    <hr className="my-8 border-gray-300" />
 
                     {loading ? (
-                        <p>Loading buses...</p>
+                        <div className="flex justify-center items-center h-64">
+                            <LoadingSpinner />
+                        </div>
                     ) : filteredBuses.length === 0 ? (
-                        <p>No buses found.</p>
+                        <div className="text-center py-10 bg-white rounded-lg">
+                            <p className="text-gray-500">No buses found. Add your first bus to get started.</p>
+                        </div>
                     ) : (
-                        <div className="grid gap-14 md:grid-cols-2 lg:grid-cols-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filteredBuses.map((bus) => (
                                 <div key={bus._id} className="relative border rounded-lg p-4 shadow-md hover:shadow-xl transition-shadow bg-white">
                                     {/* Verified Status Badge */}
-                                    <div className="absolute top-6 right-5">
+                                    <div className="absolute top-4 right-4">
                                         {bus.verified ? (
                                             <div className="px-2 py-1 rounded-xl text-green-700 border border-green-700 bg-green-100 text-xs font-semibold">
                                                 Verified
@@ -466,14 +473,17 @@ const ManageBus = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <h2 className="text-2xl font-semibold mb-1">{bus.busName}</h2>
-                                    <p className="text-gray-600">Bus Number: {bus.busNumber}</p>
-                                    <div className="mt-24 flex justify-between">
+                                    <h2 className="text-xl font-semibold mb-1 pr-20">{bus.busName}</h2>
+                                    <p className="text-gray-600 mb-4">Bus Number: {bus.busNumber}</p>
+
+                                    <div className="flex flex-col sm:flex-row gap-2 mt-4">
                                         <Button
                                             variant="contained"
                                             color="primary"
                                             startIcon={<FaEye />}
                                             onClick={() => handleViewDetails(bus)}
+                                            fullWidth
+                                            size="small"
                                         >
                                             View Details
                                         </Button>
@@ -482,6 +492,8 @@ const ManageBus = () => {
                                             color="error"
                                             startIcon={<FaTrash />}
                                             onClick={() => handleDelete(bus)}
+                                            fullWidth
+                                            size="small"
                                         >
                                             Delete
                                         </Button>
@@ -494,15 +506,26 @@ const ManageBus = () => {
                     {/* Delete Confirmation Modal */}
                     <Modal open={confirmDeleteModal} onClose={cancelDelete}>
                         <Box sx={modalStyle}>
-                            <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
-                            <p>
+                            <h2 className="text-lg md:text-xl font-bold mb-4">Confirm Deletion</h2>
+                            <p className="mb-6">
                                 Are you sure you want to delete the bus <strong>{busToDelete?.busName}</strong>?
                             </p>
-                            <div className="mt-6 flex justify-end space-x-4">
-                                <Button variant="outlined" onClick={cancelDelete}>
+                            <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                                <Button
+                                    variant="outlined"
+                                    onClick={cancelDelete}
+                                    fullWidth
+                                    className="sm:w-auto"
+                                >
                                     Cancel
                                 </Button>
-                                <Button variant="contained" color="error" onClick={confirmDelete}>
+                                <Button
+                                    variant="contained"
+                                    color="error"
+                                    onClick={confirmDelete}
+                                    fullWidth
+                                    className="sm:w-auto"
+                                >
                                     Delete
                                 </Button>
                             </div>
@@ -514,13 +537,13 @@ const ManageBus = () => {
                         <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
                             <Box sx={modalStyle}>
                                 <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-2xl font-bold">{selectedBus.busName} Details</h2>
-                                    <IconButton onClick={() => setModalOpen(false)}>
+                                    <h2 className="text-lg md:text-2xl font-bold break-words pr-4">{selectedBus.busName} Details</h2>
+                                    <IconButton onClick={() => setModalOpen(false)} size="small">
                                         <FaTimes className="text-red-600" />
                                     </IconButton>
                                 </div>
                                 {!editMode ? (
-                                    <div>
+                                    <div className="text-sm md:text-base">
                                         <p>
                                             <strong>Bus Number:</strong> {selectedBus.busNumber}
                                         </p>
@@ -528,50 +551,17 @@ const ManageBus = () => {
                                         <div className="mt-4 space-y-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Bus Description</label>
-                                                {editMode ? (
-                                                    <TextareaAutosize
-                                                        name="busDescription"
-                                                        value={formData.busDescription}
-                                                        onChange={handleInputChange}
-                                                        minRows={3}
-                                                        className="w-full p-2 border rounded-md focus:border-blue-500"
-                                                    />
-                                                ) : (
-                                                    <p className="text-gray-900">{formData.busDescription || 'No description provided'}</p>
-                                                )}
+                                                <p className="text-gray-900">{formData.busDescription || 'No description provided'}</p>
                                             </div>
 
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Primary Contact Number</label>
-                                                {editMode ? (
-                                                    <TextField
-                                                        name="primaryContactNumber"
-                                                        value={formData.primaryContactNumber}
-                                                        onChange={handleInputChange}
-                                                        fullWidth
-                                                        required
-                                                        error={!formData.primaryContactNumber}
-                                                        helperText={!formData.primaryContactNumber ? "Primary contact number is required" : ""}
-                                                        className="mb-2"
-                                                    />
-                                                ) : (
-                                                    <p className="text-gray-900">{formData.primaryContactNumber || 'No primary contact provided'}</p>
-                                                )}
+                                                <p className="text-gray-900">{formData.primaryContactNumber || 'No primary contact provided'}</p>
                                             </div>
 
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Contact Number</label>
-                                                {editMode ? (
-                                                    <TextField
-                                                        name="secondaryContactNumber"
-                                                        value={formData.secondaryContactNumber}
-                                                        onChange={handleInputChange}
-                                                        fullWidth
-                                                        className="mb-2"
-                                                    />
-                                                ) : (
-                                                    <p className="text-gray-900">{formData.secondaryContactNumber || 'No secondary contact provided'}</p>
-                                                )}
+                                                <p className="text-gray-900">{formData.secondaryContactNumber || 'No secondary contact provided'}</p>
                                             </div>
                                         </div>
                                         <hr className="my-4 border-gray-200" />
@@ -603,7 +593,7 @@ const ManageBus = () => {
                                         <hr className="my-4 border-gray-200" />
                                         <div className="mt-2">
                                             <strong>Document Images:</strong>
-                                            <div className="mt-1 text-sm bg-amber-50 border border-amber-200 rounded p-2 mb-3">
+                                            <div className="mt-1 text-xs md:text-sm bg-amber-50 border border-amber-200 rounded p-2 mb-3">
                                                 <p className="flex items-center text-amber-700">
                                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -611,7 +601,7 @@ const ManageBus = () => {
                                                     Note: Sign in to your Google account with the same operator email to view document images.
                                                 </p>
                                             </div>
-                                            <div className="mt-1 grid grid-rows-1 gap-3">
+                                            <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 {selectedBus.documents ? (
                                                     Object.entries(selectedBus.documents).map(([key, url], idx) => (
                                                         <div key={idx} className="flex flex-col gap-2">
@@ -635,7 +625,7 @@ const ManageBus = () => {
                                         <hr className="my-4 border-gray-200" />
                                         <div className="mt-2">
                                             <strong>Bus Images:</strong>
-                                            <div className="mt-1 grid grid-rows-1 gap-3">
+                                            <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 {selectedBus.images ? (
                                                     Object.entries(selectedBus.images).map(([key, url], idx) => (
                                                         <div key={idx} className="flex flex-col gap-2">
@@ -665,7 +655,7 @@ const ManageBus = () => {
                                     </div>
                                 ) : (
                                     // --- Edit Mode Form ---
-                                    <div>
+                                    <div className="text-sm md:text-base">
                                         {/* Description */}
                                         <div className="mb-4">
                                             <label className="block font-semibold mb-1">Description</label>
@@ -675,6 +665,7 @@ const ManageBus = () => {
                                                 onChange={handleInputChange}
                                                 minRows={3}
                                                 style={{ width: '100%', padding: '8px' }}
+                                                className="border rounded-md"
                                             />
                                         </div>
                                         <hr className="my-4 border-gray-200" />
@@ -725,7 +716,7 @@ const ManageBus = () => {
                                                         onChange={(e) => handlePolicyChange(e, index)}
                                                         fullWidth
                                                     />
-                                                    <IconButton onClick={() => removePolicy(index)}>
+                                                    <IconButton onClick={() => removePolicy(index)} size="small">
                                                         <FaTimes className="text-red-600" />
                                                     </IconButton>
                                                 </div>
@@ -747,7 +738,7 @@ const ManageBus = () => {
                                                         onChange={(e) => handleAmenityChange(e, index)}
                                                         fullWidth
                                                     />
-                                                    <IconButton onClick={() => removeAmenity(index)}>
+                                                    <IconButton onClick={() => removeAmenity(index)} size="small">
                                                         <FaTimes className="text-red-600" />
                                                     </IconButton>
                                                 </div>
@@ -761,32 +752,42 @@ const ManageBus = () => {
                                         {/* Bus Images */}
                                         <div className="mb-4">
                                             <label className="block font-semibold mb-1">Bus Images</label>
-                                            {['front', 'back', 'left', 'right'].map((position) => (
-                                                <div key={position} className="mb-3">
-                                                    <div className="flex items-center space-x-2">
-                                                        <Button
-                                                            variant="outlined"
-                                                            size="small"
-                                                            startIcon={<FaImage />}
-                                                            onClick={() => handleOpenImage(formData.images[position])}
-                                                        >
-                                                            View {position.charAt(0).toUpperCase() + position.slice(1)}
-                                                        </Button>
-                                                        <label className="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded">
-                                                            Choose Image
-                                                            <input
-                                                                type="file"
-                                                                accept="image/*"
-                                                                className="hidden"
-                                                                onChange={(e) => handleImageUpload(e, position)}
-                                                            />
-                                                        </label>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                {['front', 'back', 'left', 'right'].map((position) => (
+                                                    <div key={position} className="mb-3">
+                                                        <div className="flex flex-col gap-2">
+                                                            <div className="mb-1">
+                                                                <span className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-xs font-medium capitalize">
+                                                                    {position} view
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <Button
+                                                                    variant="outlined"
+                                                                    size="small"
+                                                                    startIcon={<FaImage />}
+                                                                    onClick={() => handleOpenImage(formData.images[position])}
+                                                                    disabled={!formData.images[position]}
+                                                                >
+                                                                    View
+                                                                </Button>
+                                                                <label className="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded text-sm">
+                                                                    Choose Image
+                                                                    <input
+                                                                        type="file"
+                                                                        accept="image/*"
+                                                                        className="hidden"
+                                                                        onChange={(e) => handleImageUpload(e, position)}
+                                                                    />
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                        <div className="mt-2">
+                                                            <ImageUrlDisplay url={formData.images[position]} fileName={fileNames[position]} />
+                                                        </div>
                                                     </div>
-                                                    <div className="mt-2">
-                                                        <ImageUrlDisplay url={formData.images[position]} fileName={fileNames[position]} />
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
                                         </div>
                                         <hr className="my-4 border-gray-200" />
 
@@ -794,45 +795,62 @@ const ManageBus = () => {
                                         {!selectedBus.verified && (
                                             <div className="mb-4">
                                                 <label className="block font-semibold mb-1">Document Images</label>
-                                                {['bluebook', 'roadPermit', 'insurance'].map((docKey) => (
-                                                    <div key={docKey} className="mb-3">
-                                                        <div className="flex items-center space-x-2">
-                                                            <Button
-                                                                variant="outlined"
-                                                                size="small"
-                                                                startIcon={<FaImage />}
-                                                                onClick={() => handleOpenImage(formData.documents[docKey])}
-                                                            >
-                                                                View {docKey.charAt(0).toUpperCase() + docKey.slice(1)}
-                                                            </Button>
-                                                            <label className="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded">
-                                                                Choose {docKey.charAt(0).toUpperCase() + docKey.slice(1)} Image
-                                                                <input
-                                                                    type="file"
-                                                                    accept="image/*"
-                                                                    className="hidden"
-                                                                    onChange={(e) => handleDocumentUpload(e, docKey)}
-                                                                />
-                                                            </label>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {['bluebook', 'roadPermit', 'insurance'].map((docKey) => (
+                                                        <div key={docKey} className="mb-3">
+                                                            <div className="flex flex-col gap-2">
+                                                                <div className="mb-1">
+                                                                    <span className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-xs font-medium capitalize">
+                                                                        {docKey === 'roadPermit' ? 'Road Permit' : docKey}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <Button
+                                                                        variant="outlined"
+                                                                        size="small"
+                                                                        startIcon={<FaImage />}
+                                                                        onClick={() => handleOpenImage(formData.documents[docKey])}
+                                                                        disabled={!formData.documents[docKey]}
+                                                                    >
+                                                                        View
+                                                                    </Button>
+                                                                    <label className="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded text-sm">
+                                                                        Choose Image
+                                                                        <input
+                                                                            type="file"
+                                                                            accept="image/*"
+                                                                            className="hidden"
+                                                                            onChange={(e) => handleDocumentUpload(e, docKey)}
+                                                                        />
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            <div className="mt-2">
+                                                                <ImageUrlDisplay url={formData.documents[docKey]} fileName={fileNames[docKey]} />
+                                                            </div>
                                                         </div>
-                                                        <div className="mt-2">
-                                                            <ImageUrlDisplay url={formData.documents[docKey]} fileName={fileNames[docKey]} />
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
                                         <hr className="my-4 border-gray-200" />
 
                                         {/* Action Buttons: Cancel then Save Changes */}
-                                        <div className="flex justify-end space-x-4 mt-4">
-                                            <Button variant="outlined" onClick={() => setEditMode(false)}>
+                                        <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4 mt-4">
+                                            <Button
+                                                variant="outlined"
+                                                onClick={() => setEditMode(false)}
+                                                fullWidth
+                                                className="sm:w-auto"
+                                            >
                                                 Cancel
                                             </Button>
                                             <Button
                                                 variant="contained"
                                                 onClick={handleSaveChanges}
                                                 sx={{ backgroundColor: 'green', '&:hover': { backgroundColor: 'darkgreen' } }}
+                                                fullWidth
+                                                className="sm:w-auto"
                                             >
                                                 Save Changes
                                             </Button>
@@ -844,7 +862,7 @@ const ManageBus = () => {
                     )}
                 </div>
             </div>
-        </div>
+        </OperatorLayout>
     );
 };
 

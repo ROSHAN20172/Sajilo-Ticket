@@ -28,6 +28,10 @@ import ResetPassword from "./pages/auth/resetpassword/ResetPassword";
 import UserProtectedRoute from "./components/protectedroutes/userProtectedRoute/UserProtectedRoute";
 import UserBookings from "./pages/user/bookings/UserBookings";
 
+// Live Tracking Pages
+import LiveTracking from "./pages/tracking/LiveTracking";
+import LiveTrackingVerify from "./pages/tracking/LiveTrackingVerify";
+
 // Admin Pages
 import AdminLogin from './pages/admin/auth/adminlogin/AdminLogin';
 import AdminRegister from './pages/admin/auth/adminsignup/AdminSignUp';
@@ -45,6 +49,7 @@ import OperatorManageBus from "./pages/operator/Bus/managebus/ManageBus";
 import OperatorManageBusRoutes from "./pages/operator/Bus/manageroutes/ManageRoutes";
 import OperatorManageBusSchedules from "./pages/operator/Bus/manageschedules/ManageSchedules";
 import ManageBookings from "./pages/operator/Bus/managebookings/ManageBookings";
+import OperatorLiveTracking from "./pages/operator/tracking/OperatorLiveTracking";
 
 const MainContent = () => {
   const location = useLocation();
@@ -71,6 +76,10 @@ const MainContent = () => {
         <Route path="/help-support" element={<HelpSupport />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/faqs" element={<Faqs />} />
+
+        {/* Live Tracking Routes */}
+        <Route path="/live-tracking" element={<LiveTrackingVerify />} />
+        <Route path="/live-tracking/:bookingId" element={<LiveTracking />} />
 
         {/* Protected Bus Ticket User Routes */}
         <Route element={<UserProtectedRoute />}>
@@ -113,6 +122,7 @@ const MainContent = () => {
           <Route path="/operator/bus-routes" element={<OperatorManageBusRoutes />} />
           <Route path="/operator/bus-schedules" element={<OperatorManageBusSchedules />} />
           <Route path="/operator/bookings" element={<ManageBookings />} />
+          <Route path="/operator/live-tracking" element={<OperatorLiveTracking />} />
         </Route>
       </Routes>
 

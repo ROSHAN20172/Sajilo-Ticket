@@ -4,6 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { OperatorAppContext } from '../../../../context/OperatorAppContext';
 import { FaPlus, FaTrash, FaTimes } from 'react-icons/fa';
+import OperatorLayout from '../../../../layout/operator/OperatorLayout';
 
 const OperatorAddBus = () => {
     const { backendUrl } = useContext(OperatorAppContext);
@@ -124,6 +125,10 @@ const OperatorAddBus = () => {
             toast.error("Primary Contact Number is required.");
             return;
         }
+        if (!busDescription.trim()) {
+            toast.error("Bus Description is required.");
+            return;
+        }
         if (!bluebook) {
             toast.error("Bluebook document is required.");
             return;
@@ -198,190 +203,214 @@ const OperatorAddBus = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto p-6">
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-                <div className="flex justify-between items-start mb-8">
-                    <h2 className="text-2xl font-bold text-gray-800">Add New Bus</h2>
-                    <button
-                        onClick={handleClose}
-                        className="p-2 text-red-600 hover:bg-gray-100 rounded-full transition-colors"
-                        aria-label="Close"
-                    >
-                        <FaTimes className="w-6 h-6" />
-                    </button>
+        <OperatorLayout>
+            <div className="w-full px-4 py-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">Add New Bus</h1>
                 </div>
 
-                <form onSubmit={onSubmitHandler} className="space-y-8" noValidate>
-                    {/* Basic Details */}
-                    <div className="border-b pb-8">
-                        <h3 className="text-xl font-semibold text-gray-800 mb-6">Basic Details</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Bus Name</label>
-                                <input
-                                    type="text"
-                                    value={busName}
-                                    onChange={(e) => setBusName(e.target.value)}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
+                <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-8">
+                    <form onSubmit={onSubmitHandler}>
+                        {/* Basic Details */}
+                        <div className="mb-8">
+                            <h2 className="text-xl font-semibold mb-4 text-gray-700">Basic Details</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Bus Name <span className="text-red-600">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={busName}
+                                        onChange={(e) => setBusName(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                        placeholder="Enter bus name"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Bus Number <span className="text-red-600">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={busNumber}
+                                        onChange={(e) => setBusNumber(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                        placeholder="Enter registration number"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Primary Contact <span className="text-red-600">*</span>
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={primaryContactNumber}
+                                        onChange={(e) => setPrimaryContactNumber(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                        placeholder="Enter primary contact number"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Secondary Contact <span className="text-xs text-gray-500">(Optional)</span>
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={secondaryContactNumber}
+                                        onChange={(e) => setSecondaryContactNumber(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                        placeholder="Enter secondary contact number"
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Bus Number</label>
-                                <input
-                                    type="text"
-                                    value={busNumber}
-                                    onChange={(e) => setBusNumber(e.target.value)}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Primary Contact Number</label>
-                                <input
-                                    type="text"
-                                    value={primaryContactNumber}
-                                    onChange={(e) => setPrimaryContactNumber(e.target.value)}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Contact Number</label>
-                                <input
-                                    type="text"
-                                    value={secondaryContactNumber}
-                                    onChange={(e) => setSecondaryContactNumber(e.target.value)}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                            </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Bus Description</label>
+                            <div className="mt-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Bus Description <span className="text-red-600">*</span>
+                                </label>
                                 <textarea
                                     value={busDescription}
                                     onChange={(e) => setBusDescription(e.target.value)}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="Enter bus description"
                                     rows="3"
-                                />
+                                    required
+                                ></textarea>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Documents Section */}
-                    <div className="border-b pb-8">
-                        <h3 className="text-xl font-semibold text-gray-800 mb-6">Mandatory Documents</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <FileUpload label="Bluebook" file={bluebook} setFile={setBluebook} required />
-                            <FileUpload label="Road Permit" file={roadPermit} setFile={setRoadPermit} required />
-                            <FileUpload label="Insurance" file={insurance} setFile={setInsurance} required />
+                        {/* Documents Section */}
+                        <div className="border-b pb-8">
+                            <h3 className="text-xl font-semibold text-gray-800 mb-6">Documents</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <FileUpload label="Bluebook" file={bluebook} setFile={setBluebook} required />
+                                <FileUpload label="Road Permit" file={roadPermit} setFile={setRoadPermit} required />
+                                <FileUpload label="Insurance" file={insurance} setFile={setInsurance} required />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Bus Images Section */}
-                    <div className="border-b pb-8">
-                        <h3 className="text-xl font-semibold text-gray-800 mb-6">Bus Images</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <FileUpload label="Front View" file={busImageFront} setFile={setBusImageFront} />
-                            <FileUpload label="Back View" file={busImageBack} setFile={setBusImageBack} />
-                            <FileUpload label="Left Side" file={busImageLeft} setFile={setBusImageLeft} />
-                            <FileUpload label="Right Side" file={busImageRight} setFile={setBusImageRight} />
+                        {/* Bus Images Section */}
+                        <div className="border-b pb-8 pt-4">
+                            <h3 className="text-xl font-semibold text-gray-800 mb-6">Bus Images</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                <FileUpload label="Front View" file={busImageFront} setFile={setBusImageFront} />
+                                <FileUpload label="Back View" file={busImageBack} setFile={setBusImageBack} />
+                                <FileUpload label="Left Side" file={busImageLeft} setFile={setBusImageLeft} />
+                                <FileUpload label="Right Side" file={busImageRight} setFile={setBusImageRight} />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Reservation Policies & Amenities */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Reservation Policies */}
-                        <div>
-                            <h3 className="text-xl font-semibold text-gray-800 mb-6">Reservation Policies</h3>
-                            <div className="space-y-4">
-                                {defaultReservationPolicies.map((policy, index) => (
-                                    <CheckboxOption
-                                        key={index}
-                                        label={policy}
-                                        checked={selectedReservationPolicies.includes(policy)}
-                                        onChange={() => handleReservationPolicyChange(policy)}
-                                    />
-                                ))}
-                                {/* Extra Reservation Policies */}
-                                {extraReservationPolicies.map((policy, index) => (
-                                    <div key={`extra-policy-${index}`} className="flex items-center space-x-2">
-                                        <input
-                                            type="text"
-                                            value={policy}
-                                            onChange={(e) => handleExtraReservationPolicyChange(index, e.target.value)}
-                                            placeholder="Enter additional reservation policy"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        {/* Reservation Policies & Amenities */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                            {/* Reservation Policies */}
+                            <div>
+                                <h3 className="text-xl font-semibold text-gray-800 mb-6">Reservation Policies</h3>
+                                <div className="space-y-4">
+                                    {defaultReservationPolicies.map((policy, index) => (
+                                        <CheckboxOption
+                                            key={index}
+                                            label={policy}
+                                            checked={selectedReservationPolicies.includes(policy)}
+                                            onChange={() => handleReservationPolicyChange(policy)}
                                         />
-                                        <button
-                                            type="button"
-                                            onClick={() => removeExtraReservationPolicy(index)}
-                                            className="flex items-center justify-center p-1 bg-red-100 text-red-500 rounded-md hover:bg-red-200 transition-colors"
-                                        >
-                                            <FaTrash />
-                                        </button>
-                                    </div>
-                                ))}
-                                <button
-                                    type="button"
-                                    onClick={addExtraReservationPolicy}
-                                    className="flex items-center space-x-1 mt-2 px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-                                >
-                                    <FaPlus />
-                                    <span>Add Reservation Policy</span>
-                                </button>
+                                    ))}
+                                    {/* Extra Reservation Policies */}
+                                    {extraReservationPolicies.map((policy, index) => (
+                                        <div key={`extra-policy-${index}`} className="flex items-center space-x-2">
+                                            <input
+                                                type="text"
+                                                value={policy}
+                                                onChange={(e) => handleExtraReservationPolicyChange(index, e.target.value)}
+                                                placeholder="Enter additional reservation policy"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeExtraReservationPolicy(index)}
+                                                className="flex items-center justify-center p-1 bg-red-100 text-red-500 rounded-md hover:bg-red-200 transition-colors"
+                                            >
+                                                <FaTrash />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={addExtraReservationPolicy}
+                                        className="flex items-center space-x-1 mt-2 px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                                    >
+                                        <FaPlus />
+                                        <span>Add Reservation Policy</span>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Amenities */}
-                        <div>
-                            <h3 className="text-xl font-semibold text-gray-800 mb-6">Bus Amenities</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {defaultAmenities.map((amenity, index) => (
-                                    <CheckboxOption
-                                        key={index}
-                                        label={amenity}
-                                        checked={selectedAmenities.includes(amenity)}
-                                        onChange={() => handleAmenityChange(amenity)}
-                                    />
-                                ))}
-                            </div>
-                            <div className="mt-4 space-y-2">
-                                {extraAmenities.map((amenity, index) => (
-                                    <div key={`extra-amenity-${index}`} className="flex items-center space-x-2">
-                                        <input
-                                            type="text"
-                                            value={amenity}
-                                            onChange={(e) => handleExtraAmenityChange(index, e.target.value)}
-                                            placeholder="Enter additional amenity"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            {/* Amenities */}
+                            <div>
+                                <h3 className="text-xl font-semibold text-gray-800 mb-6">Bus Amenities</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {defaultAmenities.map((amenity, index) => (
+                                        <CheckboxOption
+                                            key={index}
+                                            label={amenity}
+                                            checked={selectedAmenities.includes(amenity)}
+                                            onChange={() => handleAmenityChange(amenity)}
                                         />
-                                        <button
-                                            type="button"
-                                            onClick={() => removeExtraAmenity(index)}
-                                            className="flex items-center justify-center p-1 bg-red-100 text-red-500 rounded-md hover:bg-red-200 transition-colors"
-                                        >
-                                            <FaTrash />
-                                        </button>
-                                    </div>
-                                ))}
-                                <button
-                                    type="button"
-                                    onClick={addExtraAmenity}
-                                    className="flex items-center space-x-1 mt-2 px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-                                >
-                                    <FaPlus />
-                                    <span>Add Amenity</span>
-                                </button>
+                                    ))}
+                                </div>
+                                <div className="mt-4 space-y-2">
+                                    {extraAmenities.map((amenity, index) => (
+                                        <div key={`extra-amenity-${index}`} className="flex items-center space-x-2">
+                                            <input
+                                                type="text"
+                                                value={amenity}
+                                                onChange={(e) => handleExtraAmenityChange(index, e.target.value)}
+                                                placeholder="Enter additional amenity"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeExtraAmenity(index)}
+                                                className="flex items-center justify-center p-1 bg-red-100 text-red-500 rounded-md hover:bg-red-200 transition-colors"
+                                            >
+                                                <FaTrash />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={addExtraAmenity}
+                                        className="flex items-center space-x-1 mt-2 px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                                    >
+                                        <FaPlus />
+                                        <span>Add Amenity</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <button
-                        type="submit"
-                        className="w-full py-3 px-6 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold"
-                    >
-                        Add Bus
-                    </button>
-                </form>
+                        <div className="flex flex-col md:flex-row gap-4 justify-end mt-8">
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isUploading}
+                                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                            >
+                                {isUploading ? 'Uploading...' : 'Add Bus'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
+        </OperatorLayout>
     );
 };
 
@@ -430,7 +459,7 @@ const FileUpload = ({ label, file, setFile, required }) => {
         <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
                 {label}
-                {required && <span className="text-red-500 ml-1">*</span>}
+                {required && <span className="text-red-600 ml-1">*</span>}
             </label>
             <div
                 className={`relative border-2 border-dashed ${isDragging ? "border-blue-500" : "border-gray-300"} rounded-lg h-32 flex items-center justify-center transition-colors`}
@@ -462,9 +491,9 @@ const CheckboxOption = ({ label, checked, onChange }) => (
             type="checkbox"
             checked={checked}
             onChange={onChange}
-            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 group-hover:border-blue-500"
+            className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500 group-hover:border-red-500"
         />
-        <span className="text-gray-700 group-hover:text-blue-600">{label}</span>
+        <span className="text-gray-700 group-hover:text-red-600">{label}</span>
     </label>
 );
 
