@@ -3,7 +3,7 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { OperatorAppContext } from '../../context/OperatorAppContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { FiLogOut, FiMenu, FiX } from 'react-icons/fi';
+import { FiLogOut, FiMenu, FiX, FiUser } from 'react-icons/fi';
 import { FaBus, FaPlus, FaRoute, FaClock, FaTicketAlt, FaHome, FaMapMarkerAlt } from 'react-icons/fa';
 
 const OperatorLayout = ({ children }) => {
@@ -138,6 +138,18 @@ const OperatorLayout = ({ children }) => {
                                 Live Tracking
                             </Link>
                         </li>
+                        <li>
+                            <Link
+                                to="/operator/profile"
+                                className={`flex items-center p-3 rounded-lg ${isActive('/operator/profile')
+                                    ? 'bg-red-50 text-red-600'
+                                    : 'text-gray-700 hover:bg-red-50 hover:text-red-600'}`}
+                                onClick={() => setSidebarOpen(false)}
+                            >
+                                <FiUser className="w-5 h-5 mr-3" />
+                                Profile
+                            </Link>
+                        </li>
                     </ul>
                 </nav>
             </aside>
@@ -163,13 +175,21 @@ const OperatorLayout = ({ children }) => {
                             </button>
                             <h1 className="text-xl md:text-4xl text-primary font-bold mt-2 mb-2">SAJILO TICKET</h1>
                         </div>
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center px-3 py-1 md:px-4 md:py-2 text-xs md:text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100"
-                        >
-                            Logout
-                            <FiLogOut className='ml-2' />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <Link
+                                to="/operator/profile"
+                                className="flex items-center p-2 text-red-600 hover:bg-red-50 rounded-full"
+                            >
+                                <FiUser size={20} />
+                            </Link>
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center px-3 py-1 md:px-4 md:py-2 text-xs md:text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100"
+                            >
+                                Logout
+                                <FiLogOut className='ml-2' />
+                            </button>
+                        </div>
                     </div>
                 </header>
 

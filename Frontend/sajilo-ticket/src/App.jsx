@@ -51,6 +51,7 @@ import OperatorManageBusRoutes from "./pages/operator/Bus/manageroutes/ManageRou
 import OperatorManageBusSchedules from "./pages/operator/Bus/manageschedules/ManageSchedules";
 import ManageBookings from "./pages/operator/Bus/managebookings/ManageBookings";
 import OperatorLiveTracking from "./pages/operator/tracking/OperatorLiveTracking";
+import OperatorProfile from "./pages/operator/profile/OperatorProfile";
 
 const MainContent = () => {
   const location = useLocation();
@@ -119,6 +120,7 @@ const MainContent = () => {
         {/* Protected Operator Routes */}
         <Route element={<OperatorProtectedRoute />}>
           <Route path="/operator/dashboard" element={<OperatorDashboard />} />
+          <Route path="/operator/profile" element={<OperatorProfile />} />
           <Route path="/operator/add-bus" element={<OperatorAddBus />} />
           <Route path="/operator/buses" element={<OperatorManageBus />} />
           <Route path="/operator/bus-routes" element={<OperatorManageBusRoutes />} />
