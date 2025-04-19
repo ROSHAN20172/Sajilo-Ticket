@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
-import { FaBars } from 'react-icons/fa';
-import { FaX, FaArrowRight } from "react-icons/fa6";
+import { FaBars, FaTicketAlt, FaSignOutAlt } from 'react-icons/fa';
+import { FaX, FaArrowRight, FaUser } from "react-icons/fa6";
 import { UserAppContext } from '../../context/UserAppContext';
 import { toast } from 'react-toastify';
 import axios from 'axios';
@@ -150,26 +150,42 @@ const Navbar = () => {
                         ))}
                     </ul>
                     {userData ?
-                        <div onClick={(e) => {
-                            e.stopPropagation();
-                            // For mobile, toggle a class to show/hide dropdown
-                            const dropdown = e.currentTarget.querySelector(".profile-dropdown");
-                            if (dropdown) {
-                                dropdown.classList.toggle("hidden");
-                                dropdown.classList.toggle("block");
-                            }
-                        }} className='w-10 h-10 flex justify-center items-center rounded-full bg-primary text-white relative group mx-4 md:mx-0 mt-4 md:mt-0'>
+                        <div
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                // For mobile, toggle a class to show/hide dropdown
+                                const dropdown = e.currentTarget.querySelector(".profile-dropdown");
+                                if (dropdown) {
+                                    dropdown.classList.toggle("hidden");
+                                    dropdown.classList.toggle("block");
+                                }
+                            }}
+                            className='w-10 h-10 flex justify-center items-center rounded-full bg-primary text-white relative group mx-4 md:mx-0 mt-4 md:mt-0 cursor-pointer'
+                        >
                             {userData.name[0].toUpperCase()}
                             <div className='profile-dropdown absolute hidden md:group-hover:block md:top-0 md:right-0 top-full left-0 md:left-auto z-20 text-black rounded md:pt-10 pt-2 w-32'>
                                 <ul className='list-none m-0 p-2 bg-gray-100 text-sm shadow-lg rounded'>
                                     <li onClick={() => {
+                                        navigate('/profile');
+                                        handleClose();
+                                    }} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap flex items-center gap-2'>
+                                        <FaUser size={12} />
+                                        Profile
+                                    </li>
+                                    <li onClick={() => {
                                         navigate('/bookings');
                                         handleClose();
-                                    }} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap'>My Bookings</li>
+                                    }} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap flex items-center gap-2'>
+                                        <FaTicketAlt size={12} />
+                                        Bookings
+                                    </li>
                                     <li onClick={() => {
                                         logout();
                                         handleClose();
-                                    }} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap'>Log Out</li>
+                                    }} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap flex items-center gap-2'>
+                                        <FaSignOutAlt size={12} />
+                                        Log Out
+                                    </li>
                                 </ul>
                             </div>
                         </div>

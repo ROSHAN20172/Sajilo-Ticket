@@ -27,6 +27,7 @@ import EmailVerify from "./pages/auth/emailverification/EmailVerify";
 import ResetPassword from "./pages/auth/resetpassword/ResetPassword";
 import UserProtectedRoute from "./components/protectedroutes/userProtectedRoute/UserProtectedRoute";
 import UserBookings from "./pages/user/bookings/UserBookings";
+import Profile from "./pages/user/Profile";
 
 // Live Tracking Pages
 import LiveTracking from "./pages/tracking/LiveTracking";
@@ -90,6 +91,7 @@ const MainContent = () => {
           <Route path="/bus-tickets/payment-callback" element={<PaymentCallback />} />
           <Route path="/bus-tickets/invoice" element={<Invoice />} />
           <Route path="/bookings" element={<UserBookings />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
 
         {/* User Auth Routes */}

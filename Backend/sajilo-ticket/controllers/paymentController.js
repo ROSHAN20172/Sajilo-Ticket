@@ -17,8 +17,7 @@ const KHALTI_API_URL = process.env.NODE_ENV === 'production'
     : 'https://dev.khalti.com/api/v2';
 
 const KHALTI_SECRET_KEY = process.env.KHALTI_SECRET_KEY;
-const WEBSITE_URL = process.env.CLIENT_URL || 'http://localhost:5173';
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 // Global flag to track email sending in progress
 const emailSendingInProgress = new Map();
@@ -139,8 +138,8 @@ export const initiatePayment = async (req, res) => {
 
         // Prepare Khalti payment request
         const khaltiPayload = {
-            return_url: `${WEBSITE_URL}/bus-tickets/payment-callback`,
-            website_url: WEBSITE_URL,
+            return_url: `${CLIENT_URL}/bus-tickets/payment-callback`,
+            website_url: CLIENT_URL,
             amount: amountInPaisa,
             purchase_order_id,
             purchase_order_name: `Ticket for ${ticketInfo.fromLocation} to ${ticketInfo.toLocation}`,
