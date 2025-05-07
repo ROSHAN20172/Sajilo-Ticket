@@ -1,7 +1,7 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { MdEmail } from "react-icons/md";
-import { FaLock } from "react-icons/fa6";
+import { FaLock, FaEye, FaEyeSlash } from "react-icons/fa6";
 import { UserAppContext } from '../../../context/UserAppContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -13,6 +13,9 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [isOtpSubmitted, setIsOtpSubmitted] = useState(false);
@@ -97,6 +100,12 @@ const ResetPassword = () => {
 
   const onSubmitNewPassword = async (e) => {
     e.preventDefault();
+
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
     try {
       const { data } = await axios.post(`${backendUrl}/api/auth/reset-password`, { email, otp, newPassword });
       if (data.success) {
@@ -168,11 +177,47 @@ const ResetPassword = () => {
         <form onSubmit={onSubmitNewPassword} noValidate className='bg-slate-900 p-6 md:p-8 rounded-lg shadow-lg w-full max-w-sm md:w-96 text-sm'>
           <h1 className='text-white text-xl md:text-2xl font-semibold text-center mb-4'>New Password</h1>
           <p className='text-center mb-6 text-indigo-300'>Enter New Password</p>
+
+          {/* New Password input */}
           <div className='mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]'>
             <FaLock className='text-indigo-300 w-5 h-5 min-w-5 min-h-5' />
-            <input type="password" placeholder='Password' className='bg-transparent outline-none text-white w-full'
-              value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
+            <input
+              type={showNewPassword ? "text" : "password"}
+              placeholder='New Password'
+              className='bg-transparent outline-none text-white w-full'
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+              className="text-indigo-300"
+            >
+              {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
           </div>
+
+          {/* Confirm New Password input */}
+          <div className='mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]'>
+            <FaLock className='text-indigo-300 w-5 h-5 min-w-5 min-h-5' />
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder='Confirm New Password'
+              className='bg-transparent outline-none text-white w-full'
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="text-indigo-300"
+            >
+              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+
           <button className='w-full py-2.5 bg-primary rounded-full font-medium text-neutral-50'>Submit</button>
 
           <div className="mt-6 text-center">

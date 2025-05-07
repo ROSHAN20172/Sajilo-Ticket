@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { FaUser, FaLock } from "react-icons/fa6";
+import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa6";
 import { MdEmail } from "react-icons/md";
 import { useNavigate, Link } from 'react-router-dom';
 import { UserAppContext } from '../../../context/UserAppContext';
@@ -12,6 +12,9 @@ const Signup = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     useEffect(() => {
         setSuppressUnauthorizedToast(false);
@@ -40,6 +43,12 @@ const Signup = () => {
         // Check if password meets the criteria
         if (!passwordRegex.test(password)) {
             toast.error("Password must be at least 6 characters long and contain at least one special character.");
+            return false;
+        }
+
+        // Check if passwords match
+        if (password !== confirmPassword) {
+            toast.error("Passwords do not match.");
             return false;
         }
 
@@ -103,10 +112,35 @@ const Signup = () => {
                             onChange={e => setPassword(e.target.value)}
                             value={password}
                             className='bg-transparent outline-none w-full'
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             placeholder='Password'
                             required
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="text-indigo-300"
+                        >
+                            {showPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                    </div>
+                    <div className='mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]'>
+                        <FaLock className="w-5 h-5 min-w-5 min-h-5 text-indigo-300" />
+                        <input
+                            onChange={e => setConfirmPassword(e.target.value)}
+                            value={confirmPassword}
+                            className='bg-transparent outline-none w-full'
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder='Confirm Password'
+                            required
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="text-indigo-300"
+                        >
+                            {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
                     </div>
                     <button className='w-full py-2.5 bg-primary hover:bg-transparent border-2 border-primary hover:border-primary rounded-full font-medium text-neutral-50 hover:text-primary ease-in-out duration-300'>
                         Sign Up

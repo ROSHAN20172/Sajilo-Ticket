@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { FaLock } from "react-icons/fa6";
+import { FaLock, FaEye, FaEyeSlash } from "react-icons/fa6";
 import { MdEmail } from "react-icons/md";
 import { useNavigate, Link } from 'react-router-dom';
 import { OperatorAppContext } from '../../../../context/OperatorAppContext';
@@ -11,6 +11,7 @@ const OperatorLogin = () => {
     const { backendUrl, setIsOperatorLoggedin, getOperatorData, isOperatorLoggedin, setSuppressUnauthorizedToast } = useContext(OperatorAppContext);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [submitted, setSubmitted] = useState(false);
 
     useEffect(() => {
@@ -72,10 +73,17 @@ const OperatorLogin = () => {
                             onChange={e => setPassword(e.target.value)}
                             value={password}
                             className='bg-transparent outline-none w-full text-white'
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             placeholder='Operator Password'
                             required
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="text-indigo-300"
+                        >
+                            {showPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
                     </div>
                     <p onClick={() => navigate('/operator-reset-password')} className='mb-4 text-indigo-500 cursor-pointer'>
                         Forgot Password?
