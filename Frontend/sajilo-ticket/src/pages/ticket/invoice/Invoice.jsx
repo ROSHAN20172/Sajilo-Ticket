@@ -25,6 +25,7 @@ const Invoice = () => {
     primaryContactNumber: null,
     secondaryContactNumber: null
   });
+  const [contactInfoFetched, setContactInfoFetched] = useState(false);
 
   useEffect(() => {
     const fetchInvoiceData = async () => {
@@ -122,19 +123,21 @@ const Invoice = () => {
   useEffect(() => {
     const fetchBusContactInfo = async () => {
       // Check if we have invoiceData
-      if (!invoiceData) {
+      if (!invoiceData || contactInfoFetched) {
         return;
       }
 
       // Skip if we already have contact info
-      if (invoiceData.primaryContactNumber && invoiceData.secondaryContactNumber) {
+      if (invoiceData.primaryContactNumber) {
         console.log('Contact information already available, skipping fetch');
+        setContactInfoFetched(true);
         return;
       }
 
       setLoading(true);
       try {
         console.log('Attempting to fetch bus contact information...');
+        setContactInfoFetched(true); // Mark as fetched to prevent infinite loop
 
         // First approach: Try to use busId if available
         if (invoiceData.busId) {
@@ -247,7 +250,7 @@ const Invoice = () => {
     };
 
     fetchBusContactInfo();
-  }, [invoiceData, backendUrl]);
+  }, [invoiceData, backendUrl, contactInfoFetched]);
 
   // Generate QR code data from invoice data
   const generateQrCodeData = (data) => {

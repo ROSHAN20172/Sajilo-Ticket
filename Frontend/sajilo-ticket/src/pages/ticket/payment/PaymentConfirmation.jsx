@@ -323,7 +323,7 @@ const PaymentConfirmation = () => {
         <div className='w-full space-y-12 pb-16'>
             <TopLayout
                 bgImg={"https://ts1.mm.bing.net/th?id=OIP.gNpTYgggmsWFW_ITmPOinwHaDf&pid=15.1"}
-                title={"Confirm Your Payment"}
+                title={"Confirm Your Booking Details"}
             />
 
             <RootLayout className="space-y-8 w-full pb-16">

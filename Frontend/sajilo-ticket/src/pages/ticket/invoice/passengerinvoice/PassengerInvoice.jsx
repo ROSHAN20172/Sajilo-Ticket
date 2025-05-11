@@ -60,6 +60,14 @@ const PassengerInvoice = ({ data }) => {
             return data.contactPhone;
         }
 
+        // Use primaryContactNumber if available
+        if (data?.primaryContactNumber) {
+            if (data?.secondaryContactNumber) {
+                return `${data.primaryContactNumber}, ${data.secondaryContactNumber}`;
+            }
+            return data.primaryContactNumber;
+        }
+
         // Final fallback: no contact information available
         return "Contact information not available";
     };
