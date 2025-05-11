@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import { FaBars, FaTicketAlt, FaSignOutAlt } from 'react-icons/fa';
 import { FaX, FaArrowRight, FaUser } from "react-icons/fa6";
@@ -11,6 +11,9 @@ const Navbar = () => {
     const [scrollPosition, setScrollPosition] = useState(0);
     const [isVisible, setIsVisible] = useState(true);
     const [open, setOpen] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [dropdownOpenedByClick, setDropdownOpenedByClick] = useState(false);
+    const profileDropdownRef = useRef(null);
 
     const navigate = useNavigate()
     const { userData, backendUrl, setUserData, setIsLoggedin } = useContext(UserAppContext)
@@ -21,6 +24,7 @@ const Navbar = () => {
             const { data } = await axios.post(`${backendUrl}/api/auth/logout`)
             data.success && setIsLoggedin(false)
             data.success && setUserData(false)
+            setDropdownOpen(false)
             navigate('/')
         } catch (error) {
             toast.error(error.message)
@@ -39,24 +43,55 @@ const Navbar = () => {
     //Handle click open
     const handleOpen = () => {
         setOpen(!open)
-        // Reset any open dropdowns when toggling navbar
-        const dropdowns = document.querySelectorAll(".profile-dropdown");
-        dropdowns.forEach(dropdown => {
-            dropdown.classList.add('hidden');
-            dropdown.classList.remove('block');
-        });
+        // Close dropdown when toggling navbar
+        setDropdownOpen(false);
     }
 
     //Handle click open
     const handleClose = () => {
         setOpen(false);
-        // Reset any open dropdowns when closing navbar
-        const dropdowns = document.querySelectorAll(".profile-dropdown");
-        dropdowns.forEach(dropdown => {
-            dropdown.classList.add('hidden');
-            dropdown.classList.remove('block');
-        });
+        // Close dropdown when closing navbar
+        setDropdownOpen(false);
     }
+
+    // Handle dropdown toggle
+    const toggleDropdown = (e) => {
+        e.stopPropagation();
+        if (!dropdownOpen) {
+            // If dropdown is closed, open it and mark it as clicked
+            setDropdownOpen(true);
+            setDropdownOpenedByClick(true);
+        } else if (!dropdownOpenedByClick) {
+            // If dropdown is open due to hover (not click), set it to clicked mode
+            setDropdownOpenedByClick(true);
+        } else {
+            // If dropdown is open due to previous click, close it
+            setDropdownOpen(false);
+            setDropdownOpenedByClick(false);
+        }
+    };
+
+    // Navigate to profile and close dropdown
+    const navigateToPage = (path) => {
+        setDropdownOpen(false);
+        handleClose();
+        navigate(path);
+    };
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+                setDropdownOpen(false);
+                setDropdownOpenedByClick(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     //To make the navbar sticky and the hide when scrolling up and showing when scrolling down
     useEffect(() => {
@@ -151,38 +186,33 @@ const Navbar = () => {
                     </ul>
                     {userData ?
                         <div
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                // For mobile, toggle a class to show/hide dropdown
-                                const dropdown = e.currentTarget.querySelector(".profile-dropdown");
-                                if (dropdown) {
-                                    dropdown.classList.toggle("hidden");
-                                    dropdown.classList.toggle("block");
+                            ref={profileDropdownRef}
+                            onClick={toggleDropdown}
+                            onMouseEnter={() => {
+                                if (!dropdownOpenedByClick) {
+                                    setDropdownOpen(true);
+                                }
+                            }}
+                            onMouseLeave={() => {
+                                if (!dropdownOpenedByClick) {
+                                    setDropdownOpen(false);
                                 }
                             }}
                             className='w-10 h-10 flex justify-center items-center rounded-full bg-primary text-white relative group mx-4 md:mx-0 mt-4 md:mt-0 cursor-pointer'
                         >
                             {userData.name[0].toUpperCase()}
-                            <div className='profile-dropdown absolute hidden md:group-hover:block md:top-0 md:right-0 top-full left-0 md:left-auto z-20 text-black rounded md:pt-10 pt-2 w-32'>
-                                <ul className='list-none m-0 p-2 bg-gray-100 text-sm shadow-lg rounded'>
-                                    <li onClick={() => {
-                                        navigate('/profile');
-                                        handleClose();
-                                    }} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap flex items-center gap-2'>
+                            <div className={`absolute md:top-0 md:right-0 top-full left-0 md:left-auto z-20 text-black rounded md:pt-10 pt-2 w-32 ${dropdownOpen ? 'block' : 'hidden'}`}>
+                                <ul className='list-none m-0 p-2 bg-gray-100 text-sm shadow-lg rounded'
+                                    onClick={(e) => e.stopPropagation()}>
+                                    <li onClick={() => navigateToPage('/profile')} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap flex items-center gap-2'>
                                         <FaUser size={12} />
                                         Profile
                                     </li>
-                                    <li onClick={() => {
-                                        navigate('/bookings');
-                                        handleClose();
-                                    }} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap flex items-center gap-2'>
+                                    <li onClick={() => navigateToPage('/bookings')} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap flex items-center gap-2'>
                                         <FaTicketAlt size={12} />
                                         Bookings
                                     </li>
-                                    <li onClick={() => {
-                                        logout();
-                                        handleClose();
-                                    }} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap flex items-center gap-2'>
+                                    <li onClick={logout} className='py-2 px-4 hover:bg-gray-200 cursor-pointer whitespace-nowrap flex items-center gap-2'>
                                         <FaSignOutAlt size={12} />
                                         Log Out
                                     </li>
